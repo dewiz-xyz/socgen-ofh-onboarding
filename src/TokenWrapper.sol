@@ -9,11 +9,18 @@ import {ITokenWrapper} from "./ITokenWrapper.sol";
 contract TokenWrapper is ITokenWrapper, DSToken {
     IHoldable public token;
 
-    constructor(IHoldable token_) public DSToken("wOFH") {
+    constructor(IHoldable token_, DSAuthority authority_) public DSToken("wOFH") {
         token = token_;
+        setAuthority(authority_);
     }
 
-    function wrap() external override {}
+    function wrap(
+        string calldata id,
+        address gal,
+        uint256 wad
+    ) external override {
+        mint(gal, wad);
+    }
 
-    function unwrap() external override {}
+    function unwrap(string calldata id) external override {}
 }
