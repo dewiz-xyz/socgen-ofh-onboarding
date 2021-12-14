@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.6.12;
 
-import "ds-test/test.sol";
+import { DSTest } from "ds-test/test.sol";
+import { TokenWrapper } from "./TokenWrapper.sol";
 
-import "./SocgenOfhOnboardingPrototype.sol";
-
-contract SocgenOfhOnboardingPrototypeTest is DSTest {
-    SocgenOfhOnboardingPrototype prototype;
+contract TokenWrapperTest is DSTest {
+    TokenWrapper wrapper;
 
     function setUp() public {
-        prototype = new SocgenOfhOnboardingPrototype();
+        wrapper = new TokenWrapper();
     }
 
     function testFail_basic_sanity() public {
