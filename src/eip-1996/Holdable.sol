@@ -1,7 +1,8 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.6.12;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { StringUtil } from "solidity-string-util/contracts/StringUtil.sol";
+import { StringUtil } from "./StringUtil.sol";
 import { IHoldable } from "./IHoldable.sol";
 
 contract Holdable is IHoldable, ERC20 {
@@ -25,12 +26,12 @@ contract Holdable is IHoldable, ERC20 {
     uint256 internal _totalHeldBalance;
 
     function hold(
-        string memory operationId,
+        string calldata operationId,
         address to,
         address notary,
         uint256 value,
         uint256 timeToExpiration
-    ) public returns (bool)
+    ) external returns (bool)
     {
         _checkHold(to);
 
@@ -46,13 +47,13 @@ contract Holdable is IHoldable, ERC20 {
     }
 
     function holdFrom(
-        string memory operationId,
+        string calldata operationId,
         address from,
         address to,
         address notary,
         uint256 value,
         uint256 timeToExpiration
-    ) public returns (bool)
+    ) external returns (bool)
     {
         _checkHoldFrom(to, from);
 
@@ -68,12 +69,12 @@ contract Holdable is IHoldable, ERC20 {
     }
 
     function holdWithExpirationDate(
-        string memory operationId,
+        string calldata operationId,
         address to,
         address notary,
         uint256 value,
         uint256 expiration
-    ) public returns (bool)
+    ) external returns (bool)
     {
         _checkHold(to);
         _checkExpiration(expiration);
@@ -90,13 +91,13 @@ contract Holdable is IHoldable, ERC20 {
     }
 
     function holdFromWithExpirationDate(
-        string memory operationId,
+        string calldata operationId,
         address from,
         address to,
         address notary,
         uint256 value,
         uint256 expiration
-    ) public returns (bool)
+    ) external returns (bool)
     {
         _checkHoldFrom(to, from);
         _checkExpiration(expiration);
@@ -112,13 +113,13 @@ contract Holdable is IHoldable, ERC20 {
         );
     }
 
-    function releaseHold(string memory operationId) public returns (bool) {
+    function releaseHold(string calldata operationId) external returns (bool) {
         Hold storage releasableHold = holds[operationId.toHash()];
 
         return _releaseHold(releasableHold, operationId);
     }
 
-    function executeHold(string memory operationId, uint256 value) public returns (bool) {
+    function executeHold(string calldata operationId, uint256 value) external returns (bool) {
         return _executeHold(
             operationId,
             value,
@@ -127,7 +128,7 @@ contract Holdable is IHoldable, ERC20 {
         );
     }
 
-    function executeHoldAndKeepOpen(string memory operationId, uint256 value) public returns (bool) {
+    function executeHoldAndKeepOpen(string calldata operationId, uint256 value) external returns (bool) {
         return _executeHold(
             operationId,
             value,
@@ -136,7 +137,7 @@ contract Holdable is IHoldable, ERC20 {
         );
     }
 
-    function renewHold(string memory operationId, uint256 timeToExpiration) public returns (bool) {
+    function renewHold(string calldata operationId, uint256 timeToExpiration) external returns (bool) {
         Hold storage renewableHold = holds[operationId.toHash()];
 
         _checkRenewableHold(renewableHold);
@@ -144,7 +145,7 @@ contract Holdable is IHoldable, ERC20 {
         return _renewHold(renewableHold, operationId, _computeExpiration(timeToExpiration));
     }
 
-    function renewHoldWithExpirationDate(string memory operationId, uint256 expiration) public returns (bool) {
+    function renewHoldWithExpirationDate(string calldata operationId, uint256 expiration) external returns (bool) {
         Hold storage renewableHold = holds[operationId.toHash()];
 
         _checkRenewableHold(renewableHold);
@@ -153,7 +154,7 @@ contract Holdable is IHoldable, ERC20 {
         return _renewHold(renewableHold, operationId, expiration);
     }
 
-    function retrieveHoldData(string memory operationId) public view returns (
+    function retrieveHoldData(string calldata operationId) external view returns (
         address from,
         address to,
         address notary,
@@ -172,23 +173,23 @@ contract Holdable is IHoldable, ERC20 {
         );
     }
 
-    function balanceOnHold(address account) public view returns (uint256) {
+    function balanceOnHold(address account) external view returns (uint256) {
         return heldBalance[account];
     }
 
-    function netBalanceOf(address account) public view returns (uint256) {
+    function netBalanceOf(address account) external view returns (uint256) {
         return super.balanceOf(account);
     }
 
-    function totalSupplyOnHold() public view returns (uint256) {
+    function totalSupplyOnHold() external view returns (uint256) {
         return _totalHeldBalance;
     }
 
-    function isHoldOperatorFor(address operator, address from) public view returns (bool) {
+    function isHoldOperatorFor(address operator, address from) external view returns (bool) {
         return operators[from][operator];
     }
 
-    function authorizeHoldOperator(address operator) public returns (bool) {
+    function authorizeHoldOperator(address operator) external returns (bool) {
         require (operators[msg.sender][operator] == false, "The operator is already authorized");
 
         operators[msg.sender][operator] = true;
@@ -196,7 +197,7 @@ contract Holdable is IHoldable, ERC20 {
         return true;
     }
 
-    function revokeHoldOperator(address operator) public returns (bool) {
+    function revokeHoldOperator(address operator) external returns (bool) {
         require (operators[msg.sender][operator] == true, "The operator is already not authorized");
 
         operators[msg.sender][operator] = false;
@@ -209,12 +210,12 @@ contract Holdable is IHoldable, ERC20 {
         return super.balanceOf(account).sub(heldBalance[account]);
     }
 
-    function transfer(address _to, uint256 _value) public returns (bool) {
+    function transfer(address _to, uint256 _value) external returns (bool) {
         require(balanceOf(msg.sender) >= _value, "Not enough available balance");
         return super.transfer(_to, _value);
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) external returns (bool) {
         require(balanceOf(_from) >= _value, "Not enough available balance");
         return super.transferFrom(_from, _to, _value);
     }

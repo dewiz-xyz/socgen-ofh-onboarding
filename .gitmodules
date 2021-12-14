@@ -4,9 +4,3 @@
 [submodule "lib/ds-token"]
 	path = lib/ds-token
 	url = https://github.com/dapphub/ds-token
-[submodule "lib/openzeppelin-contracts"]
-	path = lib/openzeppelin-contracts
-	url = https://github.com/openzeppelin/openzeppelin-contracts
-[submodule "lib/solidity-string-util"]
-	path = lib/solidity-string-util
-	url = https://github.com/IoBuilders/solidity-string-util
