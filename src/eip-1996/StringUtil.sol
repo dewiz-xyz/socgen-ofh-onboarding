@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// @author Adapted from https://github.com/IoBuilders/solidity-string-util/blob/2af6a135446499b372d8577a2ff4c5fd7f7a2911/contracts/StringUtil.sol
 pragma solidity ^0.6.12;
 
 library StringUtil {

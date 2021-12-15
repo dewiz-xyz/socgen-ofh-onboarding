@@ -2,7 +2,6 @@
 pragma solidity ^0.6.12;
 
 import {DSTest} from "ds-test/test.sol";
-import {DSGuard} from "ds-guard/guard.sol";
 import {TokenWrapper} from "./TokenWrapper.sol";
 import {IHoldable} from "./eip-1996/IHoldable.sol";
 import {MockOFH} from "./mock/MockOFH.sol";
@@ -37,9 +36,6 @@ contract TokenWrapperTest is DSTest {
         guardAuthority = new DSGuard();
         token = new MockOFH(400);
         wrapper = new TokenWrapper(token, guardAuthority);
-
-        guardAuthority.permit(address(wrapper), address(wrapper), bytes4(keccak256("mint(address,uint256)")));
-        guardAuthority.permit(address(wrapper), address(wrapper), bytes4(keccak256("burn(address,uint256)")));
     }
 
     function testExistingHoldCanBeWrapped() public {
@@ -63,12 +59,5 @@ contract TokenWrapperTest is DSTest {
     function testFailOnlyExistingHoldCanBeWrapped() public {
         token.hold("Foo", address(1), address(wrapper), 400, block.timestamp + 365 days);
         wrapper.wrap("Bar", address(1));
-    }
-
-    function testFailAnyoneCanMint() public {
-        // Changes the owner so the mint call fails.
-        wrapper.setOwner(address(0));
-
-        wrapper.mint(address(1), 400);
     }
 }

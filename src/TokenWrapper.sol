@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.6.12;
 
-import {DSToken} from "ds-token/token.sol";
-import {DSAuthority} from "ds-auth/auth.sol";
-import {IHoldable} from "./eip-1996/IHoldable.sol";
+import {IERC20} from "openzeppelin-contracts/token/ERC20/ERC20.sol";
 import {ITokenWrapper} from "./ITokenWrapper.sol";
+import {IHoldable} from "./eip-1996/IHoldable.sol";
 
 /**
  */
-contract TokenWrapper is ITokenWrapper, DSToken {
+contract TokenWrapper is ITokenWrapper, ERC20 {
     IHoldable public immutable token;
 
     struct WrapInfo {
@@ -23,9 +22,8 @@ contract TokenWrapper is ITokenWrapper, DSToken {
      * @param token_ The holdable token implementation.
      * @param authority_ A DSAuthority implementation.
      */
-    constructor(IHoldable token_, DSAuthority authority_) public DSToken("wOFH") {
+    constructor(IHoldable token_) public ERC20("Wrapped OFH", "wOFH") {
         token = token_;
-        setAuthority(authority_);
     }
 
     /**
@@ -45,9 +43,7 @@ contract TokenWrapper is ITokenWrapper, DSToken {
         wrapInfo[id].gal = gal;
         wrapInfo[id].wad = value * WAD;
 
-        allowance[address(this)][gal] = value * WAD;
-
-        mint(gal, value * WAD);
+        _mint(gal, value * WAD);
     }
 
     function unwrap(string calldata id) external override {
@@ -55,7 +51,7 @@ contract TokenWrapper is ITokenWrapper, DSToken {
         require(notary == address(this), "token-wrapper-is-not-notary");
 
         address gal = wrapInfo[id].gal;
-        burn(gal, wrapInfo[id].wad);
+        _burn(gal, wrapInfo[id].wad);
 
         token.releaseHold(id);
     }

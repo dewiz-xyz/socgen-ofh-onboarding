@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// @author Adapted from https://github.com/IoBuilders/holdable-token/blob/372dd8ed0252691231bea6d0b9e724cfb5fa0494/contracts/Holdable.sol
 pragma solidity ^0.6.12;
 
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
@@ -6,7 +7,7 @@ import {ERC20} from "openzeppelin-contracts/token/ERC20/ERC20.sol";
 import {StringUtil} from "./StringUtil.sol";
 import {IHoldable} from "./IHoldable.sol";
 
-contract Holdable is IHoldable, ERC20 {
+abstract contract Holdable is IHoldable, ERC20 {
     using StringUtil for string;
 
     struct Hold {
