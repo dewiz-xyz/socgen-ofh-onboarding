@@ -39,13 +39,30 @@ contract TokenWrapperTest is DSTest {
         wrapper = new TokenWrapper(token, guardAuthority);
 
         guardAuthority.permit(address(wrapper), address(wrapper), bytes4(keccak256("mint(address,uint256)")));
+        guardAuthority.permit(address(wrapper), address(wrapper), bytes4(keccak256("burn(address,uint256)")));
     }
 
-    function testOnlyExistingHoldCanBeWrapped() public {
+    function testExistingHoldCanBeWrapped() public {
+        wrapper.setOwner(address(0));
+
         token.hold("Foo", address(1), address(wrapper), 400, block.timestamp + 365 days);
         wrapper.wrap("Foo", address(1));
 
         assertEq(wrapper.balanceOf(address(1)), 400 * WAD);
+    }
+
+    function testWrappedHoldCanBeUnwrapped() public {
+        token.hold("Foo", address(1), address(wrapper), 400, block.timestamp + 365 days);
+        wrapper.wrap("Foo", address(1));
+
+        wrapper.unwrap("Foo");
+
+        assertEq(wrapper.balanceOf(address(1)), 0);
+    }
+
+    function testFailOnlyExistingHoldCanBeWrapped() public {
+        token.hold("Foo", address(1), address(wrapper), 400, block.timestamp + 365 days);
+        wrapper.wrap("Bar", address(1));
     }
 
     function testFailAnyoneCanMint() public {
