@@ -7,20 +7,30 @@ import {IHoldable} from "./eip-1996/IHoldable.sol";
 import {ITokenWrapper} from "./ITokenWrapper.sol";
 
 contract TokenWrapper is ITokenWrapper, DSToken {
-    IHoldable public token;
+    IHoldable public immutable token;
 
     constructor(IHoldable token_, DSAuthority authority_) public DSToken("wOFH") {
         token = token_;
         setAuthority(authority_);
     }
 
-    function wrap(
-        string calldata id,
-        address gal,
-        uint256 wad
-    ) external override {
-        mint(gal, wad);
+    function wrap(string calldata id, address gal) external override {
+        (, , address notary, uint256 value, uint256 expiration, IHoldable.HoldStatusCode status) = token
+            .retrieveHoldData(id);
+
+        require(notary == address(this), "token-wrapper-is-not-notary");
+        require(status == IHoldable.HoldStatusCode.Ordered, "hold-not-ordered");
+        // TODO: Should we add a minimum expiration requirement here?
+        require(expiration > block.timestamp, "hold-expired");
+
+        mint(gal, value * WAD);
     }
 
-    function unwrap(string calldata id) external override {}
+    function unwrap(string calldata id) external override {
+        (, , address notary, , , ) = token.retrieveHoldData(id);
+
+        require(notary == address(this), "token-wrapper-is-not-notary");
+
+        token.releaseHold(id);
+    }
 }
