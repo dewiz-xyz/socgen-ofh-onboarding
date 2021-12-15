@@ -4,6 +4,3 @@
 [submodule "lib/openzeppelin-contracts"]
 	path = lib/openzeppelin-contracts
 	url = https://github.com/openzeppelin/openzeppelin-contracts
-[submodule "lib/ds-guard"]
-	path = lib/ds-guard
-	url = https://github.com/cliofinance/ds-guard
