@@ -45,23 +45,12 @@ contract RwaInputConduit {
         emit Nope(usr);
     }
 
-    modifier operator() {
-        require(can[msg.sender] == 1, "RwaConduit/not-operator");
-        _;
-    }
-
-    DSTokenLike public gov;
     DSTokenLike public dai;
     address public to;
 
     event Push(address indexed to, uint256 wad);
 
-    constructor(
-        DSTokenLike _gov,
-        DSTokenLike _dai,
-        address _to
-    ) public {
-        gov = _gov;
+    constructor(DSTokenLike _dai, address _to) public {
         dai = _dai;
         to = _to;
 
@@ -69,9 +58,8 @@ contract RwaInputConduit {
         emit Rely(msg.sender);
     }
 
-    function push() external operator {
-        // TODO: is this check still relevant to MakerDAO?
-        require(gov.balanceOf(msg.sender) > 0, "RwaConduit/no-gov");
+    function push() external {
+        require(can[msg.sender] == 1, "RwaConduit/not-allowed");
 
         uint256 balance = dai.balanceOf(address(this));
         dai.transfer(to, balance);
@@ -115,7 +103,6 @@ contract RwaOutputConduit {
         _;
     }
 
-    DSTokenLike public gov;
     DSTokenLike public dai;
 
     address public to;
@@ -131,10 +118,8 @@ contract RwaOutputConduit {
     event Pick(address indexed who);
     event Push(address indexed to, uint256 wad);
 
-    constructor(DSTokenLike _gov, DSTokenLike _dai) public {
-        gov = _gov;
+    constructor(DSTokenLike _dai) public {
         dai = _dai;
-
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
     }
@@ -162,7 +147,6 @@ contract RwaOutputConduit {
 
     function push() external {
         require(to != address(0), "RwaConduit/to-not-set");
-        require(gov.balanceOf(msg.sender) > 0, "RwaConduit/no-gov");
 
         uint256 balance = dai.balanceOf(address(this));
         address recipient = to;
