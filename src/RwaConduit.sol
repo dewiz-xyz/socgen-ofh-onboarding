@@ -1,4 +1,4 @@
-pragma solidity 0.6.12;
+pragma solidity ^0.6.12;
 
 interface DSTokenLike {
     function balanceOf(address) external view returns (uint256);
