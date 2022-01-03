@@ -13,12 +13,12 @@ contract RwaInputConduit {
     // --- auth ---
 
     mapping(address => uint256) public wards;
-    mapping(address => uint256) public canPush;
+    mapping(address => uint256) public may;
 
     event Rely(address indexed usr);
     event Deny(address indexed usr);
-    event AllowPush(address indexed usr);
-    event DenyPush(address indexed usr);
+    event Mate(address indexed usr);
+    event Hate(address indexed usr);
 
     function rely(address usr) external auth {
         wards[usr] = 1;
@@ -35,14 +35,14 @@ contract RwaInputConduit {
         _;
     }
 
-    function allowPush(address usr) external auth {
-        canPush[usr] = 1;
-        emit AllowPush(usr);
+    function mate(address usr) external auth {
+        may[usr] = 1;
+        emit Mate(usr);
     }
 
-    function denyPush(address usr) external auth {
-        canPush[usr] = 0;
-        emit DenyPush(usr);
+    function hate(address usr) external auth {
+        may[usr] = 0;
+        emit Hate(usr);
     }
 
     DSTokenLike public dai;
@@ -59,7 +59,7 @@ contract RwaInputConduit {
     }
 
     function push() external {
-        require(canPush[msg.sender] == 1, "RwaConduit/not-allowed");
+        require(maymsg.sender] == 1, "RwaConduit/not-allowed");
 
         uint256 balance = dai.balanceOf(address(this));
         dai.transfer(to, balance);
@@ -72,7 +72,7 @@ contract RwaOutputConduit {
     // --- auth ---
     mapping(address => uint256) public wards;
     mapping(address => uint256) public can;
-    mapping(address => uint256) public canPush;
+    mapping(address => uint256) public may;
 
     function rely(address usr) external auth {
         wards[usr] = 1;
@@ -99,14 +99,14 @@ contract RwaOutputConduit {
         emit Nope(usr);
     }
 
-    function allowPush(address usr) external auth {
-        canPush[usr] = 1;
-        emit AllowPush(usr);
+    function mate(address usr) external auth {
+        may[usr] = 1;
+        emit Mate(usr);
     }
 
-    function denyPush(address usr) external auth {
-        canPush[usr] = 0;
-        emit DenyPush(usr);
+    function hate(address usr) external auth {
+        may[usr] = 0;
+        emit Hate(usr);
     }
 
     modifier operator() {
@@ -124,8 +124,8 @@ contract RwaOutputConduit {
     event Deny(address indexed usr);
     event Hope(address indexed usr);
     event Nope(address indexed usr);
-    event AllowPush(address indexed usr);
-    event DenyPush(address indexed usr);
+    event Mate(address indexed usr);
+    event Hate(address indexed usr);
     event Kiss(address indexed who);
     event Diss(address indexed who);
     event Pick(address indexed who);
