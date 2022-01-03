@@ -59,7 +59,7 @@ contract RwaInputConduit {
     }
 
     function push() external {
-        require(maymsg.sender] == 1, "RwaConduit/not-allowed");
+        require(may[msg.sender] == 1, "RwaConduit/not-allowed");
 
         uint256 balance = dai.balanceOf(address(this));
         dai.transfer(to, balance);
@@ -160,7 +160,7 @@ contract RwaOutputConduit {
 
     function push() external {
         require(to != address(0), "RwaConduit/to-not-set");
-        require(canPush[msg.sender] == 1, "RwaConduit/not-allowed");
+        require(may[msg.sender] == 1, "RwaConduit/not-allowed");
         uint256 balance = dai.balanceOf(address(this));
         address recipient = to;
         to = address(0);
