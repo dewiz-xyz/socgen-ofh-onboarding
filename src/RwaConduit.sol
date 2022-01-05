@@ -7,10 +7,11 @@ interface DSTokenLike {
 }
 
 /**
- * @dev After the deploy the owner must call `hope()` for the DIIS Group wallet.
+ * @dev After the deploy the owner must call `mate()` for the DIIS Group wallet.
  */
 contract RwaInputConduit {
-    // --- auth ---
+    DSTokenLike public immutable dai;
+    address public immutable to;
 
     mapping(address => uint256) public wards;
     mapping(address => uint256) public may;
@@ -19,6 +20,20 @@ contract RwaInputConduit {
     event Deny(address indexed usr);
     event Mate(address indexed usr);
     event Hate(address indexed usr);
+    event Push(address indexed to, uint256 wad);
+
+    constructor(DSTokenLike _dai, address _to) public {
+        dai = _dai;
+        to = _to;
+
+        wards[msg.sender] = 1;
+        emit Rely(msg.sender);
+    }
+
+    modifier auth() {
+        require(wards[msg.sender] == 1, "RwaConduit/not-authorized");
+        _;
+    }
 
     function rely(address usr) external auth {
         wards[usr] = 1;
@@ -28,11 +43,6 @@ contract RwaInputConduit {
     function deny(address usr) external auth {
         wards[usr] = 0;
         emit Deny(usr);
-    }
-
-    modifier auth() {
-        require(wards[msg.sender] == 1, "RwaConduit/not-authorized");
-        _;
     }
 
     function mate(address usr) external auth {
@@ -45,21 +55,8 @@ contract RwaInputConduit {
         emit Hate(usr);
     }
 
-    DSTokenLike public dai;
-    address public to;
-
-    event Push(address indexed to, uint256 wad);
-
-    constructor(DSTokenLike _dai, address _to) public {
-        dai = _dai;
-        to = _to;
-
-        wards[msg.sender] = 1;
-        emit Rely(msg.sender);
-    }
-
     function push() external {
-        require(may[msg.sender] == 1, "RwaConduit/not-allowed");
+        require(may[msg.sender] == 1, "RwaConduit/not-mate");
 
         uint256 balance = dai.balanceOf(address(this));
         dai.transfer(to, balance);
@@ -69,10 +66,35 @@ contract RwaInputConduit {
 }
 
 contract RwaOutputConduit {
-    // --- auth ---
+    DSTokenLike public immutable dai;
+    address public to;
+
     mapping(address => uint256) public wards;
     mapping(address => uint256) public can;
     mapping(address => uint256) public may;
+    mapping(address => uint256) public bud;
+
+    event Rely(address indexed usr);
+    event Deny(address indexed usr);
+    event Hope(address indexed usr);
+    event Nope(address indexed usr);
+    event Mate(address indexed usr);
+    event Hate(address indexed usr);
+    event Kiss(address indexed who);
+    event Diss(address indexed who);
+    event Pick(address indexed who);
+    event Push(address indexed to, uint256 wad);
+
+    constructor(DSTokenLike _dai) public {
+        dai = _dai;
+        wards[msg.sender] = 1;
+        emit Rely(msg.sender);
+    }
+
+    modifier auth() {
+        require(wards[msg.sender] == 1, "RwaConduit/not-authorized");
+        _;
+    }
 
     function rely(address usr) external auth {
         wards[usr] = 1;
@@ -82,11 +104,6 @@ contract RwaOutputConduit {
     function deny(address usr) external auth {
         wards[usr] = 0;
         emit Deny(usr);
-    }
-
-    modifier auth() {
-        require(wards[msg.sender] == 1, "RwaConduit/not-authorized");
-        _;
     }
 
     function hope(address usr) external auth {
@@ -109,58 +126,29 @@ contract RwaOutputConduit {
         emit Hate(usr);
     }
 
-    modifier operator() {
-        require(can[msg.sender] == 1, "RwaConduit/not-operator");
-        _;
+    function kiss(address usr) public auth {
+        bud[usr] = 1;
+        emit Kiss(usr);
     }
 
-    DSTokenLike public dai;
-
-    address public to;
-    mapping(address => uint256) public bud;
-
-    // Events
-    event Rely(address indexed usr);
-    event Deny(address indexed usr);
-    event Hope(address indexed usr);
-    event Nope(address indexed usr);
-    event Mate(address indexed usr);
-    event Hate(address indexed usr);
-    event Kiss(address indexed who);
-    event Diss(address indexed who);
-    event Pick(address indexed who);
-    event Push(address indexed to, uint256 wad);
-
-    constructor(DSTokenLike _dai) public {
-        dai = _dai;
-        wards[msg.sender] = 1;
-        emit Rely(msg.sender);
-    }
-
-    // --- administration ---
-    function kiss(address who) public auth {
-        bud[who] = 1;
-        emit Kiss(who);
-    }
-
-    function diss(address who) public auth {
-        if (to == who) {
+    function diss(address usr) public auth {
+        if (to == usr) {
             to = address(0);
         }
-        bud[who] = 0;
-        emit Diss(who);
+        bud[usr] = 0;
+        emit Diss(usr);
     }
 
-    // --- routing ---
-    function pick(address who) public operator {
+    function pick(address who) public {
+        require(can[msg.sender] == 1, "RwaConduit/not-operator");
         require(bud[who] == 1 || who == address(0), "RwaConduit/not-bud");
         to = who;
         emit Pick(who);
     }
 
     function push() external {
-        require(to != address(0), "RwaConduit/to-not-set");
-        require(may[msg.sender] == 1, "RwaConduit/not-allowed");
+        require(may[msg.sender] == 1, "RwaConduit/not-mate");
+        require(to != address(0), "RwaConduit/to-not-picked");
         uint256 balance = dai.balanceOf(address(this));
         address recipient = to;
         to = address(0);
