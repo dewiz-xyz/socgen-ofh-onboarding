@@ -13,7 +13,9 @@ interface OFHTokenLike {
 /**
  */
 contract TokenWrapper is ITokenWrapper, ERC20 {
-    // --- auth ---
+    uint256 internal constant WAD = 10**18;
+
+    OFHTokenLike public immutable token;
 
     mapping(address => uint256) public wards;
     mapping(address => uint256) public can;
@@ -22,6 +24,27 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
     event Deny(address indexed usr);
     event Hope(address indexed usr);
     event Nope(address indexed usr);
+
+    /**
+     * @notice Creates a token wrapper for a OFH token implementation.
+     * @param token_ The OFH token implementation.
+     */
+    constructor(OFHTokenLike token_) public ERC20("Wrapped OFH", "wOFH") {
+        token = token_;
+
+        wards[msg.sender] = 1;
+        emit Rely(msg.sender);
+    }
+
+    modifier auth() {
+        require(wards[msg.sender] == 1, "TokenWrapper/not-authorized");
+        _;
+    }
+
+    modifier operator() {
+        require(can[msg.sender] == 1, "TokenWrapper/not-operator");
+        _;
+    }
 
     function rely(address usr) external auth {
         wards[usr] = 1;
@@ -33,11 +56,6 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
         emit Deny(usr);
     }
 
-    modifier auth() {
-        require(wards[msg.sender] == 1, "TokenWrapper/not-authorized");
-        _;
-    }
-
     function hope(address usr) external auth {
         can[usr] = 1;
         emit Hope(usr);
@@ -46,26 +64,6 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
     function nope(address usr) external auth {
         can[usr] = 0;
         emit Nope(usr);
-    }
-
-    modifier operator() {
-        require(can[msg.sender] == 1, "TokenWrapper/not-operator");
-        _;
-    }
-
-    uint256 internal constant WAD = 10**18;
-
-    OFHTokenLike public immutable token;
-
-    /**
-     * @notice Creates a token wrapper for a OFH token implementation.
-     * @param token_ The OFH token implementation.
-     */
-    constructor(OFHTokenLike token_) public ERC20("Wrapped OFH", "wOFH") {
-        token = token_;
-
-        wards[msg.sender] = 1;
-        emit Rely(msg.sender);
     }
 
     /**
