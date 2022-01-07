@@ -5,7 +5,7 @@ import {ERC20} from "openzeppelin-contracts/token/ERC20/ERC20.sol";
 import {ITokenWrapper} from "./ITokenWrapper.sol";
 
 interface OFHTokenLike {
-    function balanceOf(address) external view returns (uint256);
+    function getBalance(address) external view returns (uint256);
 
     function transfer(address, uint256) external returns (uint256);
 }
@@ -92,7 +92,10 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
     function doWrap(address gal, uint256 value) private {
         // Normalize the amount to have 18 decimals. We assume that `token` has 0 decimals.
         uint256 wad = value.mul(WAD);
-        require(totalSupply().add(wad) <= token.balanceOf(address(this)).mul(WAD), "TokenWrapper/insufficient-balance");
+        require(
+            totalSupply().add(wad) <= token.getBalance(address(this)).mul(WAD),
+            "TokenWrapper/insufficient-balance"
+        );
         _mint(gal, wad);
     }
 
