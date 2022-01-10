@@ -3,9 +3,9 @@
 
 # Loads an address file from a URL and adds checksummed contract addresses to the environment
 # Source this script to set envvars
-#    `. ./scripts/build-env-addresses.sh [ URL | network ]`
+#    `bash ./scripts/build-env-addresses.sh [ network ]`
 # Run as script and write to file to save exports to source file
-#    `./scripts/build-env-addresses.sh [ URL | network ] > env-addresses-network`
+#    `bash ./scripts/build-env-addresses.sh [ network ] > env-addresses-network`
 
 function validate_url() {
   if [[ $(curl -I ${1} 2>&1 | grep -E 'HTTP/(1.1|2) [23][0-9]+') ]]; then
@@ -30,7 +30,8 @@ if [ "${1}" == "kovan" ]; then
 elif [ "${1}" == "mainnet" ]; then
   URL="https://changelog.makerdao.com/releases/mainnet/active/contracts.json"
 else
-  URL="${1}"
+  echo "# Invalid network ${1}"
+  [ -z "${PS1}" ] && exit || return
 fi
 
 if validate_url "${URL}"; then
