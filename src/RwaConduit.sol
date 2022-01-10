@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.6.12;
 
 interface DSTokenLike {
@@ -6,9 +7,6 @@ interface DSTokenLike {
     function transfer(address, uint256) external returns (uint256);
 }
 
-/**
- * @dev After the deploy the owner must call `mate()` for the DIIS Group wallet.
- */
 contract RwaInputConduit {
     DSTokenLike public immutable dai;
     address public immutable to;
