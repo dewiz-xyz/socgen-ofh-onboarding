@@ -1,6 +1,3 @@
-ds-guard/=lib/ds-guard/src/
 ds-test/=lib/ds-test/src/
-ds-token/=lib/ds-token/src/
-ds-auth/=lib/ds-token/lib/ds-auth/src/
-ds-math/=lib/ds-token/lib/ds-math/src/
+dss-interfaces/=lib/dss-interfaces/src/
 openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/
