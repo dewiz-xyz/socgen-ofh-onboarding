@@ -4,8 +4,8 @@
 
 set -e
 
-[[ "$1" == "mainnet" || "$1" == "kovan"]] || {
-    echo "Please specify the network [ mainnet, kovan ].";
+[[ "$1" == "mainnet" || "$1" == "goerli"]] || {
+    echo "Please specify the network [ mainnet, goerli ].";
     exit 1;
 }
 [[ "$ETH_RPC_URL" && "$(seth chain)" == "$1" ]] || {
@@ -36,7 +36,7 @@ export ETH_GAS=6000000
 #
 [[ -z "$LETTER" ]] && LETTER="A";
 [[ -z "$OPERATOR" ]] && OPERATOR="0xA5Eee849FF395f9FA592645979f2A8Af6E0eF5c3" 
-# using generic mock operator address for Kovan, TODO: update for mainnet
+# using generic mock operator address for goerli, TODO: update for mainnet
 # [[ -z "$MIP21_LIQUIDATION_ORACLE" ]] && MIP21_LIQUIDATION_ORACLE="0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF"
 # TODO: confirm liquidations handling - no liquidations for the time being
 
@@ -44,8 +44,8 @@ export ETH_GAS=6000000
 # RWA_OUTPUT_CONDUIT=$RWA007_A_OUTPUT_CONDUIT
 # RWA_INPUT_CONDUIT=$RWA007_A_INPUT_CONDUIT
 
-# kovan only
-# using generic address for Kovan, TODO: update for mainnet
+# goerli only
+# using generic address for goerli, TODO: update for mainnet
 TRUST1="0x597084d145e96Ae2e89E1c9d8DEE6d43d3557898"
 TRUST2="0xCB84430E410Df2dbDE0dF04Cf7711E656C90BDa2"
 
@@ -65,7 +65,7 @@ seth send "${RWA_TOKEN}" 'transfer(address,uint256)' "$OPERATOR" "$(seth --to-we
 
 if [ "$RWA_OUTPUT_CONDUIT" != "$OPERATOR" ]; then
     seth send "${RWA_OUTPUT_CONDUIT}" 'rely(address)' "${MCD_PAUSE_PROXY}"
-    if [ "$1" == "kovan" ]; then
+    if [ "$1" == "goerli" ]; then
         seth send "${RWA_OUTPUT_CONDUIT}" 'kiss(address)' "${TRUST1}"
         seth send "${RWA_OUTPUT_CONDUIT}" 'kiss(address)' "${TRUST2}"
     fi
@@ -101,7 +101,7 @@ seth send "${RWA_JOIN}" 'deny(address)' "${ETH_FROM}"
 
 # print it
 echo "OPERATOR: ${OPERATOR}"
-if [ "$1" == "kovan" ]; then
+if [ "$1" == "goerli" ]; then
     echo "TRUST1: ${TRUST1}"
     echo "TRUST2: ${TRUST2}"
 fi

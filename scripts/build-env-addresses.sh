@@ -21,12 +21,12 @@ if [[ $_ != "${0}" ]]; then
 fi
 
 if [ -z "${1}" ]; then
-  echo "Please specify the network [ mainnet, kovan ] or a file path as an argument."
+  echo "Please specify the network [ mainnet, goerli ] or a file path as an argument."
   [ -z "${PS1}" ] && exit || return
 fi
 
-if [ "${1}" == "kovan" ]; then
-  URL="https://changelog.makerdao.com/releases/kovan/active/contracts.json"
+if [ "${1}" == "goerli" ]; then
+  URL="https://changelog.makerdao.com/releases/goerli/active/contracts.json"
 elif [ "${1}" == "mainnet" ]; then
   URL="https://changelog.makerdao.com/releases/mainnet/active/contracts.json"
 else
