@@ -4,21 +4,21 @@ pragma solidity >=0.6.8 <0.7.0;
 import {VatAbstract, JugAbstract, DSTokenAbstract, GemJoinAbstract, DaiJoinAbstract, DaiAbstract} from "dss-interfaces/Interfaces.sol";
 
 library Math {
-    uint256 public constant RAY = 10**27;
+    uint256 internal constant RAY = 10**27;
 
-    function add(uint256 x, uint256 y) public pure returns (uint256 z) {
+    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x + y) >= x, "Math/add-overflow");
     }
 
-    function sub(uint256 x, uint256 y) public pure returns (uint256 z) {
+    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x - y) <= x, "Math/sub-overflow");
     }
 
-    function mul(uint256 x, uint256 y) public pure returns (uint256 z) {
+    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require(y == 0 || (z = x * y) / y == x, "Math/mul-overflow");
     }
 
-    function divup(uint256 x, uint256 y) public pure returns (uint256 z) {
+    function divup(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = add(x, sub(y, 1)) / y;
     }
 }
@@ -51,7 +51,8 @@ contract RwaUrn {
         DaiJoinAbstract daiJoin_,
         address outputConduit_
     ) public {
-        // requires in urn that outputConduit isn't address(0)
+        require(outputConduit_ != address(0), "RwaUrn/invalid-conduit");
+
         vat = vat_;
         jug = jug_;
         gemJoin = gemJoin_;
@@ -69,6 +70,11 @@ contract RwaUrn {
         emit File("jug", address(jug_));
     }
 
+    /**
+     * ==============================================
+     * Authorization
+     * ==============================================
+     */
     function rely(address usr) external auth {
         wards[usr] = 1;
         emit Rely(usr);
@@ -124,8 +130,6 @@ contract RwaUrn {
     }
 
     function draw(uint256 wad) external operator {
-        require(outputConduit != address(0), "RwaUrn/invalid-conduit");
-
         bytes32 ilk = gemJoin.ilk();
         jug.drip(ilk);
         (, uint256 rate, , , ) = vat.ilks(ilk);
@@ -153,7 +157,6 @@ contract RwaUrn {
     }
 
     function quit() external {
-        require(outputConduit != address(0), "RwaUrn/invalid-conduit");
         require(vat.live() == 0, "RwaUrn/vat-still-live");
 
         DSTokenAbstract dai = DSTokenAbstract(daiJoin.dai());
