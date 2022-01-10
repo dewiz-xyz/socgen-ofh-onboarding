@@ -1,22 +1,17 @@
 #!/bin/bash
 #
-# ./scripts/deploy.sh <network>
+# bash scripts/deploy-goerli.sh
 
 set -e
 
-[[ "$1" == "mainnet" || "$1" == "goerli"]] || {
-    echo "Please specify the network [ mainnet, goerli ].";
-    exit 1;
-}
 [[ "$ETH_RPC_URL" && "$(seth chain)" == "$1" ]] || {
     echo "Please set a $1 ETH_RPC_URL";
     exit 1;
 }
 
 # shellcheck disable=SC1091
-source ./scripts/build-env-addresses.sh "$1" > /dev/null 2>&1
+source ./scripts/build-env-addresses.sh goerli > /dev/null 2>&1
 
-# TODO: confirm for mainnet deployment
 export ETH_GAS=6000000
 
 # TODO: confirm if name/symbol is going to follow the RWA convention
@@ -35,17 +30,12 @@ export ETH_GAS=6000000
 # ! TODO: check with team/PE if this is still the case
 #
 [[ -z "$LETTER" ]] && LETTER="A";
-[[ -z "$OPERATOR" ]] && OPERATOR="0xA5Eee849FF395f9FA592645979f2A8Af6E0eF5c3" 
-# using generic mock operator address for goerli, TODO: update for mainnet
+[[ -z "$OPERATOR" ]] && OPERATOR="0xA5Eee849FF395f9FA592645979f2A8Af6E0eF5c3"  # using generic mock operator address for goerli
+
 # [[ -z "$MIP21_LIQUIDATION_ORACLE" ]] && MIP21_LIQUIDATION_ORACLE="0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF"
 # TODO: confirm liquidations handling - no liquidations for the time being
 
-# for the TinlakeManager
-# RWA_OUTPUT_CONDUIT=$RWA007_A_OUTPUT_CONDUIT
-# RWA_INPUT_CONDUIT=$RWA007_A_INPUT_CONDUIT
-
-# goerli only
-# using generic address for goerli, TODO: update for mainnet
+# goerli only, trust a couple of addresses
 TRUST1="0x597084d145e96Ae2e89E1c9d8DEE6d43d3557898"
 TRUST2="0xCB84430E410Df2dbDE0dF04Cf7711E656C90BDa2"
 
@@ -61,14 +51,15 @@ RWA_TOKEN=$(dapp create "src/TokenWrapper.sol:TokenWrapper")
 seth send "${RWA_TOKEN}" 'transfer(address,uint256)' "$OPERATOR" "$(seth --to-wei 1.0 ether)"
 
 # route it
-[[ -z "$RWA_OUTPUT_CONDUIT" ]] && RWA_OUTPUT_CONDUIT=$(dapp create RwaConduits:RwaOutputConduit "${MCD_GOV}" "${MCD_DAI}")
+[[ -z "$RWA_OUTPUT_CONDUIT" ]] && RWA_OUTPUT_CONDUIT=$(dapp create RwaConduits:RwaOutputConduit "${MCD_DAI}")
 
 if [ "$RWA_OUTPUT_CONDUIT" != "$OPERATOR" ]; then
     seth send "${RWA_OUTPUT_CONDUIT}" 'rely(address)' "${MCD_PAUSE_PROXY}"
-    if [ "$1" == "goerli" ]; then
-        seth send "${RWA_OUTPUT_CONDUIT}" 'kiss(address)' "${TRUST1}"
-        seth send "${RWA_OUTPUT_CONDUIT}" 'kiss(address)' "${TRUST2}"
-    fi
+
+    # trust addresses for goerli
+    seth send "${RWA_OUTPUT_CONDUIT}" 'kiss(address)' "${TRUST1}"
+    seth send "${RWA_OUTPUT_CONDUIT}" 'kiss(address)' "${TRUST2}"
+
     seth send "${RWA_OUTPUT_CONDUIT}" 'deny(address)' "${ETH_FROM}"
 fi
 
@@ -77,7 +68,6 @@ RWA_JOIN=$(dapp create AuthGemJoin "${MCD_VAT}" "${ILK_ENCODED}" "${RWA_TOKEN}")
 seth send "${RWA_JOIN}" 'rely(address)' "${MCD_PAUSE_PROXY}"
 
 # urn it
-# TODO: write RwaUrn contract
 RWA_URN=$(dapp create RwaUrn "${MCD_VAT}" "${MCD_JUG}" "${RWA_JOIN}" "${MCD_JOIN_DAI}" "${RWA_OUTPUT_CONDUIT}")
 seth send "${RWA_URN}" 'rely(address)' "${MCD_PAUSE_PROXY}"
 seth send "${RWA_URN}" 'deny(address)' "${ETH_FROM}"
@@ -89,7 +79,7 @@ seth send "${RWA_JOIN}" 'rely(address)' "${RWA_URN}"
 seth send "${RWA_JOIN}" 'deny(address)' "${ETH_FROM}"
 
 # connect it
-[[ -z "$RWA_INPUT_CONDUIT" ]] && RWA_INPUT_CONDUIT=$(dapp create RwaConduits:RwaInputConduit "${MCD_GOV}" "${MCD_DAI}" "${RWA_URN}")
+[[ -z "$RWA_INPUT_CONDUIT" ]] && RWA_INPUT_CONDUIT=$(dapp create RwaConduits:RwaInputConduit "${MCD_DAI}" "${RWA_URN}")
 
 # TODO: confirm liquidations handling - no liquidations for the time being
 # # price it
@@ -101,10 +91,8 @@ seth send "${RWA_JOIN}" 'deny(address)' "${ETH_FROM}"
 
 # print it
 echo "OPERATOR: ${OPERATOR}"
-if [ "$1" == "goerli" ]; then
-    echo "TRUST1: ${TRUST1}"
-    echo "TRUST2: ${TRUST2}"
-fi
+echo "TRUST1: ${TRUST1}"
+echo "TRUST2: ${TRUST2}"
 echo "ILK: ${ILK}"
 echo "${SYMBOL}: ${RWA_TOKEN}"
 echo "MCD_JOIN_${SYMBOL}_${LETTER}: ${RWA_JOIN}"
