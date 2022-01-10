@@ -46,7 +46,7 @@ contract RwaInputConduit {
     event Push(address indexed to, uint256 wad);
 
     modifier auth() {
-        require(wards[msg.sender] == 1, "RwaConduit/not-authorized");
+        require(wards[msg.sender] == 1, "RwaInputConduit/not-authorized");
         _;
     }
 
@@ -102,7 +102,7 @@ contract RwaInputConduit {
      * @notice Transfers the outstanding Dai balance of this contract to the receiver.
      */
     function push() external {
-        require(may[msg.sender] == 1, "RwaConduit/not-mate");
+        require(may[msg.sender] == 1, "RwaInputConduit/not-mate");
 
         uint256 balance = dai.balanceOf(address(this));
         dai.transfer(to, balance);
@@ -179,7 +179,7 @@ contract RwaOutputConduit {
     event Push(address indexed to, uint256 wad);
 
     modifier auth() {
-        require(wards[msg.sender] == 1, "RwaConduit/not-authorized");
+        require(wards[msg.sender] == 1, "RwaOutputConduit/not-authorized");
         _;
     }
 
@@ -272,8 +272,8 @@ contract RwaOutputConduit {
      * @param who The user address.
      */
     function pick(address who) public {
-        require(can[msg.sender] == 1, "RwaConduit/not-operator");
-        require(bud[who] == 1 || who == address(0), "RwaConduit/not-bud");
+        require(can[msg.sender] == 1, "RwaOutputConduit/not-operator");
+        require(bud[who] == 1 || who == address(0), "RwaOutputConduit/not-bud");
         to = who;
         emit Pick(who);
     }
@@ -282,8 +282,8 @@ contract RwaOutputConduit {
      * @notice Transfers the outstanding Dai balance of this contract to the receiver.
      */
     function push() external {
-        require(may[msg.sender] == 1, "RwaConduit/not-mate");
-        require(to != address(0), "RwaConduit/to-not-picked");
+        require(may[msg.sender] == 1, "RwaOutputConduit/not-mate");
+        require(to != address(0), "RwaOutputConduit/to-not-picked");
         uint256 balance = dai.balanceOf(address(this));
         address recipient = to;
         to = address(0);
