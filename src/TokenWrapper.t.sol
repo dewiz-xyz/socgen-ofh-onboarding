@@ -75,14 +75,14 @@ contract TokenWrapperTest is DSTest {
     }
 
     function testWrapOwnAddress(
-        uint192 total,
-        uint192 transferred,
-        uint192 wrapped
+        uint256 total,
+        uint256 transferred,
+        uint256 wrapped
     ) public {
-        if (total < transferred || transferred < wrapped) {
-            // Testing in these cases doesn't make sense, so we make it pass
-            return;
-        }
+        // Getting values that actually make sense
+        total = (total % (type(uint192).max - 50)) + 50; // 50-(type(uint192).max - 1))
+        transferred = (transferred % (total - 1)) + 1; // 1-(total - 1)
+        wrapped = (wrapped % (transferred - 1)) + 1; // 1-(transferred - 1)
 
         token = new MockOFH(total);
         wrapper = new TokenWrapper(OFHTokenLike(address(token)));
@@ -101,10 +101,10 @@ contract TokenWrapperTest is DSTest {
         uint192 transferred,
         uint192 wrapped
     ) public {
-        if (total < transferred || transferred >= wrapped) {
-            // Testing in these cases doesn't make sense, so we make it pass
-            revert();
-        }
+        // Getting values that actually make sense
+        total = (total % (type(uint192).max - 50)) + 50; // 50-(type(uint192).max - 1))
+        transferred = (transferred % (total - 1)) + 1; // 1-(total - 1)
+        wrapped = (wrapped % (total - transferred)) + transferred + 1; // (trasnferred+1)-total
 
         token = new MockOFH(total);
         wrapper = new TokenWrapper(OFHTokenLike(address(token)));
