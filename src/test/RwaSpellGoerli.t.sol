@@ -317,8 +317,8 @@ contract DssSpellTest is DSTest, DSMath {
     uint256 constant THOUSAND = 10**3;
     uint256 constant MILLION = 10**6;
     uint256 constant BILLION = 10**9;
-    uint256 constant WAD = 10**18;
-    uint256 constant RAY = 10**27;
+    //    uint256 constant WAD = 10**18;
+    //    uint256 constant RAY = 10**27;
     uint256 constant RAD = 10**45;
 
     event Debug(uint256 index, uint256 val);
