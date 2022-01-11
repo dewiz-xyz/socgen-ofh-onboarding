@@ -7,3 +7,6 @@
 [submodule "lib/dss-gem-joins"]
 	path = lib/dss-gem-joins
 	url = https://github.com/makerdao/dss-gem-joins
+[submodule "lib/openzeppelin-contracts"]
+	path = lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
