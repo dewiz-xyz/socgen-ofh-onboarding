@@ -13,17 +13,17 @@ interface OFHTokenLike {
 /**
  */
 contract TokenWrapper is ITokenWrapper, ERC20 {
+    event Rely(address indexed usr);
+    event Deny(address indexed usr);
+    event Hope(address indexed usr);
+    event Nope(address indexed usr);
+
     uint256 internal constant WAD = 10**18;
 
     OFHTokenLike public immutable token;
 
     mapping(address => uint256) public wards;
     mapping(address => uint256) public can;
-
-    event Rely(address indexed usr);
-    event Deny(address indexed usr);
-    event Hope(address indexed usr);
-    event Nope(address indexed usr);
 
     /**
      * @notice Creates a token wrapper for a OFH token implementation.

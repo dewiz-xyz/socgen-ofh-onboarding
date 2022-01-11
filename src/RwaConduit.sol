@@ -8,20 +8,20 @@ interface DSTokenLike {
 }
 
 contract RwaInputConduit {
-    DSTokenLike public immutable dai;
-    address public immutable to;
-
-    mapping(address => uint256) public wards;
-    mapping(address => uint256) public may;
-
     event Rely(address indexed usr);
     event Deny(address indexed usr);
     event Mate(address indexed usr);
     event Hate(address indexed usr);
     event Push(address indexed to, uint256 wad);
 
-    constructor(DSTokenLike _dai, address _to) public {
-        dai = _dai;
+    DSTokenLike public immutable dai;
+    address public immutable to;
+
+    mapping(address => uint256) public wards;
+    mapping(address => uint256) public may;
+
+    constructor(address _dai, address _to) public {
+        dai = DSTokenLike(_dai);
         to = _to;
 
         wards[msg.sender] = 1;
@@ -64,14 +64,6 @@ contract RwaInputConduit {
 }
 
 contract RwaOutputConduit {
-    DSTokenLike public immutable dai;
-    address public to;
-
-    mapping(address => uint256) public wards;
-    mapping(address => uint256) public can;
-    mapping(address => uint256) public may;
-    mapping(address => uint256) public bud;
-
     event Rely(address indexed usr);
     event Deny(address indexed usr);
     event Hope(address indexed usr);
@@ -83,8 +75,16 @@ contract RwaOutputConduit {
     event Pick(address indexed who);
     event Push(address indexed to, uint256 wad);
 
-    constructor(DSTokenLike _dai) public {
-        dai = _dai;
+    DSTokenLike public immutable dai;
+    address public to;
+
+    mapping(address => uint256) public wards;
+    mapping(address => uint256) public can;
+    mapping(address => uint256) public may;
+    mapping(address => uint256) public bud;
+
+    constructor(address _dai) public {
+        dai = DSTokenLike(_dai);
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
     }

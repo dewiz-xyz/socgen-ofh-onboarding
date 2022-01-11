@@ -59,14 +59,14 @@ contract TokenWrapperTest is DSTest {
         uint192 transferred,
         uint192 wrapped
     ) public {
-        token = new MockOFH(total);
-        wrapper = new TokenWrapper(OFHTokenLike(address(token)));
-        wrapper.hope(address(this));
-
         if (total < transferred || transferred < wrapped) {
             // Testing in these cases doesn't make sense, so we make it pass
             return;
         }
+
+        token = new MockOFH(total);
+        wrapper = new TokenWrapper(OFHTokenLike(address(token)));
+        wrapper.hope(address(this));
 
         token.transfer(address(wrapper), transferred);
         wrapper.wrap(holder1, wrapped);
@@ -79,16 +79,16 @@ contract TokenWrapperTest is DSTest {
         uint192 transferred,
         uint192 wrapped
     ) public {
+        if (total < transferred || transferred < wrapped) {
+            // Testing in these cases doesn't make sense, so we make it pass
+            return;
+        }
+
         token = new MockOFH(total);
         wrapper = new TokenWrapper(OFHTokenLike(address(token)));
         holder1 = address(new ForwardProxy(address(wrapper)));
         holder2 = address(new ForwardProxy(address(wrapper)));
         wrapper.hope(holder1);
-
-        if (total < transferred || transferred < wrapped) {
-            // Testing in these cases doesn't make sense, so we make it pass
-            return;
-        }
 
         token.transfer(address(wrapper), transferred);
         TokenWrapper(holder1).wrap(wrapped);
@@ -101,14 +101,14 @@ contract TokenWrapperTest is DSTest {
         uint192 transferred,
         uint192 wrapped
     ) public {
-        token = new MockOFH(total);
-        wrapper = new TokenWrapper(OFHTokenLike(address(token)));
-        wrapper.hope(address(this));
-
         if (total < transferred || transferred >= wrapped) {
             // Testing in these cases doesn't make sense, so we make it pass
             revert();
         }
+
+        token = new MockOFH(total);
+        wrapper = new TokenWrapper(OFHTokenLike(address(token)));
+        wrapper.hope(address(this));
 
         token.transfer(address(wrapper), transferred);
         wrapper.wrap(holder1, wrapped);

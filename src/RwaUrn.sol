@@ -24,15 +24,6 @@ library Math {
 }
 
 contract RwaUrn {
-    VatAbstract public immutable vat;
-    JugAbstract public immutable jug;
-    GemJoinAbstract public immutable gemJoin;
-    DaiJoinAbstract public immutable daiJoin;
-    address public immutable outputConduit;
-
-    mapping(address => uint256) public wards;
-    mapping(address => uint256) public can;
-
     event Rely(address indexed usr);
     event Deny(address indexed usr);
     event Hope(address indexed usr);
@@ -44,37 +35,45 @@ contract RwaUrn {
     event Wipe(address indexed usr, uint256 wad);
     event Quit(address indexed usr, uint256 wad);
 
+    VatAbstract public immutable vat;
+    GemJoinAbstract public immutable gemJoin;
+    DaiJoinAbstract public immutable daiJoin;
+    JugAbstract public jug;
+    address public outputConduit;
+
+    mapping(address => uint256) public wards;
+    mapping(address => uint256) public can;
+
     constructor(
-        VatAbstract vat_,
-        JugAbstract jug_,
-        GemJoinAbstract gemJoin_,
-        DaiJoinAbstract daiJoin_,
+        address vat_,
+        address jug_,
+        address gemJoin_,
+        address daiJoin_,
         address outputConduit_
     ) public {
-        require(outputConduit_ != address(0), "RwaUrn/invalid-conduit");
+        // require(outputConduit_ != address(0), "RwaUrn/invalid-conduit");
 
-        vat = vat_;
-        jug = jug_;
-        gemJoin = gemJoin_;
-        daiJoin = daiJoin_;
+        vat = VatAbstract(vat_);
+        jug = JugAbstract(jug_);
+        gemJoin = GemJoinAbstract(gemJoin_);
+        daiJoin = DaiJoinAbstract(daiJoin_);
         outputConduit = outputConduit_;
 
         wards[msg.sender] = 1;
 
-        DSTokenAbstract(gemJoin_.gem()).approve(address(gemJoin_), type(uint256).max);
-        DaiAbstract(daiJoin_.dai()).approve(address(daiJoin_), type(uint256).max);
-        vat_.hope(address(daiJoin_));
+        DSTokenAbstract(GemJoinAbstract(gemJoin_).gem()).approve(gemJoin_, type(uint256).max);
+        DaiAbstract(DaiJoinAbstract(daiJoin_).dai()).approve(daiJoin_, type(uint256).max);
+        VatAbstract(vat_).hope(daiJoin_);
 
         emit Rely(msg.sender);
-        emit File("outputConduit", address(outputConduit_));
-        emit File("jug", address(jug_));
+        emit File("outputConduit", outputConduit_);
+        emit File("jug", jug_);
     }
 
-    /**
-     * ==============================================
-     * Authorization
-     * ==============================================
-     */
+    /*//////////////////////////////////
+               Authorization
+    //////////////////////////////////*/
+
     function rely(address usr) external auth {
         wards[usr] = 1;
         emit Rely(usr);
@@ -105,11 +104,27 @@ contract RwaUrn {
         _;
     }
 
-    /**
-     * ==============================================
-     * Vault Operation
-     * ==============================================
-     */
+    /*//////////////////////////////////
+               Administration
+    //////////////////////////////////*/
+
+    function file(bytes32 what, address data) external auth {
+        if (what == "outputConduit") {
+            require(data != address(0), "RwaUrn/invalid-conduit");
+            outputConduit = data;
+        } else if (what == "jug") {
+            jug = JugAbstract(data);
+        } else {
+            revert("RwaUrn/unrecognised-param");
+        }
+
+        emit File(what, data);
+    }
+
+    /*//////////////////////////////////
+              Vault Operation
+    //////////////////////////////////*/
+
     function lock(uint256 wad) external operator {
         require(wad <= 2**255 - 1, "RwaUrn/overflow");
 

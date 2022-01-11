@@ -9,7 +9,7 @@ contract MockOFH is ERC20 {
         _setupDecimals(0);
     }
 
-    function getBalance(address who) public returns (uint256) {
+    function getBalance(address who) public view returns (uint256) {
         return balanceOf(who);
     }
 }
