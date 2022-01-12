@@ -1,19 +1,28 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+/*//////////////////////////////////////////////////////////////
+//                          WARNING                           //
+//                                                            //
+// This is NOT the contract currently being used on the live  //
+// system. To get the implementation currently in use, check  //
+// https://changelog.makerdao.com/ and look for               //
+// `MIP21_LIQUIDATION_ORACLE`                                 //
+//////////////////////////////////////////////////////////////*/
 
-pragma solidity ^0.6.12;
+// SPDX-License-Identifier: GPL-3.0-or-later
+pragma solidity 0.6.12;
 
 import {VatAbstract} from "dss-interfaces/dss/VatAbstract.sol";
 import {DSValue} from "ds-value/value.sol";
 
-library Math {
-    uint256 internal constant RAY = 10**27;
-
+/**
+ * @title An extension/subset of `DSMath` containing only the methods required in this file.
+ */
+library DSMathCustom {
     function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require((z = x + y) >= x, "Math/add-overflow");
+        require((z = x + y) >= x, "DSMath/add-overflow");
     }
 
     function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require(y == 0 || (z = x * y) / y == x, "Math/mul-overflow");
+        require(y == 0 || (z = x * y) / y == x, "DSMath/mul-overflow");
     }
 }
 
@@ -33,9 +42,10 @@ contract RwaLiquidationOracle {
     VatAbstract public immutable vat;
     /// @notice Module that handles system debt and surplus.
     address public vow;
-    /// @notice All collateral types supported by this oracle. ilks[ilk].
+
+    /// @notice All collateral types supported by this oracle. `ilks[ilk]`
     mapping(bytes32 => Ilk) public ilks;
-    /// @notice Addresses with admin access to this contract. wards[usr].
+    /// @notice Addresses with admin access on this contract. `wards[usr]`
     mapping(address => uint256) public wards;
 
     /**
@@ -43,20 +53,17 @@ contract RwaLiquidationOracle {
      * @param usr The user address.
      */
     event Rely(address indexed usr);
-
     /**
      * @notice `usr` admin access was revoked.
      * @param usr The user address.
      */
     event Deny(address indexed usr);
-
     /**
      * @notice A contract parameter was updated.
      * @param what The changed parameter name. Currently the only supported value is "vow".
      * @param data The new value of the parameter.
      */
     event File(bytes32 indexed what, address data);
-
     /**
      * @notice A new collateral `ilk` was added.
      * @param ilk The name of the collateral.
@@ -65,26 +72,22 @@ contract RwaLiquidationOracle {
      * @param tau The amount of time the ilk can remain in liquidation before being written-off.
      */
     event Init(bytes32 indexed ilk, uint256 val, string doc, uint48 tau);
-
     /**
      * @notice The value of the collateral `ilk` was updated.
      * @param ilk The name of the collateral.
      * @param val The new value.
      */
     event Bump(bytes32 indexed ilk, uint256 val);
-
     /**
      * @notice The liquidation process for collateral `ilk` was started.
      * @param ilk The name of the collateral.
      */
     event Tell(bytes32 indexed ilk);
-
     /**
      * @notice The liquidation process for collateral `ilk` was stopped before the write-off.
      * @param ilk The name of the collateral.
      */
     event Cure(bytes32 indexed ilk);
-
     /**
      * @notice A `urn` outstanding debt for collateral `ilk` was written-off.
      * @param ilk The name of the collateral.
@@ -119,7 +122,7 @@ contract RwaLiquidationOracle {
     }
 
     /**
-     * @notice Revokes `usr` admin access to this contract.
+     * @notice Revokes `usr` admin access from this contract.
      * @param usr The user address.
      */
     function deny(address usr) external auth {
@@ -236,7 +239,7 @@ contract RwaLiquidationOracle {
      */
     function cull(bytes32 ilk, address urn) external auth {
         require(ilks[ilk].pip != address(0), "RwaOracle/unknown-ilk");
-        require(block.timestamp >= Math.add(ilks[ilk].toc, ilks[ilk].tau), "RwaOracle/early-cull");
+        require(block.timestamp >= DSMathCustom.add(ilks[ilk].toc, ilks[ilk].tau), "RwaOracle/early-cull");
 
         DSValue(ilks[ilk].pip).poke(bytes32(0));
 
@@ -254,6 +257,6 @@ contract RwaLiquidationOracle {
     function good(bytes32 ilk) external view returns (bool) {
         require(ilks[ilk].pip != address(0), "RwaOracle/unknown-ilk");
 
-        return (ilks[ilk].toc == 0 || block.timestamp < Math.add(ilks[ilk].toc, ilks[ilk].tau));
+        return (ilks[ilk].toc == 0 || block.timestamp < DSMathCustom.add(ilks[ilk].toc, ilks[ilk].tau));
     }
 }

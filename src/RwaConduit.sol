@@ -8,51 +8,99 @@ interface DSTokenLike {
 }
 
 contract RwaInputConduit {
-    event Rely(address indexed usr);
-    event Deny(address indexed usr);
-    event Mate(address indexed usr);
-    event Hate(address indexed usr);
-    event Push(address indexed to, uint256 wad);
-
+    /// @notice The Dai token implementation.
     DSTokenLike public immutable dai;
+    /// @notice The destination of Dai when it is pushed into this contract.
     address public immutable to;
 
+    /// @notice Addresses with admin access on this contract. `wards[usr]`
     mapping(address => uint256) public wards;
+    /// @notice Addresses with push access on this contract. `may[usr]`
     mapping(address => uint256) public may;
 
-    constructor(address _dai, address _to) public {
-        dai = DSTokenLike(_dai);
-        to = _to;
-
-        wards[msg.sender] = 1;
-        emit Rely(msg.sender);
-    }
+    /**
+     * @notice `usr` was granted admin access.
+     * @param usr The user address.
+     */
+    event Rely(address indexed usr);
+    /**
+     * @notice `usr` admin access was revoked.
+     * @param usr The user address.
+     */
+    event Deny(address indexed usr);
+    /**
+     * @notice `usr` was granted push access.
+     * @param usr The user address.
+     */
+    event Mate(address indexed usr);
+    /**
+     * @notice `usr` push access was revoked.
+     * @param usr The user address.
+     */
+    event Hate(address indexed usr);
+    /**
+     * @notice `wad` amount of Dai was pushed to `to_`.
+     * @param to The destination address.
+     * @param wad The amount pushed.
+     */
+    event Push(address indexed to, uint256 wad);
 
     modifier auth() {
         require(wards[msg.sender] == 1, "RwaConduit/not-authorized");
         _;
     }
 
+    /**
+     * @param dai_ The Dai token implementation.
+     * @param to_ The destination of Dai when it is pushed into this contract.
+     */
+    constructor(address dai_, address to_) public {
+        dai = DSTokenLike(dai_);
+        to = to_;
+
+        wards[msg.sender] = 1;
+        emit Rely(msg.sender);
+    }
+
+    /**
+     * @notice Grants `usr` admin access to this contract.
+     * @param usr The user address.
+     */
     function rely(address usr) external auth {
         wards[usr] = 1;
         emit Rely(usr);
     }
 
+    /**
+     * @notice Revokes `usr` admin access from this contract.
+     * @param usr The user address.
+     */
     function deny(address usr) external auth {
         wards[usr] = 0;
         emit Deny(usr);
     }
 
+    /**
+     * @notice Grants `usr` push access to this contract.
+     * @param usr The user address.
+     */
     function mate(address usr) external auth {
         may[usr] = 1;
         emit Mate(usr);
     }
 
+    /**
+     * @notice Revokes `usr` push access from this contract.
+     * @param usr The user address.
+     */
     function hate(address usr) external auth {
         may[usr] = 0;
         emit Hate(usr);
     }
 
+    /**
+     * @notice Transfers the outstanding Dai balance of this contract to the receiver.
+     */
     function push() external {
         require(may[msg.sender] == 1, "RwaConduit/not-mate");
 
@@ -64,79 +112,165 @@ contract RwaInputConduit {
 }
 
 contract RwaOutputConduit {
-    event Rely(address indexed usr);
-    event Deny(address indexed usr);
-    event Hope(address indexed usr);
-    event Nope(address indexed usr);
-    event Mate(address indexed usr);
-    event Hate(address indexed usr);
-    event Kiss(address indexed who);
-    event Diss(address indexed who);
-    event Pick(address indexed who);
-    event Push(address indexed to, uint256 wad);
-
+    /// @notice The Dai token implementation.
     DSTokenLike public immutable dai;
+    /// @notice The destination of Dai when drawn from this contract.
     address public to;
 
+    /// @notice Addresses with admin access on this contract. `wards[usr]`
     mapping(address => uint256) public wards;
+    /// @notice Addresses with operator access on this contract. `can[usr]`
     mapping(address => uint256) public can;
+    /// @notice Addresses with push access on this contract. `may[usr]`
     mapping(address => uint256) public may;
+    /// @notice Addresses which can receive Dai from this contract. `bud[who]`
     mapping(address => uint256) public bud;
 
-    constructor(address _dai) public {
-        dai = DSTokenLike(_dai);
-        wards[msg.sender] = 1;
-        emit Rely(msg.sender);
-    }
+    /**
+     * @notice `usr` was granted admin access.
+     * @param usr The user address.
+     */
+    event Rely(address indexed usr);
+    /**
+     * @notice `usr` admin access was revoked.
+     * @param usr The user address.
+     */
+    event Deny(address indexed usr);
+    /**
+     * @notice `usr` was granted operator access.
+     * @param usr The user address.
+     */
+    event Hope(address indexed usr);
+    /**
+     * @notice `usr` operator access was revoked.
+     * @param usr The user address.
+     */
+    event Nope(address indexed usr);
+    /**
+     * @notice `usr` was granted push access.
+     * @param usr The user address.
+     */
+    event Mate(address indexed usr);
+    /**
+     * @notice `usr` push access was revoked.
+     * @param usr The user address.
+     */
+    event Hate(address indexed usr);
+    /**
+     * @notice `who` was allowed to receive Dai from this contract.
+     * @param who The user address.
+     */
+    event Kiss(address indexed who);
+    /**
+     * @notice `who` permission to receive Dai from this contract was revoked.
+     * @param who The user address.
+     */
+    event Diss(address indexed who);
+    /**
+     * @notice `who` was picked as the destination of Dai for the next `push`.
+     * @param who The user address.
+     */
+    event Pick(address indexed who);
+    /**
+     * @notice `wad` amount of Dai was pushed to `to_`.
+     * @param to The destination address.
+     * @param wad The amount pushed.
+     */
+    event Push(address indexed to, uint256 wad);
 
     modifier auth() {
         require(wards[msg.sender] == 1, "RwaConduit/not-authorized");
         _;
     }
 
+    /**
+     * @param dai_ The Dai token implementation.
+     */
+    constructor(address dai_) public {
+        dai = DSTokenLike(dai_);
+        wards[msg.sender] = 1;
+        emit Rely(msg.sender);
+    }
+
+    /**
+     * @notice Grants `usr` admin access to this contract.
+     * @param usr The user address.
+     */
     function rely(address usr) external auth {
         wards[usr] = 1;
         emit Rely(usr);
     }
 
+    /**
+     * @notice Revoeks `usr` admin access to this contract.
+     * @param usr The user address.
+     */
     function deny(address usr) external auth {
         wards[usr] = 0;
         emit Deny(usr);
     }
 
+    /**
+     * @notice Grants `usr` operator access to this contract.
+     * @param usr The user address.
+     */
     function hope(address usr) external auth {
         can[usr] = 1;
         emit Hope(usr);
     }
 
+    /**
+     * @notice Revokes `usr` admin access to this contract.
+     * @param usr The user address.
+     */
     function nope(address usr) external auth {
         can[usr] = 0;
         emit Nope(usr);
     }
 
+    /**
+     * @notice Grants `usr` push access to this contract.
+     * @param usr The user address.
+     */
     function mate(address usr) external auth {
         may[usr] = 1;
         emit Mate(usr);
     }
 
+    /**
+     * @notice Revokes `usr` push access to this contract.
+     * @param usr The user address.
+     */
     function hate(address usr) external auth {
         may[usr] = 0;
         emit Hate(usr);
     }
 
-    function kiss(address usr) public auth {
-        bud[usr] = 1;
-        emit Kiss(usr);
+    /**
+     * @notice Allows `who` to receive Dai from this contract.
+     * @param who The user address.
+     */
+    function kiss(address who) public auth {
+        bud[who] = 1;
+        emit Kiss(who);
     }
 
-    function diss(address usr) public auth {
-        if (to == usr) {
+    /**
+     * @notice Forbids `who` from receiving Dai from this contract.
+     * @param who The user address.
+     */
+    function diss(address who) public auth {
+        if (to == who) {
             to = address(0);
         }
-        bud[usr] = 0;
-        emit Diss(usr);
+        bud[who] = 0;
+        emit Diss(who);
     }
 
+    /**
+     * @notice Picks `who` as the destination for Dai transferred on the next `push`.
+     * @param who The user address.
+     */
     function pick(address who) public {
         require(can[msg.sender] == 1, "RwaConduit/not-operator");
         require(bud[who] == 1 || who == address(0), "RwaConduit/not-bud");
@@ -144,6 +278,9 @@ contract RwaOutputConduit {
         emit Pick(who);
     }
 
+    /**
+     * @notice Transfers the outstanding Dai balance of this contract to the receiver.
+     */
     function push() external {
         require(may[msg.sender] == 1, "RwaConduit/not-mate");
         require(to != address(0), "RwaConduit/to-not-picked");

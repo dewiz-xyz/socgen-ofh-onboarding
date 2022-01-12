@@ -81,7 +81,7 @@ contract TokenWrapperTest is DSTest {
     ) public {
         // Getting values that actually make sense
         total = (total % (type(uint192).max - 50)) + 50; // 50-(type(uint192).max - 1))
-        transferred = (transferred % (total - 1)) + 1; // 1-(total - 1)
+        transferred = (transferred % (total - 2)) + 2; // 2-(total - 1)
         wrapped = (wrapped % (transferred - 1)) + 1; // 1-(transferred - 1)
 
         token = new MockOFH(total);

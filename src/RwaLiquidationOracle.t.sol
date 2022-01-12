@@ -1,4 +1,5 @@
-pragma solidity ^0.6.12;
+// SPDX-License-Identifier: GPL-3.0-or-later
+pragma solidity >=0.6.8 <0.7.0;
 
 import {DSTest} from "ds-test/test.sol";
 import {DSToken} from "ds-token/token.sol";
