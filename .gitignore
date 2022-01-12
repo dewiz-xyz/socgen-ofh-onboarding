@@ -2,4 +2,4 @@ out/
 node_modules/
 env-addresses-network
 env-addresses-mainnet
-env-addresses-kovan
+env-addresses-ces-goerli
