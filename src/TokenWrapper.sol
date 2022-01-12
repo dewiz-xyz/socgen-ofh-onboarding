@@ -10,7 +10,7 @@ import {ITokenWrapper} from "./ITokenWrapper.sol";
 interface OFHTokenLike {
     function getBalance(address) external view returns (uint256);
 
-    function transfer(address, uint256) external returns (uint256);
+    function transfer(address, uint256) external returns (bool);
 }
 
 /**
@@ -173,7 +173,7 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
         // Normalizes the amount to have 18 decimals. Assumes that `token` has 0 decimals.
         uint256 wad = DSMathCustom.wad(value);
         _burn(msg.sender, wad);
-        token.transfer(gal, value);
+        require(token.transfer(gal, value), "TokenWrapper/transfer-failed");
     }
 
     /**
