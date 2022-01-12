@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# bash scripts/deploy-goerli.sh
+# bash scripts/deploy-goerli-ces.sh
 
 set -e
 
