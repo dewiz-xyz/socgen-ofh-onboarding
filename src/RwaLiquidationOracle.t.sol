@@ -195,25 +195,25 @@ contract RwaLiquidationOracleTest is DSTest, DSMath {
         vat.rely(address(daiJoin));
         dai.setOwner(address(daiJoin));
 
-        vat.init("RWA008-SGFWOFH");
+        vat.init("RWA008-SGFWOFH1-A");
         vat.file("Line", 100 * rad(CEILING));
-        vat.file("RWA008-SGFWOFH", "line", rad(CEILING));
+        vat.file("RWA008-SGFWOFH1-A", "line", rad(CEILING));
 
-        jug.init("RWA008-SGFWOFH");
-        jug.file("RWA008-SGFWOFH", "duty", EIGHT_PCT);
+        jug.init("RWA008-SGFWOFH1-A");
+        jug.file("RWA008-SGFWOFH1-A", "duty", EIGHT_PCT);
 
         oracle = new RwaLiquidationOracle(address(vat), VOW);
-        oracle.init("RWA008-SGFWOFH", 1.1 ether, DOC, TAU);
+        oracle.init("RWA008-SGFWOFH1-A", 1.1 ether, DOC, TAU);
         vat.rely(address(oracle));
-        (, address pip, , ) = oracle.ilks("RWA008-SGFWOFH");
+        (, address pip, , ) = oracle.ilks("RWA008-SGFWOFH1-A");
 
         spotter = new Spotter(address(vat));
         vat.rely(address(spotter));
-        spotter.file("RWA008-SGFWOFH", "mat", RAY);
-        spotter.file("RWA008-SGFWOFH", "pip", pip);
-        spotter.poke("RWA008-SGFWOFH");
+        spotter.file("RWA008-SGFWOFH1-A", "mat", RAY);
+        spotter.file("RWA008-SGFWOFH1-A", "pip", pip);
+        spotter.poke("RWA008-SGFWOFH1-A");
 
-        gemJoin = new AuthGemJoin(address(vat), "RWA008-SGFWOFH", address(wrapper));
+        gemJoin = new AuthGemJoin(address(vat), "RWA008-SGFWOFH1-A", address(wrapper));
         vat.rely(address(gemJoin));
 
         outConduit = new RwaOutputConduit(address(dai));
@@ -245,18 +245,18 @@ contract RwaLiquidationOracleTest is DSTest, DSMath {
         assertTrue(op.canDraw(1 ether));
 
         // Flashes the liquidation beacon
-        vat.file("RWA008-SGFWOFH", "line", 0);
+        vat.file("RWA008-SGFWOFH1-A", "line", 0);
 
-        oracle.tell("RWA008-SGFWOFH");
+        oracle.tell("RWA008-SGFWOFH1-A");
 
         assertTrue(!op.canDraw(10 ether));
 
         // Advances time before the remediation period expires
         hevm.warp(block.timestamp + TAU / 2);
-        oracle.cure("RWA008-SGFWOFH");
-        vat.file("RWA008-SGFWOFH", "line", rad(CEILING));
+        oracle.cure("RWA008-SGFWOFH1-A");
+        vat.file("RWA008-SGFWOFH1-A", "line", rad(CEILING));
 
-        assertTrue(oracle.good("RWA008-SGFWOFH"));
+        assertTrue(oracle.good("RWA008-SGFWOFH1-A"));
 
         assertEq(dai.balanceOf(address(rec)), 0);
         op.draw(100 ether);
@@ -270,7 +270,7 @@ contract RwaLiquidationOracleTest is DSTest, DSMath {
     }
 
     function testFailCureNotInRemediation() public {
-        oracle.cure("RWA008-SGFWOFH");
+        oracle.cure("RWA008-SGFWOFH1-A");
     }
 
     function testFailCureLiquidationCancelled() public {
@@ -278,22 +278,22 @@ contract RwaLiquidationOracleTest is DSTest, DSMath {
         assertTrue(op.canDraw(1 ether));
 
         // Flashes the liquidation beacon
-        vat.file("RWA008-SGFWOFH", "line", 0);
-        oracle.tell("RWA008-SGFWOFH");
+        vat.file("RWA008-SGFWOFH1-A", "line", 0);
+        oracle.tell("RWA008-SGFWOFH1-A");
 
         // Borrowing not possible anymore
         assertTrue(!op.canDraw(1 ether));
 
         // Still in remediation period
         hevm.warp(block.timestamp + TAU / 2);
-        assertTrue(oracle.good("RWA008-SGFWOFH"));
+        assertTrue(oracle.good("RWA008-SGFWOFH1-A"));
 
         // Cancels liquidation
-        oracle.cure("RWA008-SGFWOFH");
-        vat.file("RWA008-SGFWOFH", "line", rad(CEILING));
-        assertTrue(oracle.good("RWA008-SGFWOFH"));
+        oracle.cure("RWA008-SGFWOFH1-A");
+        vat.file("RWA008-SGFWOFH1-A", "line", rad(CEILING));
+        assertTrue(oracle.good("RWA008-SGFWOFH1-A"));
 
-        oracle.cure("RWA008-SGFWOFH");
+        oracle.cure("RWA008-SGFWOFH1-A");
     }
 
     function testCull() public {
@@ -302,23 +302,23 @@ contract RwaLiquidationOracleTest is DSTest, DSMath {
         op.draw(200 ether);
 
         // Flashes the liquidation beacon
-        vat.file("RWA008-SGFWOFH", "line", 0);
-        oracle.tell("RWA008-SGFWOFH");
+        vat.file("RWA008-SGFWOFH1-A", "line", 0);
+        oracle.tell("RWA008-SGFWOFH1-A");
 
         hevm.warp(block.timestamp + TAU + 1 days);
 
-        assertEq(vat.gem("RWA008-SGFWOFH", address(oracle)), 0);
-        assertTrue(!oracle.good("RWA008-SGFWOFH"));
+        assertEq(vat.gem("RWA008-SGFWOFH1-A", address(oracle)), 0);
+        assertTrue(!oracle.good("RWA008-SGFWOFH1-A"));
 
-        oracle.cull("RWA008-SGFWOFH", address(urn));
+        oracle.cull("RWA008-SGFWOFH1-A", address(urn));
 
         assertTrue(!op.canDraw(1 ether));
 
-        spotter.poke("RWA008-SGFWOFH");
-        (, , uint256 spot, , ) = vat.ilks("RWA008-SGFWOFH");
+        spotter.poke("RWA008-SGFWOFH1-A");
+        (, , uint256 spot, , ) = vat.ilks("RWA008-SGFWOFH1-A");
         assertEq(spot, 0);
 
-        (uint256 ink, uint256 art) = vat.urns("RWA008-SGFWOFH", address(urn));
+        (uint256 ink, uint256 art) = vat.urns("RWA008-SGFWOFH1-A", address(urn));
         assertEq(ink, 0);
         assertEq(art, 0);
 
@@ -326,19 +326,19 @@ contract RwaLiquidationOracleTest is DSTest, DSMath {
         assertEq(vat.sin(VOW), rad(200 ether));
 
         // After the write-off, the gem goes to the oracle
-        assertEq(vat.gem("RWA008-SGFWOFH", address(oracle)), 400 ether);
+        assertEq(vat.gem("RWA008-SGFWOFH1-A", address(oracle)), 400 ether);
     }
 
     function testUnremediedLoanIsNotGood() public {
         op.lock(400 ether);
         op.draw(100 ether);
 
-        vat.file("RWA008-SGFWOFH", "line", 0);
-        oracle.tell("RWA008-SGFWOFH");
-        assertTrue(oracle.good("RWA008-SGFWOFH"));
+        vat.file("RWA008-SGFWOFH1-A", "line", 0);
+        oracle.tell("RWA008-SGFWOFH1-A");
+        assertTrue(oracle.good("RWA008-SGFWOFH1-A"));
 
         hevm.warp(block.timestamp + TAU + 1 days);
-        assertTrue(!oracle.good("RWA008-SGFWOFH"));
+        assertTrue(!oracle.good("RWA008-SGFWOFH1-A"));
     }
 
     function testCullMultipleUrns() public {
@@ -360,17 +360,17 @@ contract RwaLiquidationOracleTest is DSTest, DSMath {
         assertTrue(op.canDraw(1 ether));
         assertTrue(op2.canDraw(1 ether));
 
-        vat.file("RWA008-SGFWOFH", "line", 0);
-        oracle.tell("RWA008-SGFWOFH");
+        vat.file("RWA008-SGFWOFH1-A", "line", 0);
+        oracle.tell("RWA008-SGFWOFH1-A");
 
         assertTrue(!op.canDraw(1 ether));
         assertTrue(!op2.canDraw(1 ether));
 
         hevm.warp(block.timestamp + TAU + 1 days);
 
-        oracle.cull("RWA008-SGFWOFH", address(urn));
+        oracle.cull("RWA008-SGFWOFH1-A", address(urn));
         assertEq(vat.sin(VOW), rad(50 ether));
-        oracle.cull("RWA008-SGFWOFH", address(urn2));
+        oracle.cull("RWA008-SGFWOFH1-A", address(urn2));
         assertEq(vat.sin(VOW), rad(50 ether + 80 ether));
     }
 
@@ -385,15 +385,15 @@ contract RwaLiquidationOracleTest is DSTest, DSMath {
         assertTrue(!op.canDraw(1 ether));
 
         // Increase the debt ceiling
-        vat.file("RWA008-SGFWOFH", "line", rad(CEILING + 200 ether));
+        vat.file("RWA008-SGFWOFH1-A", "line", rad(CEILING + 200 ether));
 
         // Still can't borrow much more because vault is unsafe
         assertTrue(op.canDraw(1 ether));
         assertTrue(!op.canDraw(200 ether));
 
-        // Bump the price of RWA008-SGFWOFH
-        oracle.bump("RWA008-SGFWOFH", wmul(2 ether, 1.1 ether));
-        spotter.poke("RWA008-SGFWOFH");
+        // Bump the price of RWA008-SGFWOFH1-A
+        oracle.bump("RWA008-SGFWOFH1-A", wmul(2 ether, 1.1 ether));
+        spotter.poke("RWA008-SGFWOFH1-A");
 
         op.draw(200 ether);
         op.pick(address(rec));
@@ -407,8 +407,8 @@ contract RwaLiquidationOracleTest is DSTest, DSMath {
     }
 
     function testFailBumpDuringLiquidation() public {
-        vat.file("RWA008-SGFWOFH", "line", 0);
-        oracle.tell("RWA008-SGFWOFH");
-        oracle.bump("RWA008-SGFWOFH", wmul(2 ether, 1.1 ether));
+        vat.file("RWA008-SGFWOFH1-A", "line", 0);
+        oracle.tell("RWA008-SGFWOFH1-A");
+        oracle.bump("RWA008-SGFWOFH1-A", wmul(2 ether, 1.1 ether));
     }
 }
