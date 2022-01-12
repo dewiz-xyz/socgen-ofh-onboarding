@@ -13,9 +13,20 @@ import {Proxy} from "openzeppelin-contracts/proxy/Proxy.sol";
  * The success and return data of the delegated call will be returned back to the caller of the proxy.
  */
 contract ForwardProxy is Proxy {
-    address internal immutable forwardTo;
+    address internal forwardTo;
 
+    /**
+     * @param forwardTo_ The contract to which the call is going to be forwarded to.
+     */
     constructor(address forwardTo_) public {
+        forwardTo = forwardTo_;
+    }
+
+    /**
+     * @notice Updates the `forwardTo` address.
+     * @param forwardTo_ The contract to which the call is going to be forwarded to.
+     */
+    function updateForwardTo(address forwardTo_) public {
         forwardTo = forwardTo_;
     }
 
