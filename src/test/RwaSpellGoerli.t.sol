@@ -478,9 +478,10 @@ contract DssSpellTest is DSTest, DSMath {
 
     function vote(address _spell) private {
         if (chief.hat() != _spell) {
+            hevm.store(address(gov), bytes32(uint256(2)), bytes32(gov.totalSupply() + 999999999999 ether));
             hevm.store(
                 address(gov),
-                keccak256(abi.encode(address(this), uint256(1))),
+                keccak256(abi.encode(address(this), uint256(3))),
                 bytes32(uint256(999999999999 ether))
             );
             gov.approve(address(chief), uint256(-1));

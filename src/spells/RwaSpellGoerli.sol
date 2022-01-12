@@ -88,12 +88,12 @@ contract SpellAction {
         RWA007_A_OUTPUT_CONDUIT: 0xc54fEee07421EAB8000AC8c921c0De9DbfbE780B
         MIP21_LIQUIDATION_ORACLE: 0x2881c5dF65A8D81e38f7636122aFb456514804CC
     */
-    address constant RWA007_OPERATOR = 0xA5Eee849FF395f9FA592645979f2A8Af6E0eF5c3;
-    address constant RWA007_GEM = 0x8F9A8cbBdfb93b72d646c8DEd6B4Fe4D86B315cB;
-    address constant MCD_JOIN_RWA007_A = 0x029A554f252373e146f76Fa1a7455f73aBF4d38e;
-    address constant RWA007_A_URN = 0x3Ba90D86f7E3218C48b7E0FCa959EcF43d9A30F4;
-    address constant RWA007_A_INPUT_CONDUIT = 0xe37673730F03060922a2Bd8eC5987AfE3eA16a05;
-    address constant RWA007_A_OUTPUT_CONDUIT = 0xc54fEee07421EAB8000AC8c921c0De9DbfbE780B;
+    address constant RWA008_SGFWOFH1_OPERATOR = 0xA5Eee849FF395f9FA592645979f2A8Af6E0eF5c3;
+    address constant RWA008_SGFWOFH1_GEM = 0x8F9A8cbBdfb93b72d646c8DEd6B4Fe4D86B315cB;
+    address constant MCD_JOIN_RWA008_SGFWOFH1_A = 0x029A554f252373e146f76Fa1a7455f73aBF4d38e;
+    address constant RWA008_SGFWOFH1_A_URN = 0x3Ba90D86f7E3218C48b7E0FCa959EcF43d9A30F4;
+    address constant RWA008_SGFWOFH1_A_INPUT_CONDUIT = 0xe37673730F03060922a2Bd8eC5987AfE3eA16a05;
+    address constant RWA008_SGFWOFH1_A_OUTPUT_CONDUIT = 0xc54fEee07421EAB8000AC8c921c0De9DbfbE780B;
     address constant MIP21_LIQUIDATION_ORACLE = 0x2881c5dF65A8D81e38f7636122aFb456514804CC;
 
     uint256 constant THREE_PCT_RATE = 1000000000937303470807876289; // TODO Risk team should provide this one
@@ -105,8 +105,8 @@ contract SpellAction {
     uint256 public constant RAY = 10**27;
     uint256 public constant RAD = 10**45;
 
-    uint256 constant RWA007_A_INITIAL_DC = 1000 * RAD; // TODO RWA team should provide
-    uint256 constant RWA007_A_INITIAL_PRICE = 1060 * WAD; // TODO RWA team should provide
+    uint256 constant RWA008_SGFWOFH1_A_INITIAL_DC = 1000 * RAD; // TODO RWA team should provide
+    uint256 constant RWA008_SGFWOFH1_A_INITIAL_PRICE = 1060 * WAD; // TODO RWA team should provide
 
     // MIP13c3-SP4 Declaration of Intent & Commercial Points -
     //   Off-Chain Asset Backed Lender to onboard Real World Assets
@@ -120,22 +120,22 @@ contract SpellAction {
         address MCD_JUG = ChainlogAbstract(CHANGELOG).getAddress("MCD_JUG");
         address MCD_SPOT = ChainlogAbstract(CHANGELOG).getAddress("MCD_SPOT");
 
-        // RWA001-A collateral deploy
+        // RWA008-SGFWOFH1-A collateral deploy
 
         // Set ilk bytes32 variable
-        bytes32 ilk = "RWA001-A";
+        bytes32 ilk = "RWA008-SGFWOFH1-A";
 
         // add RWA-001 contract to the changelog
-        CHANGELOG.setAddress("RWA007", RWA007_GEM);
-        CHANGELOG.setAddress("MCD_JOIN_RWA007_A", MCD_JOIN_RWA007_A);
+        CHANGELOG.setAddress("RWA008_SGFWOFH1", RWA008_SGFWOFH1_GEM);
+        CHANGELOG.setAddress("MCD_JOIN_RWA008_SGFWOFH1_A", MCD_JOIN_RWA008_SGFWOFH1_A);
         CHANGELOG.setAddress("MIP21_LIQUIDATION_ORACLE", MIP21_LIQUIDATION_ORACLE);
-        CHANGELOG.setAddress("RWA007_A_URN", RWA007_A_URN);
-        CHANGELOG.setAddress("RWA007_A_INPUT_CONDUIT", RWA007_A_INPUT_CONDUIT);
-        CHANGELOG.setAddress("RWA007_A_OUTPUT_CONDUIT", RWA007_A_OUTPUT_CONDUIT);
+        CHANGELOG.setAddress("RWA008_SGFWOFH1_A_URN", RWA008_SGFWOFH1_A_URN);
+        CHANGELOG.setAddress("RWA008_SGFWOFH1_A_INPUT_CONDUIT", RWA008_SGFWOFH1_A_INPUT_CONDUIT);
+        CHANGELOG.setAddress("RWA008_SGFWOFH1_A_OUTPUT_CONDUIT", RWA008_SGFWOFH1_A_OUTPUT_CONDUIT);
 
         // bump changelog version
         // TODO make sure to update this version on mainnet
-        // CHANGELOG.setVersion("1.2.9");
+        CHANGELOG.setVersion("1.0.0");
 
         // Sanity checks
         require(GemJoinAbstract(MCD_JOIN_RWA007_A).vat() == MCD_VAT, "join-vat-not-match");
@@ -149,9 +149,9 @@ contract SpellAction {
         // init the RwaLiquidationOracle
         // doc: "doc"
         // tau: 5 minutes // TODO: this should be verified with RWA Team (5 min for testing is good)
-        RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).init(ilk, RWA007_A_INITIAL_PRICE, DOC, 300);
+        RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).init(ilk, RWA008_SGFWOFH1_A_INITIAL_PRICE, DOC, 300);
         (, address pip, , ) = RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).ilks(ilk);
-        CHANGELOG.setAddress("PIP_RWA007", pip);
+        CHANGELOG.setAddress("PIP_RWA008_SGFWOFH1", pip);
 
         // Set price feed for RWA001
         SpotAbstract(MCD_SPOT).file(ilk, "pip", pip);
@@ -162,14 +162,14 @@ contract SpellAction {
         JugAbstract(MCD_JUG).init(ilk);
 
         // Allow RWA-001 Join to modify Vat registry
-        VatAbstract(MCD_VAT).rely(MCD_JOIN_RWA007_A);
+        VatAbstract(MCD_VAT).rely(MCD_JOIN_RWA008_SGFWOFH1_A);
 
         // Allow RwaLiquidationOracle to modify Vat registry
         VatAbstract(MCD_VAT).rely(MIP21_LIQUIDATION_ORACLE);
 
         // 1000 debt ceiling
         VatAbstract(MCD_VAT).file(ilk, "line", RWA007_A_INITIAL_DC);
-        VatAbstract(MCD_VAT).file("Line", VatAbstract(MCD_VAT).Line() + RWA007_A_INITIAL_DC);
+        VatAbstract(MCD_VAT).file("Line", VatAbstract(MCD_VAT).Line() + RWA008_SGFWOFH1_A_INITIAL_DC);
 
         // No dust
         // VatAbstract(MCD_VAT).file(ilk, "dust", 0)
@@ -184,13 +184,13 @@ contract SpellAction {
         SpotAbstract(MCD_SPOT).poke(ilk);
 
         // give the urn permissions on the join adapter
-        GemJoinAbstract(MCD_JOIN_RWA007_A).rely(RWA007_A_URN);
+        GemJoinAbstract(MCD_JOIN_RWA007_A).rely(RWA008_SGFWOFH1_A_URN);
 
         // set up the urn
-        RwaUrnLike(RWA007_A_URN).hope(RWA007_OPERATOR);
+        RwaUrnLike(RWA007_A_URN).hope(RWA008_SGFWOFH1_OPERATOR);
 
         // set up output conduit
-        RwaOutputConduitLike(RWA007_A_OUTPUT_CONDUIT).hope(RWA007_OPERATOR);
+        RwaOutputConduitLike(RWA007_A_OUTPUT_CONDUIT).hope(RWA008_SGFWOFH1_OPERATOR);
         // could potentially kiss some BD addresses if they are available
     }
 }
