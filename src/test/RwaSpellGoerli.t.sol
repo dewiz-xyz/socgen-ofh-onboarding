@@ -228,7 +228,7 @@ contract BumpSpell is TestSpell {
 
 contract DssSpellTest is DSTest, DSMath {
     // populate with mainnet spell if needed
-    address constant GOERLI_SPELL = address(0xdCB87e8149F7bE368ec077b0D92C7ADAC8bB919e);
+    address constant GOERLI_SPELL = address(0);
     // this needs to be updated
     uint256 constant SPELL_CREATED = 1614270940;
 
@@ -293,13 +293,13 @@ contract DssSpellTest is DSTest, DSMath {
 
     ChainlogAbstract chainlog = ChainlogAbstract(addr.addr("CHANGELOG"));
 
-    bytes32 constant ilk = "RWA001-A";
-    DSTokenAbstract rwagem = DSTokenAbstract(addr.addr("RWA001"));
-    GemJoinAbstract rwajoin = GemJoinAbstract(addr.addr("MCD_JOIN_RWA001_A"));
+    bytes32 constant ilk = "RWA007-A";
+    DSTokenAbstract rwagem = DSTokenAbstract(addr.addr("RWA007"));
+    GemJoinAbstract rwajoin = GemJoinAbstract(addr.addr("MCD_JOIN_RWA007_A"));
     RwaLiquidationLike oracle = RwaLiquidationLike(addr.addr("MIP21_LIQUIDATION_ORACLE"));
-    RwaUrnLike rwaurn = RwaUrnLike(addr.addr("RWA001_A_URN"));
-    RwaInputConduitLike rwaconduitin = RwaInputConduitLike(addr.addr("RWA001_A_INPUT_CONDUIT"));
-    RwaOutputConduitLike rwaconduitout = RwaOutputConduitLike(addr.addr("RWA001_A_OUTPUT_CONDUIT"));
+    RwaUrnLike rwaurn = RwaUrnLike(addr.addr("RWA007_A_URN"));
+    RwaInputConduitLike rwaconduitin = RwaInputConduitLike(addr.addr("RWA007_A_INPUT_CONDUIT"));
+    RwaOutputConduitLike rwaconduitout = RwaOutputConduitLike(addr.addr("RWA007_A_OUTPUT_CONDUIT"));
 
     address makerDeployer06 = 0xda0fab060e6cc7b1C0AA105d29Bd50D71f036711;
 
@@ -423,7 +423,7 @@ contract DssSpellTest is DSTest, DSMath {
         //
         // Test for all collateral based changes here
         //
-        afterSpell.collaterals["RWA001-A"] = CollateralValues({ // TODO
+        afterSpell.collaterals["RWA007-A"] = CollateralValues({ // TODO
             line: 1000, // In whole Dai units
             dust: 0, // In whole Dai units
             pct: 200, // In basis points
@@ -709,7 +709,7 @@ contract DssSpellTest is DSTest, DSMath {
         }
         assertTrue(spell.done());
 
-        assertEq(chainlog.getAddress("RWA001"), addr.addr("RWA001"));
+        assertEq(chainlog.getAddress("RWA007"), addr.addr("RWA001"));
         assertEq(chainlog.getAddress("MCD_JOIN_RWA001_A"), addr.addr("MCD_JOIN_RWA001_A"));
         assertEq(chainlog.getAddress("RWA001_A_URN"), addr.addr("RWA001_A_URN"));
         assertEq(chainlog.getAddress("RWA001_A_INPUT_CONDUIT"), addr.addr("RWA001_A_INPUT_CONDUIT"));

@@ -91,7 +91,7 @@ contract SpellAction {
     address constant RWA007_OPERATOR = 0xA5Eee849FF395f9FA592645979f2A8Af6E0eF5c3;
     address constant RWA007_GEM = 0x8F9A8cbBdfb93b72d646c8DEd6B4Fe4D86B315cB;
     address constant MCD_JOIN_RWA007_A = 0x029A554f252373e146f76Fa1a7455f73aBF4d38e;
-    address constant RWA007_URN = 0x3Ba90D86f7E3218C48b7E0FCa959EcF43d9A30F4;
+    address constant RWA007_A_URN = 0x3Ba90D86f7E3218C48b7E0FCa959EcF43d9A30F4;
     address constant RWA007_A_INPUT_CONDUIT = 0xe37673730F03060922a2Bd8eC5987AfE3eA16a05;
     address constant RWA007_A_OUTPUT_CONDUIT = 0xc54fEee07421EAB8000AC8c921c0De9DbfbE780B;
     address constant MIP21_LIQUIDATION_ORACLE = 0x2881c5dF65A8D81e38f7636122aFb456514804CC;
@@ -140,7 +140,7 @@ contract SpellAction {
         // Sanity checks
         require(GemJoinAbstract(MCD_JOIN_RWA007_A).vat() == MCD_VAT, "join-vat-not-match");
         require(GemJoinAbstract(MCD_JOIN_RWA007_A).ilk() == ilk, "join-ilk-not-match");
-        require(GemJoinAbstract(MCD_JOIN_RWA007_A).gem() == RWA001_GEM, "join-gem-not-match");
+        require(GemJoinAbstract(MCD_JOIN_RWA007_A).gem() == RWA007_GEM, "join-gem-not-match");
         require(
             GemJoinAbstract(MCD_JOIN_RWA007_A).dec() == DSTokenAbstract(RWA007_GEM).decimals(),
             "join-dec-not-match"
@@ -149,7 +149,7 @@ contract SpellAction {
         // init the RwaLiquidationOracle
         // doc: "doc"
         // tau: 5 minutes // TODO: this should be verified with RWA Team (5 min for testing is good)
-        RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).init(ilk, RWA001_A_INITIAL_PRICE, DOC, 300);
+        RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).init(ilk, RWA007_A_INITIAL_PRICE, DOC, 300);
         (, address pip, , ) = RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).ilks(ilk);
         CHANGELOG.setAddress("PIP_RWA007", pip);
 
@@ -187,7 +187,7 @@ contract SpellAction {
         GemJoinAbstract(MCD_JOIN_RWA007_A).rely(RWA007_A_URN);
 
         // set up the urn
-        RwaUrnLike(RWA001_A_URN).hope(RWA007_OPERATOR);
+        RwaUrnLike(RWA007_A_URN).hope(RWA007_OPERATOR);
 
         // set up output conduit
         RwaOutputConduitLike(RWA007_A_OUTPUT_CONDUIT).hope(RWA007_OPERATOR);
