@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.6.12;
 
 import "dss-interfaces/dss/VatAbstract.sol";
@@ -99,7 +100,7 @@ contract SpellAction {
 
     uint256 constant THREE_PCT_RATE = 1000000000937303470807876289; // TODO Risk team should provide this one
 
-    // precision
+    /// @notice precision
     uint256 public constant THOUSAND = 10**3;
     uint256 public constant MILLION = 10**6;
     uint256 public constant WAD = 10**18;
@@ -109,11 +110,13 @@ contract SpellAction {
     uint256 constant RWA008SGHWOFH1_A_INITIAL_DC = 1000 * RAD; // TODO RWA team should provide
     uint256 constant RWA008SGHWOFH1_A_INITIAL_PRICE = 1060 * WAD; // TODO RWA team should provide
 
-    // MIP13c3-SP4 Declaration of Intent & Commercial Points -
-    //   Off-Chain Asset Backed Lender to onboard Real World Assets
-    //   as Collateral for a DAI loan
-    //
-    // https://ipfs.io/ipfs/QmdmAUTU3sd9VkdfTZNQM6krc9jsKgF2pz7W1qvvfJo1xk
+    /**
+     * @notice MIP13c3-SP4 Declaration of Intent & Commercial Points -
+     *   Off-Chain Asset Backed Lender to onboard Real World Assets
+     *   as Collateral for a DAI loan
+     *
+     * https://ipfs.io/ipfs/QmdmAUTU3sd9VkdfTZNQM6krc9jsKgF2pz7W1qvvfJo1xk
+     */
     string constant DOC = "QmdmAUTU3sd9VkdfTZNQM6krc9jsKgF2pz7W1qvvfJo1xk"; // TODO Reference to a documents which describe deal (should be uploaded to IPFS)
 
     function execute() external {
@@ -121,12 +124,12 @@ contract SpellAction {
         address MCD_JUG = ChainlogAbstract(CHANGELOG).getAddress("MCD_JUG");
         address MCD_SPOT = ChainlogAbstract(CHANGELOG).getAddress("MCD_SPOT");
 
-        // RWA008-SGFWOFH1-A collateral deploy
+        /// @notice RWA008-SGFWOFH1-A collateral deploy
 
-        // Set ilk bytes32 variable
+        /// @notice Set ilk bytes32 variable
         bytes32 ilk = "RWA008SGHWOFH1-A";
 
-        // add RWA-001 contract to the changelog
+        /// @notice add RWA008SGHWOFH1 contract to the changelog
         CHANGELOG.setAddress("RWA008SGHWOFH1", RWA008SGHWOFH1_GEM);
         CHANGELOG.setAddress("MCD_JOIN_RWA008SGHWOFH1_A", MCD_JOIN_RWA008SGHWOFH1_A);
         CHANGELOG.setAddress("MIP21_LIQUIDATION_ORACLE", MIP21_LIQUIDATION_ORACLE);
@@ -134,11 +137,11 @@ contract SpellAction {
         CHANGELOG.setAddress("RWA008SGHWOFH1_A_INPUT_CONDUIT", RWA008SGHWOFH1_A_INPUT_CONDUIT);
         CHANGELOG.setAddress("RWA008SGHWOFH1_A_OUTPUT_CONDUIT", RWA008SGHWOFH1_A_OUTPUT_CONDUIT);
 
-        // bump changelog version
+        /// @notice bump changelog version
         // TODO make sure to update this version on mainnet
         CHANGELOG.setVersion("1.0.0");
 
-        // Sanity checks
+        /// @notice Sanity checks
         require(GemJoinAbstract(MCD_JOIN_RWA008SGHWOFH1_A).vat() == MCD_VAT, "join-vat-not-match");
         require(GemJoinAbstract(MCD_JOIN_RWA008SGHWOFH1_A).ilk() == ilk, "join-ilk-not-match");
         require(GemJoinAbstract(MCD_JOIN_RWA008SGHWOFH1_A).gem() == RWA008SGHWOFH1_GEM, "join-gem-not-match");
@@ -147,52 +150,55 @@ contract SpellAction {
             "join-dec-not-match"
         );
 
-        // init the RwaLiquidationOracle
-        // doc: "doc"
-        // tau: 5 minutes // TODO: this should be verified with RWA Team (5 min for testing is good)
+        /**
+         * @notice init the RwaLiquidationOracle
+         * doc: "doc"
+         * tau: 5 minutes
+         */
+        // TODO: this should be verified with RWA Team (5 min for testing is good)
         RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).init(ilk, RWA008SGHWOFH1_A_INITIAL_PRICE, DOC, 300);
         (, address pip, , ) = RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).ilks(ilk);
         CHANGELOG.setAddress("PIP_RWA008SGHWOFH1", pip);
 
-        // Set price feed for RWA001
+        /// @notice Set price feed for RWA008SGHWOFH1
         SpotAbstract(MCD_SPOT).file(ilk, "pip", pip);
 
-        // Init RWA-001 in Vat
+        /// @notice Init RWA008SGHWOFH1 in Vat
         VatAbstract(MCD_VAT).init(ilk);
-        // Init RWA-001 in Jug
+        /// @notice Init RWA008SGHWOFH1 in Jug
         JugAbstract(MCD_JUG).init(ilk);
 
-        // Allow RWA-001 Join to modify Vat registry
+        /// @notice Allow RWA008SGHWOFH1 Join to modify Vat registry
         VatAbstract(MCD_VAT).rely(MCD_JOIN_RWA008SGHWOFH1_A);
 
-        // Allow RwaLiquidationOracle to modify Vat registry
+        /// @notice Allow RwaLiquidationOracle to modify Vat registry
         VatAbstract(MCD_VAT).rely(MIP21_LIQUIDATION_ORACLE);
 
-        // 1000 debt ceiling
+        /// @notice 1000 debt ceiling
         VatAbstract(MCD_VAT).file(ilk, "line", RWA008SGHWOFH1_A_INITIAL_PRICE);
         VatAbstract(MCD_VAT).file("Line", VatAbstract(MCD_VAT).Line() + RWA008SGHWOFH1_A_INITIAL_DC);
 
-        // No dust
+        /// @notice No dust
         // VatAbstract(MCD_VAT).file(ilk, "dust", 0)
 
-        // 3% stability fee
+        /// @notice 3% stability fee
         JugAbstract(MCD_JUG).file(ilk, "duty", THREE_PCT_RATE);
 
-        // collateralization ratio 100%
+        /// @notice collateralization ratio 100%
         SpotAbstract(MCD_SPOT).file(ilk, "mat", RAY); // TODO Should get from RWA team
 
-        // poke the spotter to pull in a price
+        /// @notice poke the spotter to pull in a price
         SpotAbstract(MCD_SPOT).poke(ilk);
 
-        // give the urn permissions on the join adapter
+        /// @notice give the urn permissions on the join adapter
         GemJoinAbstract(MCD_JOIN_RWA008SGHWOFH1_A).rely(RWA008SGHWOFH1_A_URN);
 
-        // set up the urn
+        /// @notice set up the urn
         RwaUrnLike(RWA008SGHWOFH1_A_URN).hope(RWA008SGHWOFH1_OPERATOR);
 
-        // set up output conduit
+        /// @notice set up output conduit
         RwaOutputConduitLike(RWA008SGHWOFH1_A_OUTPUT_CONDUIT).hope(RWA008SGHWOFH1_OPERATOR);
-        // could potentially kiss some BD addresses if they are available
+        /// @notice could potentially kiss some BD addresses if they are available
     }
 }
 
