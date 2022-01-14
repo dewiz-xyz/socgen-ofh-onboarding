@@ -52,6 +52,8 @@ interface RwaOutputConduitLike {
 
     function hope(address) external;
 
+    function mate(address) external;
+
     function nope(address) external;
 
     function bud(address) external returns (uint256);
@@ -66,13 +68,13 @@ interface RwaOutputConduitLike {
 }
 
 interface RwaInputConduitLike {
-    function rely(address usr) external auth;
+    function rely(address usr) external;
 
-    function deny(address usr) external auth;
+    function deny(address usr) external;
 
-    function mate(address usr) external auth;
+    function mate(address usr) external;
 
-    function hate(address usr) external auth;
+    function hate(address usr) external;
 
     function push() external;
 }
@@ -101,7 +103,6 @@ contract SpellAction {
         RWA007_A_OUTPUT_CONDUIT: 0xc54fEee07421EAB8000AC8c921c0De9DbfbE780B
         MIP21_LIQUIDATION_ORACLE: 0x2881c5dF65A8D81e38f7636122aFb456514804CC
     */
-    // TODO change addresses when we have deployment in place
     address constant RWA007SGHWOFH1_OPERATOR = 0xab8a1efCc4d04495F913c23409E7692A8698FEe7;
     address constant RWA007SGHWOFH1_GEM = 0xCfc4043675EE82EEAe63C90D6eb3aB2dcf833431;
     address constant MCD_JOIN_RWA007SGHWOFH1_A = 0x43aEbe126B1fcBC00eE7896de62D38F67283f926;
@@ -109,7 +110,7 @@ contract SpellAction {
     address constant RWA007SGHWOFH1_A_INPUT_CONDUIT = 0x495215cabc630830071F80263a908E8826a66121;
     address constant RWA007SGHWOFH1_A_OUTPUT_CONDUIT = 0x7032546Ba3F6E8866334556a354e67B905aA4470;
     address constant MIP21_LIQUIDATION_ORACLE = 0x5FC34639f1A008e3B4bC2ee4aB4D0f8fB09c99BE;
-    address constant DIIS_GROUP = 0x5FC34639f1A008e3B4bC2ee4aB4D0f8fB09c99BE;
+    address constant DIIS_GROUP = address(0); // TODO
 
     uint256 constant THREE_PCT_RATE = 1000000000937303470807876289; // TODO RWA team should provide this one
 
