@@ -1,6 +1,4 @@
 #!/bin/bash
-#
-# bash scripts/deploy-goerli-ces.sh
 
 set -e
 
@@ -12,26 +10,25 @@ set -e
 # shellcheck disable=SC1091
 source ./scripts/build-env-addresses.sh ces-goerli >/dev/null 2>&1
 
-if [ -z "$MIP21_LIQUIDATION_ORACLE" ]; then
-    MIP21_LIQUIDATION_ORACLE=$(dapp create RwaLiquidationOracle "$MCD_VAT" "$MCD_VOW")
+export ETH_GAS=6000000
 
-    [ -z "$MIP21_LIQUIDATION_ORACLE_INIT_VAL" ] || {
+if [ -z "$MIP21_LIQUIDATION_ORACLE" ]; then
+    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_VAL" ] || {
         echo "Please set MIP21_LIQUIDATION_ORACLE_INIT_VAL param"
         exit 1
     }
 
-    [ -z "$MIP21_LIQUIDATION_ORACLE_INIT_DOC" ] || {
+    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_DOC" ] || {
         echo "Please set MIP21_LIQUIDATION_ORACLE_INIT_DOC param"
         exit 1
     }
 
-    [ -z "$MIP21_LIQUIDATION_ORACLE_INIT_TAU" ] || {
+    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_TAU" ] || {
         echo "Please set MIP21_LIQUIDATION_ORACLE_INIT_TAU param"
         exit 1
     }
 fi
 
-export ETH_GAS=6000000
 
 # TODO: confirm if name/symbol is going to follow the RWA convention
 # TODO: confirm with DAO at the time of mainnet deployment if OFH will indeed be 007
@@ -68,16 +65,21 @@ make build
 [[ -z "$OPERATOR" ]] && OPERATOR=$(dapp create ForwardProxy "$ZERO_ADDRESS") # using generic forward proxy for goerli
 [[ -z "$MATE" ]] && MATE=$(dapp create ForwardProxy "$ZERO_ADDRESS")         # using generic forward proxy for goerli
 
-[[ -z "$RWA_OFH_TOKEN" ]] && RWA_OFH_TOKEN=$(dapp create MockOFH ${RWA_OFH_TOKEN_SUPPLY:=400})
+[[ -z "$RWA_OFH_TOKEN" ]] && {
+    [[ -z "$RWA_OFH_TOKEN_SUPPLY" ]] && RWA_OFH_TOKEN_SUPPLY=400
+    RWA_OFH_TOKEN=$(dapp create MockOFH "$RWA_OFH_TOKEN_SUPPLY")
+    # Transfers the total supply to the operator's account
+    seth send "$RWA_OFH_TOKEN" 'transfer(address,uint256)' "$OPERATOR" "$RWA_OFH_TOKEN_SUPPLY"
+}
+
 
 # tokenize it
 # RWA_WRAPPER_TOKEN=$(dapp create "src/TokenWrapper.sol:TokenWrapper" \"$NAME\" \"$SYMBOL\")
 RWA_WRAPPER_TOKEN=$(dapp create TokenWrapper "$RWA_OFH_TOKEN")
-seth send "$RWA_WRAPPER_TOKEN" 'transfer(address,uint256)' "$OPERATOR" "$(seth --to-wei $RWA_OFH_TOKEN_SUPPLY)"
 
 # route it
 [[ -z "$RWA_OUTPUT_CONDUIT" ]] && {
-    RWA_OUTPUT_CONDUIT=$(dapp create RwaConduits:RwaOutputConduit "$MCD_DAI")
+    RWA_OUTPUT_CONDUIT=$(dapp create RwaOutputConduit "$MCD_DAI")
 
     # trust addresses for goerli
     seth send "$RWA_OUTPUT_CONDUIT" 'hope(address)' "$OPERATOR"
@@ -103,7 +105,7 @@ seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
 
 # connect it
 [[ -z "$RWA_INPUT_CONDUIT" ]] && {
-    RWA_INPUT_CONDUIT=$(dapp create RwaConduits:RwaInputConduit "$MCD_DAI" "$RWA_URN")
+    RWA_INPUT_CONDUIT=$(dapp create RwaInputConduit "$MCD_DAI" "$RWA_URN")
 
     # trust addresses for goerli
     seth send "$RWA_INPUT_CONDUIT" 'mate(address)' "$MATE"
