@@ -1,17 +1,23 @@
+// Copyright (C) 2022 Dai Foundation
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.6.12;
 
 import {ERC20} from "openzeppelin-contracts/token/ERC20/ERC20.sol";
-import {ITokenWrapper} from "./ITokenWrapper.sol";
-
-/**
- * @title The OFH token minimum interface required to work with this wrapper.
- */
-interface OFHTokenLike {
-    function getBalance(address) external view returns (uint256);
-
-    function transfer(address, uint256) external returns (bool);
-}
+import {ITokenWrapper, OFHTokenLike} from "./ITokenWrapper.sol";
 
 /**
  * @title An extension/subset of `DSMath` containing only the methods required in this file.
@@ -35,6 +41,7 @@ library DSMathCustom {
 }
 
 /**
+ * @author Henrique Barcelos <henrique@clio.finance>
  * @title Wraps the underlying OFH token.
  * @dev Assumes OFH has `0` decimals and normalizes `mint()/burn()` to have `18` decimals.
  */
