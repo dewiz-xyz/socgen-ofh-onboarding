@@ -59,14 +59,14 @@ contract TokenWrapperTest is DSTest {
         uint192 transferred,
         uint192 wrapped
     ) public {
-        token = new MockOFH(total);
-        wrapper = new TokenWrapper(OFHTokenLike(address(token)));
-        wrapper.hope(address(this));
-
         if (total < transferred || transferred < wrapped) {
             // Testing in these cases doesn't make sense, so we make it pass
             return;
         }
+
+        token = new MockOFH(total);
+        wrapper = new TokenWrapper(OFHTokenLike(address(token)));
+        wrapper.hope(address(this));
 
         token.transfer(address(wrapper), transferred);
         wrapper.wrap(holder1, wrapped);
@@ -75,20 +75,20 @@ contract TokenWrapperTest is DSTest {
     }
 
     function testWrapOwnAddress(
-        uint192 total,
-        uint192 transferred,
-        uint192 wrapped
+        uint256 total,
+        uint256 transferred,
+        uint256 wrapped
     ) public {
+        // Getting values that actually make sense
+        total = (total % (type(uint192).max - 50)) + 50; // 50-(type(uint192).max - 1))
+        transferred = (transferred % (total - 2)) + 2; // 2-(total - 1)
+        wrapped = (wrapped % (transferred - 1)) + 1; // 1-(transferred - 1)
+
         token = new MockOFH(total);
         wrapper = new TokenWrapper(OFHTokenLike(address(token)));
         holder1 = address(new ForwardProxy(address(wrapper)));
         holder2 = address(new ForwardProxy(address(wrapper)));
         wrapper.hope(holder1);
-
-        if (total < transferred || transferred < wrapped) {
-            // Testing in these cases doesn't make sense, so we make it pass
-            return;
-        }
 
         token.transfer(address(wrapper), transferred);
         TokenWrapper(holder1).wrap(wrapped);
@@ -101,14 +101,14 @@ contract TokenWrapperTest is DSTest {
         uint192 transferred,
         uint192 wrapped
     ) public {
+        // Getting values that actually make sense
+        total = (total % (type(uint192).max - 50)) + 50; // 50-(type(uint192).max - 1))
+        transferred = (transferred % (total - 1)) + 1; // 1-(total - 1)
+        wrapped = (wrapped % (total - transferred)) + transferred + 1; // (trasnferred+1)-total
+
         token = new MockOFH(total);
         wrapper = new TokenWrapper(OFHTokenLike(address(token)));
         wrapper.hope(address(this));
-
-        if (total < transferred || transferred >= wrapped) {
-            // Testing in these cases doesn't make sense, so we make it pass
-            revert();
-        }
 
         token.transfer(address(wrapper), transferred);
         wrapper.wrap(holder1, wrapped);

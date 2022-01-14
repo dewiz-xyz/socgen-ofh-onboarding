@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.6.12;
 
 import {Proxy} from "openzeppelin-contracts/proxy/Proxy.sol";
@@ -6,8 +7,8 @@ import {Proxy} from "openzeppelin-contracts/proxy/Proxy.sol";
  * @dev This contract provides a fallback function that forwards all calls to another contract using the EVM
  * instruction `call`.
  *
- * Additionally, delegation to the implementation can be triggered manually through the {_fallback} function, or to a
- * different contract through the {_delegate} function.
+ * Additionally, delegation to the implementation can be triggered manually through the `_fallback` function, or to a
+ * different contract through the `_delegate` function.
  *
  * The success and return data of the delegated call will be returned back to the caller of the proxy.
  */
@@ -24,6 +25,7 @@ contract ForwardProxy is Proxy {
      * @param implementation The address of the implementation contract.
      */
     function _delegate(address implementation) internal virtual override {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             // Copy msg.data. We take full control of memory in this inline assembly
             // block because it will not return to Solidity code. We overwrite the

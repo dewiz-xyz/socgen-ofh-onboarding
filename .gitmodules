@@ -4,3 +4,21 @@
 [submodule "lib/openzeppelin-contracts"]
 	path = lib/openzeppelin-contracts
 	url = https://github.com/openzeppelin/openzeppelin-contracts
+[submodule "lib/dss-interfaces"]
+	path = lib/dss-interfaces
+	url = https://github.com/makerdao/dss-interfaces
+[submodule "lib/dss-gem-joins"]
+	path = lib/dss-gem-joins
+	url = https://github.com/makerdao/dss-gem-joins
+[submodule "lib/ds-token"]
+	path = lib/ds-token
+	url = https://github.com/dapphub/ds-token
+[submodule "lib/ds-math"]
+	path = lib/ds-math
+	url = https://github.com/dapphub/ds-math
+[submodule "lib/dss"]
+	path = lib/dss
+	url = https://github.com/dapphub/dss
+[submodule "lib/ds-value"]
+	path = lib/ds-value
+	url = https://github.com/dapphub/ds-value

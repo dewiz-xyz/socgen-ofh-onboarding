@@ -8,4 +8,8 @@ contract MockOFH is ERC20 {
         _mint(msg.sender, amount_);
         _setupDecimals(0);
     }
+
+    function getBalance(address who) public view returns (uint256) {
+        return balanceOf(who);
+    }
 }
