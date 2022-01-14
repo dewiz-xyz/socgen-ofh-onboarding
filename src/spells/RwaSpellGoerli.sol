@@ -65,6 +65,18 @@ interface RwaOutputConduitLike {
     function push() external;
 }
 
+interface RwaInputConduitLike {
+    function rely(address usr) external auth;
+
+    function deny(address usr) external auth;
+
+    function mate(address usr) external auth;
+
+    function hate(address usr) external auth;
+
+    function push() external;
+}
+
 interface RwaUrnLike {
     function hope(address) external;
 }
@@ -97,8 +109,9 @@ contract SpellAction {
     address constant RWA007SGHWOFH1_A_INPUT_CONDUIT = 0x495215cabc630830071F80263a908E8826a66121;
     address constant RWA007SGHWOFH1_A_OUTPUT_CONDUIT = 0x7032546Ba3F6E8866334556a354e67B905aA4470;
     address constant MIP21_LIQUIDATION_ORACLE = 0x5FC34639f1A008e3B4bC2ee4aB4D0f8fB09c99BE;
+    address constant DIIS_GROUP = 0x5FC34639f1A008e3B4bC2ee4aB4D0f8fB09c99BE;
 
-    uint256 constant THREE_PCT_RATE = 1000000000937303470807876289; // TODO Risk team should provide this one
+    uint256 constant THREE_PCT_RATE = 1000000000937303470807876289; // TODO RWA team should provide this one
 
     /// @notice precision
     uint256 public constant THOUSAND = 10**3;
@@ -181,7 +194,7 @@ contract SpellAction {
         /// @notice No dust
         // VatAbstract(MCD_VAT).file(ilk, "dust", 0)
 
-        /// @notice 3% stability fee
+        /// @notice 3% stability fee // TODO get from RWA
         JugAbstract(MCD_JUG).file(ilk, "duty", THREE_PCT_RATE);
 
         /// @notice collateralization ratio 100%
@@ -198,7 +211,10 @@ contract SpellAction {
 
         /// @notice set up output conduit
         RwaOutputConduitLike(RWA007SGHWOFH1_A_OUTPUT_CONDUIT).hope(RWA007SGHWOFH1_OPERATOR);
-        /// @notice could potentially kiss some BD addresses if they are available
+
+        /// @notice whitelist DIIS Group in the conduits
+        RwaOutputConduitLike(RWA007SGHWOFH1_A_OUTPUT_CONDUIT).mate(DIIS_GROUP);
+        RwaInputConduitLike(RWA007SGHWOFH1_A_INPUT_CONDUIT).mate(DIIS_GROUP);
     }
 }
 
