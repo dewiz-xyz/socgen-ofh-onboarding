@@ -1,5 +1,8 @@
+.env
+.eth-password
 out/
 node_modules/
 env-addresses-network
 env-addresses-mainnet
+env-addresses-goerli
 env-addresses-ces-goerli

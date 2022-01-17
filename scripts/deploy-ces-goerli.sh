@@ -1,23 +1,39 @@
 #!/bin/bash
-#
-# bash scripts/deploy-goerli-ces.sh
 
 set -e
 
 [[ "$ETH_RPC_URL" && "$(seth chain)" == "$1" ]] || {
-    echo "Please set a $1 ETH_RPC_URL";
-    exit 1;
+    echo "Please set a $1 ETH_RPC_URL"
+    exit 1
 }
 
 # shellcheck disable=SC1091
-source ./scripts/build-env-addresses.sh ces-goerli > /dev/null 2>&1
+source ./scripts/build-env-addresses.sh ces-goerli >/dev/null 2>&1
 
 export ETH_GAS=6000000
 
+if [ -z "$MIP21_LIQUIDATION_ORACLE" ]; then
+    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_VAL" ] || {
+        echo "Please set MIP21_LIQUIDATION_ORACLE_INIT_VAL param"
+        exit 1
+    }
+
+    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_DOC" ] || {
+        echo "Please set MIP21_LIQUIDATION_ORACLE_INIT_DOC param"
+        exit 1
+    }
+
+    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_TAU" ] || {
+        echo "Please set MIP21_LIQUIDATION_ORACLE_INIT_TAU param"
+        exit 1
+    }
+fi
+
+
 # TODO: confirm if name/symbol is going to follow the RWA convention
 # TODO: confirm with DAO at the time of mainnet deployment if OFH will indeed be 007
-[[ -z "$NAME" ]] && NAME="RWA-007";
-[[ -z "$SYMBOL" ]] && SYMBOL="RWA007";
+[[ -z "$NAME" ]] && NAME="RWA-007-SGF-wOFH-1"
+[[ -z "$SYMBOL" ]] && SYMBOL="RWA007SGFWOFH1"
 #
 # WARNING (2021-09-08): The system cannot currently accomodate any LETTER beyond
 # "A".  To add more letters, we will need to update the PIP naming convention
@@ -29,72 +45,96 @@ export ETH_GAS=6000000
 # 3. Make sure all integrations are ready to accomodate that new PIP name.
 # ! TODO: check with team/PE if this is still the case
 #
-[[ -z "$LETTER" ]] && LETTER="A";
-[[ -z "$OPERATOR" ]] && OPERATOR="0xA5Eee849FF395f9FA592645979f2A8Af6E0eF5c3"  # using generic mock operator address for goerli
+[[ -z "$LETTER" ]] && LETTER="A"
 
 # [[ -z "$MIP21_LIQUIDATION_ORACLE" ]] && MIP21_LIQUIDATION_ORACLE="0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF"
 # TODO: confirm liquidations handling - no liquidations for the time being
+
+ZERO_ADDRESS="0x0000000000000000000000000000000000000000"
 
 # goerli only, trust a couple of addresses
 TRUST1="0x597084d145e96Ae2e89E1c9d8DEE6d43d3557898"
 TRUST2="0xCB84430E410Df2dbDE0dF04Cf7711E656C90BDa2"
 
 ILK="${SYMBOL}-${LETTER}"
-ILK_ENCODED=$(seth --to-bytes32 "$(seth --from-ascii ${ILK})")
+ILK_ENCODED=$(seth --to-bytes32 "$(seth --from-ascii "$ILK")")
 
 # build it
-dapp --use solc:0.6.12 build
+make build
+
+[[ -z "$OPERATOR" ]] && OPERATOR=$(dapp create ForwardProxy "$ZERO_ADDRESS") # using generic forward proxy for goerli
+[[ -z "$MATE" ]] && MATE=$(dapp create ForwardProxy "$ZERO_ADDRESS")         # using generic forward proxy for goerli
+
+[[ -z "$RWA_OFH_TOKEN" ]] && {
+    [[ -z "$RWA_OFH_TOKEN_SUPPLY" ]] && RWA_OFH_TOKEN_SUPPLY=400
+    RWA_OFH_TOKEN=$(dapp create MockOFH "$RWA_OFH_TOKEN_SUPPLY")
+    # Transfers the total supply to the operator's account
+    seth send "$RWA_OFH_TOKEN" 'transfer(address,uint256)' "$OPERATOR" "$RWA_OFH_TOKEN_SUPPLY"
+}
+
 
 # tokenize it
-# RWA_TOKEN=$(dapp create "src/TokenWrapper.sol:TokenWrapper" \"$NAME\" \"$SYMBOL\")
-RWA_TOKEN=$(dapp create "src/TokenWrapper.sol:TokenWrapper")
-seth send "${RWA_TOKEN}" 'transfer(address,uint256)' "$OPERATOR" "$(seth --to-wei 1.0 ether)"
+# RWA_WRAPPER_TOKEN=$(dapp create "src/TokenWrapper.sol:TokenWrapper" \"$NAME\" \"$SYMBOL\")
+RWA_WRAPPER_TOKEN=$(dapp create TokenWrapper "$RWA_OFH_TOKEN")
 
 # route it
-[[ -z "$RWA_OUTPUT_CONDUIT" ]] && RWA_OUTPUT_CONDUIT=$(dapp create RwaConduits:RwaOutputConduit "${MCD_DAI}")
-
-if [ "$RWA_OUTPUT_CONDUIT" != "$OPERATOR" ]; then
-    seth send "${RWA_OUTPUT_CONDUIT}" 'rely(address)' "${MCD_PAUSE_PROXY}"
+[[ -z "$RWA_OUTPUT_CONDUIT" ]] && {
+    RWA_OUTPUT_CONDUIT=$(dapp create RwaOutputConduit "$MCD_DAI")
 
     # trust addresses for goerli
-    seth send "${RWA_OUTPUT_CONDUIT}" 'kiss(address)' "${TRUST1}"
-    seth send "${RWA_OUTPUT_CONDUIT}" 'kiss(address)' "${TRUST2}"
+    seth send "$RWA_OUTPUT_CONDUIT" 'hope(address)' "$OPERATOR"
+    seth send "$RWA_OUTPUT_CONDUIT" 'mate(address)' "$MATE"
 
-    seth send "${RWA_OUTPUT_CONDUIT}" 'deny(address)' "${ETH_FROM}"
-fi
+    seth send "$RWA_OUTPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY"
+    seth send "$RWA_OUTPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
+}
 
 # join it
-RWA_JOIN=$(dapp create AuthGemJoin "${MCD_VAT}" "${ILK_ENCODED}" "${RWA_TOKEN}")
-seth send "${RWA_JOIN}" 'rely(address)' "${MCD_PAUSE_PROXY}"
+RWA_JOIN=$(dapp create AuthGemJoin "$MCD_VAT" "$ILK_ENCODED" "$RWA_WRAPPER_TOKEN")
+seth send "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY"
 
 # urn it
-RWA_URN=$(dapp create RwaUrn "${MCD_VAT}" "${MCD_JUG}" "${RWA_JOIN}" "${MCD_JOIN_DAI}" "${RWA_OUTPUT_CONDUIT}")
-seth send "${RWA_URN}" 'rely(address)' "${MCD_PAUSE_PROXY}"
-seth send "${RWA_URN}" 'deny(address)' "${ETH_FROM}"
+RWA_URN=$(dapp create RwaUrn "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT")
+seth send "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY"
+seth send "$RWA_URN" 'deny(address)' "$ETH_FROM"
 
 # rely it
-seth send "${RWA_JOIN}" 'rely(address)' "${RWA_URN}"
-
+seth send "$RWA_JOIN" 'rely(address)' "$RWA_URN"
 # deny it
-seth send "${RWA_JOIN}" 'deny(address)' "${ETH_FROM}"
+seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
 
 # connect it
-[[ -z "$RWA_INPUT_CONDUIT" ]] && RWA_INPUT_CONDUIT=$(dapp create RwaConduits:RwaInputConduit "${MCD_DAI}" "${RWA_URN}")
+[[ -z "$RWA_INPUT_CONDUIT" ]] && {
+    RWA_INPUT_CONDUIT=$(dapp create RwaInputConduit "$MCD_DAI" "$RWA_URN")
 
-# TODO: confirm liquidations handling - no liquidations for the time being
-# # price it
-# if [ -z "$MIP21_LIQUIDATION_ORACLE" ]; then
-#     MIP21_LIQUIDATION_ORACLE=$(dapp create RwaLiquidationOracle "${MCD_VAT}" "${MCD_VOW}")
-#     seth send "${MIP21_LIQUIDATION_ORACLE}" 'rely(address)' "${MCD_PAUSE_PROXY}"
-#     seth send "${MIP21_LIQUIDATION_ORACLE}" 'deny(address)' "${ETH_FROM}"
-# fi
+    # trust addresses for goerli
+    seth send "$RWA_INPUT_CONDUIT" 'mate(address)' "$MATE"
+
+    seth send "$RWA_INPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY"
+    seth send "$RWA_INPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
+}
+
+# price it
+if [ -z "$MIP21_LIQUIDATION_ORACLE" ]; then
+    MIP21_LIQUIDATION_ORACLE=$(dapp create RwaLiquidationOracle "$MCD_VAT" "$MCD_VOW")
+
+    seth send "$MIP21_LIQUIDATION_ORACLE" 'init(bytes32,uint256,string,uint48)' \
+        "$ILK_ENCODED" \
+        "$MIP21_LIQUIDATION_ORACLE_INIT_VAL" \
+        "$MIP21_LIQUIDATION_ORACLE_INIT_DOC" \
+        "$MIP21_LIQUIDATION_ORACLE_INIT_TAU"
+
+    seth send "$MIP21_LIQUIDATION_ORACLE" 'rely(address)' "$MCD_PAUSE_PROXY"
+    seth send "$MIP21_LIQUIDATION_ORACLE" 'deny(address)' "$ETH_FROM"
+fi
 
 # print it
 echo "OPERATOR: ${OPERATOR}"
-echo "TRUST1: ${TRUST1}"
-echo "TRUST2: ${TRUST2}"
+echo "MATE: ${MATE}"
+# echo "TRUST1: ${TRUST1}"
+# echo "TRUST2: ${TRUST2}"
 echo "ILK: ${ILK}"
-echo "${SYMBOL}: ${RWA_TOKEN}"
+echo "${SYMBOL}: ${RWA_WRAPPER_TOKEN}"
 echo "MCD_JOIN_${SYMBOL}_${LETTER}: ${RWA_JOIN}"
 echo "${SYMBOL}_${LETTER}_URN: ${RWA_URN}"
 echo "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT}"
