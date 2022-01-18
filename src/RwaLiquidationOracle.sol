@@ -7,6 +7,22 @@
 // `MIP21_LIQUIDATION_ORACLE`                                 //
 //////////////////////////////////////////////////////////////*/
 
+// Copyright (C) 2020, 2021 Lev Livnev <lev@liv.nev.org.uk>
+// Copyright (C) 2022 Dai Foundation
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.6.12;
 
@@ -27,6 +43,8 @@ library DSMathCustom {
 }
 
 /**
+ * @author Lev Livnev <lev@liv.nev.org.uk>
+ * @author Henrique Barcelos <henrique@clio.finance>
  * @title An Oracle for liquitation of real-world assets (RWA).
  * @dev One instance of contract can be used for many RWA collateral types.
  */
@@ -38,7 +56,7 @@ contract RwaLiquidationOracle {
         uint48 toc; // timestamp when liquidation was initiated.
     }
 
-    /// @notice Dai Core module address.
+    /// @notice Core module address.
     VatAbstract public immutable vat;
     /// @notice Module that handles system debt and surplus.
     address public vow;
@@ -96,7 +114,7 @@ contract RwaLiquidationOracle {
     event Cull(bytes32 indexed ilk, address indexed urn);
 
     /**
-     * @param vat_ The Dai core module address.
+     * @param vat_ The core module address.
      * @param vow_ The address of module that handles system debt and surplus.
      */
     constructor(address vat_, address vow_) public {
