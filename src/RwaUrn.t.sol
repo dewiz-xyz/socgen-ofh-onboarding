@@ -199,7 +199,7 @@ contract RwaUrnTest is DSTest, DSMath {
         hevm.warp(104411200);
 
         token = new MockOFH(400);
-        wrapper = new TokenWrapper(OFHTokenLike(address(token)));
+        wrapper = new TokenWrapper(address(token));
         wrapper.hope(address(this));
 
         vat = new Vat();

@@ -52,7 +52,7 @@ contract TokenWrapperTest is DSTest {
         hevm = Hevm(address(CHEAT_CODE));
 
         token = new MockOFH(400);
-        wrapper = new TokenWrapper(OFHTokenLike(address(token)));
+        wrapper = new TokenWrapper(address(token));
         holder1 = address(new ForwardProxy(address(wrapper)));
         holder2 = address(new ForwardProxy(address(wrapper)));
 
@@ -81,7 +81,7 @@ contract TokenWrapperTest is DSTest {
         }
 
         token = new MockOFH(total);
-        wrapper = new TokenWrapper(OFHTokenLike(address(token)));
+        wrapper = new TokenWrapper(address(token));
         wrapper.hope(address(this));
 
         token.transfer(address(wrapper), transferred);
@@ -101,7 +101,7 @@ contract TokenWrapperTest is DSTest {
         wrapped = (wrapped % (transferred - 1)) + 1; // 1-(transferred - 1)
 
         token = new MockOFH(total);
-        wrapper = new TokenWrapper(OFHTokenLike(address(token)));
+        wrapper = new TokenWrapper(address(token));
         holder1 = address(new ForwardProxy(address(wrapper)));
         holder2 = address(new ForwardProxy(address(wrapper)));
         wrapper.hope(holder1);
@@ -123,7 +123,7 @@ contract TokenWrapperTest is DSTest {
         wrapped = (wrapped % (total - transferred)) + transferred + 1; // (trasnferred+1)-total
 
         token = new MockOFH(total);
-        wrapper = new TokenWrapper(OFHTokenLike(address(token)));
+        wrapper = new TokenWrapper(address(token));
         wrapper.hope(address(this));
 
         token.transfer(address(wrapper), transferred);
