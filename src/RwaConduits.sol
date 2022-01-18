@@ -22,8 +22,8 @@ contract RwaInputConduit {
     event Hate(address indexed usr);
     event Push(address indexed to, uint256 wad);
 
-    constructor(DSTokenLike _dai, address _to) public {
-        dai = _dai;
+    constructor(address _dai, address _to) public {
+        dai = DSTokenLike(_dai);
         to = _to;
 
         wards[msg.sender] = 1;
@@ -85,8 +85,8 @@ contract RwaOutputConduit {
     event Pick(address indexed who);
     event Push(address indexed to, uint256 wad);
 
-    constructor(DSTokenLike _dai) public {
-        dai = _dai;
+    constructor(address _dai) public {
+        dai = DSTokenLike(_dai);
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
     }

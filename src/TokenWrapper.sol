@@ -88,8 +88,8 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
      * @notice Creates a token wrapper for a OFH token implementation.
      * @param token_ The OFH token implementation.
      */
-    constructor(OFHTokenLike token_) public ERC20("Wrapped OFH", "wOFH") {
-        token = token_;
+    constructor(address token_) public ERC20("Wrapped OFH", "wOFH") {
+        token = OFHTokenLike(token_);
 
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
