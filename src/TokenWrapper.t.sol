@@ -1,9 +1,25 @@
+// Copyright (C) 2022 Dai Foundation
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.6.12;
 
 import {DSTest} from "ds-test/test.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
-import {TokenWrapper, OFHTokenLike} from "./TokenWrapper.sol";
+import {OFHTokenLike} from "./ITokenWrapper.sol";
+import {TokenWrapper} from "./TokenWrapper.sol";
 import {MockOFH} from "./mock/MockOFH.sol";
 import {ForwardProxy} from "./util/ForwardProxy.sol";
 
@@ -36,7 +52,7 @@ contract TokenWrapperTest is DSTest {
         hevm = Hevm(address(CHEAT_CODE));
 
         token = new MockOFH(400);
-        wrapper = new TokenWrapper(OFHTokenLike(address(token)));
+        wrapper = new TokenWrapper(address(token));
         holder1 = address(new ForwardProxy(address(wrapper)));
         holder2 = address(new ForwardProxy(address(wrapper)));
 
@@ -59,14 +75,14 @@ contract TokenWrapperTest is DSTest {
         uint192 transferred,
         uint192 wrapped
     ) public {
-        token = new MockOFH(total);
-        wrapper = new TokenWrapper(OFHTokenLike(address(token)));
-        wrapper.hope(address(this));
-
         if (total < transferred || transferred < wrapped) {
             // Testing in these cases doesn't make sense, so we make it pass
             return;
         }
+
+        token = new MockOFH(total);
+        wrapper = new TokenWrapper(address(token));
+        wrapper.hope(address(this));
 
         token.transfer(address(wrapper), transferred);
         wrapper.wrap(holder1, wrapped);
@@ -75,20 +91,20 @@ contract TokenWrapperTest is DSTest {
     }
 
     function testWrapOwnAddress(
-        uint192 total,
-        uint192 transferred,
-        uint192 wrapped
+        uint256 total,
+        uint256 transferred,
+        uint256 wrapped
     ) public {
+        // Getting values that actually make sense
+        total = (total % (type(uint192).max - 50)) + 50; // 50-(type(uint192).max - 1))
+        transferred = (transferred % (total - 2)) + 2; // 2-(total - 1)
+        wrapped = (wrapped % (transferred - 1)) + 1; // 1-(transferred - 1)
+
         token = new MockOFH(total);
-        wrapper = new TokenWrapper(OFHTokenLike(address(token)));
+        wrapper = new TokenWrapper(address(token));
         holder1 = address(new ForwardProxy(address(wrapper)));
         holder2 = address(new ForwardProxy(address(wrapper)));
         wrapper.hope(holder1);
-
-        if (total < transferred || transferred < wrapped) {
-            // Testing in these cases doesn't make sense, so we make it pass
-            return;
-        }
 
         token.transfer(address(wrapper), transferred);
         TokenWrapper(holder1).wrap(wrapped);
@@ -101,14 +117,14 @@ contract TokenWrapperTest is DSTest {
         uint192 transferred,
         uint192 wrapped
     ) public {
-        token = new MockOFH(total);
-        wrapper = new TokenWrapper(OFHTokenLike(address(token)));
-        wrapper.hope(address(this));
+        // Getting values that actually make sense
+        total = (total % (type(uint192).max - 50)) + 50; // 50-(type(uint192).max - 1))
+        transferred = (transferred % (total - 1)) + 1; // 1-(total - 1)
+        wrapped = (wrapped % (total - transferred)) + transferred + 1; // (trasnferred+1)-total
 
-        if (total < transferred || transferred >= wrapped) {
-            // Testing in these cases doesn't make sense, so we make it pass
-            revert();
-        }
+        token = new MockOFH(total);
+        wrapper = new TokenWrapper(address(token));
+        wrapper.hope(address(this));
 
         token.transfer(address(wrapper), transferred);
         wrapper.wrap(holder1, wrapped);

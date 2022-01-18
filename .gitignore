@@ -1,3 +1,8 @@
+.env
+.eth-password
 out/
 node_modules/
-/.dapprc
+env-addresses-network
+env-addresses-mainnet
+env-addresses-goerli
+env-addresses-ces-goerli
