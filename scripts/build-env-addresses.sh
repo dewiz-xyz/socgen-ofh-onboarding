@@ -15,6 +15,11 @@ function validate_url() {
   fi
 }
 
+[ -x "$(command -v jq)" ] || {
+  echo "Missing 'jq' command, please install it!" >&2
+  exit 1
+}
+
 if [[ $_ != "${0}" ]]; then
   # Script was run as source
   SOURCED=1

@@ -12,24 +12,6 @@ source ./scripts/build-env-addresses.sh goerli >/dev/null 2>&1
 
 export ETH_GAS=6000000
 
-if [ -z "$MIP21_LIQUIDATION_ORACLE" ]; then
-    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_VAL" ] || {
-        echo "Please set MIP21_LIQUIDATION_ORACLE_INIT_VAL param"
-        exit 1
-    }
-
-    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_DOC" ] || {
-        echo "Please set MIP21_LIQUIDATION_ORACLE_INIT_DOC param"
-        exit 1
-    }
-
-    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_TAU" ] || {
-        echo "Please set MIP21_LIQUIDATION_ORACLE_INIT_TAU param"
-        exit 1
-    }
-fi
-
-
 # TODO: confirm if name/symbol is going to follow the RWA convention
 # TODO: confirm with DAO at the time of mainnet deployment if OFH will indeed be 007
 [[ -z "$NAME" ]] && NAME="RWA-007-SGF-wOFH-1"
@@ -51,10 +33,6 @@ fi
 # TODO: confirm liquidations handling - no liquidations for the time being
 
 ZERO_ADDRESS="0x0000000000000000000000000000000000000000"
-
-# goerli only, trust a couple of addresses
-TRUST1="0x597084d145e96Ae2e89E1c9d8DEE6d43d3557898"
-TRUST2="0xCB84430E410Df2dbDE0dF04Cf7711E656C90BDa2"
 
 ILK="${SYMBOL}-${LETTER}"
 ILK_ENCODED=$(seth --to-bytes32 "$(seth --from-ascii "$ILK")")
@@ -114,29 +92,12 @@ seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
     seth send "$RWA_INPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
 }
 
-# price it
-if [ -z "$MIP21_LIQUIDATION_ORACLE" ]; then
-    MIP21_LIQUIDATION_ORACLE=$(dapp create RwaLiquidationOracle "$MCD_VAT" "$MCD_VOW")
-
-    seth send "$MIP21_LIQUIDATION_ORACLE" 'init(bytes32,uint256,string,uint48)' \
-        "$ILK_ENCODED" \
-        "$MIP21_LIQUIDATION_ORACLE_INIT_VAL" \
-        "$MIP21_LIQUIDATION_ORACLE_INIT_DOC" \
-        "$MIP21_LIQUIDATION_ORACLE_INIT_TAU"
-
-    seth send "$MIP21_LIQUIDATION_ORACLE" 'rely(address)' "$MCD_PAUSE_PROXY"
-    seth send "$MIP21_LIQUIDATION_ORACLE" 'deny(address)' "$ETH_FROM"
-fi
-
 # print it
 echo "OPERATOR: ${OPERATOR}"
 echo "MATE: ${MATE}"
-# echo "TRUST1: ${TRUST1}"
-# echo "TRUST2: ${TRUST2}"
 echo "ILK: ${ILK}"
 echo "${SYMBOL}: ${RWA_WRAPPER_TOKEN}"
 echo "MCD_JOIN_${SYMBOL}_${LETTER}: ${RWA_JOIN}"
 echo "${SYMBOL}_${LETTER}_URN: ${RWA_URN}"
 echo "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT}"
 echo "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT: ${RWA_OUTPUT_CONDUIT}"
-echo "MIP21_LIQUIDATION_ORACLE: ${MIP21_LIQUIDATION_ORACLE}"
