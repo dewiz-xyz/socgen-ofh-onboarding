@@ -89,7 +89,7 @@ contract SpellAction {
     // The contracts in this list should correspond to MCD core contracts, verify
     // against the current release list at:
     //     https://changelog.makerdao.com/releases/goerli/latest/contracts.json
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
 
     /*
         OPERATOR: 0xA5Eee849FF395f9FA592645979f2A8Af6E0eF5c3
@@ -103,13 +103,13 @@ contract SpellAction {
         RWA007_A_OUTPUT_CONDUIT: 0xc54fEee07421EAB8000AC8c921c0De9DbfbE780B
         MIP21_LIQUIDATION_ORACLE: 0x2881c5dF65A8D81e38f7636122aFb456514804CC
     */
-    address constant RWA007SGFWOFH1_OPERATOR = 0xab8a1efCc4d04495F913c23409E7692A8698FEe7;
-    address constant RWA007SGFWOFH1_GEM = 0xCfc4043675EE82EEAe63C90D6eb3aB2dcf833431;
-    address constant MCD_JOIN_RWA007SGFWOFH1_A = 0x43aEbe126B1fcBC00eE7896de62D38F67283f926;
-    address constant RWA007SGFWOFH1_A_URN = 0xbDCa96eBfb24a694544aB53eDc4Ad2B721D781B1;
-    address constant RWA007SGFWOFH1_A_INPUT_CONDUIT = 0x495215cabc630830071F80263a908E8826a66121;
-    address constant RWA007SGFWOFH1_A_OUTPUT_CONDUIT = 0x7032546Ba3F6E8866334556a354e67B905aA4470;
-    address constant MIP21_LIQUIDATION_ORACLE = 0x5FC34639f1A008e3B4bC2ee4aB4D0f8fB09c99BE;
+    address constant RWA007SGFWOFH1_OPERATOR = 0x4C4b57c6da0b4f8a519eEEc3F719A39F3B9f6F64;
+    address constant RWA007SGFWOFH1_GEM = 0xAba7dF23843d021be1D0c3f489810C927cdBD561;
+    address constant MCD_JOIN_RWA007SGFWOFH1_A = 0x8dA7F4A346F0f4D4F050020e2E38373E5845A24B;
+    address constant RWA007SGFWOFH1_A_URN = 0x04B3767659FCb9E4C263ac6191864E815C831aDC;
+    address constant RWA007SGFWOFH1_A_INPUT_CONDUIT = 0x7e32D3E0e03493314592ff70dB9629b1bc0dd421;
+    address constant RWA007SGFWOFH1_A_OUTPUT_CONDUIT = 0x3357477a9049C9bC3a4917A0beC71Ad96F9e857C;
+    address constant MIP21_LIQUIDATION_ORACLE = 0x362dfE51E4f91a8257B8276435792095EE5d85C3;
     address constant DIIS_GROUP = address(0); // TODO
 
     uint256 constant THREE_PCT_RATE = 1000000000937303470807876289; // TODO RWA team should provide this one
@@ -220,7 +220,7 @@ contract SpellAction {
 }
 
 contract RwaSpell {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
 
     DSPauseAbstract public pause = DSPauseAbstract(CHANGELOG.getAddress("MCD_PAUSE"));
     address public action;
