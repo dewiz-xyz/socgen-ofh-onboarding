@@ -121,8 +121,9 @@ contract SpellAction {
     uint256 public constant RAY = 10**27;
     uint256 public constant RAD = 10**45;
 
-    uint256 constant RWA007SGHWOFH1_A_INITIAL_DC = 1000 * RAD; // TODO RWA team should provide
+    uint256 constant RWA007SGHWOFH1_A_INITIAL_DC = 10000 * RAD; // TODO RWA team should provide
     uint256 constant RWA007SGHWOFH1_A_INITIAL_PRICE = 1060 * WAD; // TODO RWA team should provide
+    uint256 constant RWA007SGHWOFH1_A_TAU = 300; // TODO RWA team should provide
 
     /**
      * @notice MIP13c3-SP4 Declaration of Intent & Commercial Points -
@@ -170,7 +171,12 @@ contract SpellAction {
          * tau: 5 minutes
          */
         // TODO: this should be verified with RWA Team (5 min for testing is good)
-        RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).init(ilk, RWA007SGHWOFH1_A_INITIAL_PRICE, DOC, 300);
+        RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).init(
+            ilk,
+            RWA007SGHWOFH1_A_INITIAL_PRICE,
+            DOC,
+            RWA007SGHWOFH1_A_TAU
+        );
         (, address pip, , ) = RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).ilks(ilk);
         CHANGELOG.setAddress("PIP_RWA007SGFWOFH1", pip);
 
