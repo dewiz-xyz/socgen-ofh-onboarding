@@ -6,15 +6,15 @@ update:; dapp update
 npm:; yarn install
 
 # install solc version
-# example to install other versions: `make solc 0_6_q2`
+# example to install other versions: `make solc 0_6_12`
 SOLC_VERSION := 0_6_12
 solc:; nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_${SOLC_VERSION}
 
 
 # Build & test
 build:; dapp build
-test-local:; dapp test --rpc-url $(call network,goerli) # --ffi # enable if you need the `ffi` cheat code on HEVM
-# test       :; DAPP_REMAPPINGS=`cat ./remappings.txt` ./test.sh ${match}
+test-remote:; dapp test --rpc-url $(call network,goerli) # --ffi # enable if you need the `ffi` cheat code on HEVM
+test-local:; dapp test --rpc  # --ffi # enable if you need the `ffi` cheat code on HEVM
 clean:; dapp clean
 lint:; yarn run lint
 estimate:; ./scripts/estimate-gas.sh ${contract}
