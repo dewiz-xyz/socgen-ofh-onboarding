@@ -424,7 +424,7 @@ contract DssSpellTest is DSTest, DSMath {
         //
         // Test for all collateral based changes here
         //
-        afterSpell.collaterals["RWA007SGHWOFH1-A"] = CollateralValues({ // TODO
+        afterSpell.collaterals["RWA007SGFWOFH1-A"] = CollateralValues({ // TODO
             line: 1000, // In whole Dai units
             dust: 0, // In whole Dai units
             pct: 200, // In basis points
@@ -711,15 +711,15 @@ contract DssSpellTest is DSTest, DSMath {
         }
         assertTrue(spell.done());
 
-        assertEq(chainlog.getAddress("RWA007SGFWOFH1"), addr.addr("RWA007SGHWOFH1"));
-        assertEq(chainlog.getAddress("MCD_JOIN_RWA007SGFWOFH1_A"), addr.addr("MCD_JOIN_RWA007SGHWOFH1_A"));
-        assertEq(chainlog.getAddress("RWA007SGFWOFH1_A_URN"), addr.addr("RWA007SGHWOFH1_A_URN"));
-        assertEq(chainlog.getAddress("RWA007SGFWOFH1_A_INPUT_CONDUIT"), addr.addr("RWA007SGHWOFH1_A_INPUT_CONDUIT"));
-        assertEq(chainlog.getAddress("RWA007SGFWOFH1_A_OUTPUT_CONDUIT"), addr.addr("RWA007SGHWOFH1_A_OUTPUT_CONDUIT"));
+        assertEq(chainlog.getAddress("RWA007SGFWOFH1"), addr.addr("RWA007SGFWOFH1"));
+        assertEq(chainlog.getAddress("MCD_JOIN_RWA007SGFWOFH1_A"), addr.addr("MCD_JOIN_RWA007SGFWOFH1_A"));
+        assertEq(chainlog.getAddress("RWA007SGFWOFH1_A_URN"), addr.addr("RWA007SGFWOFH1_A_URN"));
+        assertEq(chainlog.getAddress("RWA007SGFWOFH1_A_INPUT_CONDUIT"), addr.addr("RWA007SGFWOFH1_A_INPUT_CONDUIT"));
+        assertEq(chainlog.getAddress("RWA007SGFWOFH1_A_OUTPUT_CONDUIT"), addr.addr("RWA007SGFWOFH1_A_OUTPUT_CONDUIT"));
         assertEq(chainlog.getAddress("MIP21_LIQUIDATION_ORACLE"), addr.addr("MIP21_LIQUIDATION_ORACLE"));
     }
 
-    function testSpellIsCast_RWA007SGHWOFH1_INTEGRATION_BUMP() public {
+    function testSpellIsCast_RWA007SGFWOFH1_INTEGRATION_BUMP() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -740,7 +740,7 @@ contract DssSpellTest is DSTest, DSMath {
         assertEq(DSValueAbstract(pip).read(), bytes32(1070 * WAD));
     }
 
-    function testSpellIsCast_RWA007SGHWOFH1_INTEGRATION_TELL() public {
+    function testSpellIsCast_RWA007SGFWOFH1_INTEGRATION_TELL() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -765,7 +765,7 @@ contract DssSpellTest is DSTest, DSMath {
         assertTrue(!oracle.good("RWA007SGFWOFH1-A"));
     }
 
-    function testSpellIsCast_RWA007SGHWOFH1_INTEGRATION_TELL_CURE_GOOD() public {
+    function testSpellIsCast_RWA007SGFWOFH1_INTEGRATION_TELL_CURE_GOOD() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -796,7 +796,7 @@ contract DssSpellTest is DSTest, DSMath {
         assertEq(uint256(toc), 0);
     }
 
-    function testFailSpellIsCast_RWA007SGHWOFH1_INTEGRATION_CURE() public {
+    function testFailSpellIsCast_RWA007SGFWOFH1_INTEGRATION_CURE() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -812,7 +812,7 @@ contract DssSpellTest is DSTest, DSMath {
         cureSpell.cast();
     }
 
-    function testSpellIsCast_RWA007SGHWOFH1_INTEGRATION_TELL_CULL() public {
+    function testSpellIsCast_RWA007SGFWOFH1_INTEGRATION_TELL_CULL() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -844,7 +844,7 @@ contract DssSpellTest is DSTest, DSMath {
         assertEq(DSValueAbstract(pip).read(), bytes32(0));
     }
 
-    function testSpellIsCast_RWA007SGHWOFH1_OPERATOR_LOCK_DRAW_CONDUITS_WIPE_FREE() public {
+    function testSpellIsCast_RWA007SGFWOFH1_OPERATOR_LOCK_DRAW_CONDUITS_WIPE_FREE() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -884,10 +884,13 @@ contract DssSpellTest is DSTest, DSMath {
         assertEq(dai.balanceOf(address(rwaconduitout)), 1 * WAD);
 
         // wards
-        hevm.store(address(rwaconduitout), keccak256(abi.encode(address(this), uint256(0))), bytes32(uint256(1)));
-
-        // can
         hevm.store(address(rwaconduitout), keccak256(abi.encode(address(this), uint256(1))), bytes32(uint256(1)));
+        // can
+        hevm.store(address(rwaconduitout), keccak256(abi.encode(address(this), uint256(2))), bytes32(uint256(1)));
+        // may
+        hevm.store(address(rwaconduitout), keccak256(abi.encode(address(this), uint256(3))), bytes32(uint256(1)));
+        // bud
+        hevm.store(address(rwaconduitout), keccak256(abi.encode(address(this), uint256(4))), bytes32(uint256(1)));
 
         assertEq(dai.balanceOf(address(rwaconduitout)), 1 * WAD);
 
@@ -916,6 +919,10 @@ contract DssSpellTest is DSTest, DSMath {
         uint256 daiToPay = (art * rate - dustInVat) / RAY + 1; // extra wei rounding
 
         hevm.store(address(dai), keccak256(abi.encode(address(this), uint256(2))), bytes32(uint256(daiToPay))); // Forcing extra DAI balance to pay accumulated fee
+        // wards
+        hevm.store(address(rwaconduitin), keccak256(abi.encode(address(this), uint256(0))), bytes32(uint256(1)));
+        // may
+        hevm.store(address(rwaconduitin), keccak256(abi.encode(address(this), uint256(1))), bytes32(uint256(1)));
 
         assertEq(dai.balanceOf(address(rwaconduitin)), 0);
         dai.transfer(address(rwaconduitin), daiToPay);
@@ -934,7 +941,7 @@ contract DssSpellTest is DSTest, DSMath {
         assertEq(ink, 0);
     }
 
-    function testSpellIsCast_RWA007SGHWOFH1_END() public {
+    function testSpellIsCast_RWA007SGFWOFH1_END() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();

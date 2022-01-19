@@ -95,7 +95,7 @@ contract SpellAction {
         OPERATOR: 0xA5Eee849FF395f9FA592645979f2A8Af6E0eF5c3
         TRUST1: 0x597084d145e96Ae2e89E1c9d8DEE6d43d3557898
         TRUST2: 0xCB84430E410Df2dbDE0dF04Cf7711E656C90BDa2
-        ILK: RWA007
+        ILK: RWA007SGFWOFH1-A
         RWA001: 0x8F9A8cbBdfb93b72d646c8DEd6B4Fe4D86B315cB
         MCD_JOIN_RWA001_A: 0x029A554f252373e146f76Fa1a7455f73aBF4d38e
         RWA007_A_URN: 0x3Ba90D86f7E3218C48b7E0FCa959EcF43d9A30F4
@@ -121,9 +121,9 @@ contract SpellAction {
     uint256 public constant RAY = 10**27;
     uint256 public constant RAD = 10**45;
 
-    uint256 constant RWA007SGHWOFH1_A_INITIAL_DC = 10000 * RAD; // TODO RWA team should provide
+    uint256 constant RWA007SGHWOFH1_A_INITIAL_DC = 10000000 * RAD; // TODO RWA team should provide
     uint256 constant RWA007SGHWOFH1_A_INITIAL_PRICE = 1060 * WAD; // TODO RWA team should provide
-    uint256 constant RWA007SGHWOFH1_A_TAU = 300; // TODO RWA team should provide
+    uint48 constant RWA007SGHWOFH1_A_TAU = 300; // TODO RWA team should provide
 
     /**
      * @notice MIP13c3-SP4 Declaration of Intent & Commercial Points -
@@ -195,7 +195,7 @@ contract SpellAction {
         VatAbstract(MCD_VAT).rely(MIP21_LIQUIDATION_ORACLE);
 
         /// @notice 1000 debt ceiling
-        VatAbstract(MCD_VAT).file(ilk, "line", RWA007SGHWOFH1_A_INITIAL_PRICE);
+        VatAbstract(MCD_VAT).file(ilk, "line", RWA007SGHWOFH1_A_INITIAL_DC);
         VatAbstract(MCD_VAT).file("Line", VatAbstract(MCD_VAT).Line() + RWA007SGHWOFH1_A_INITIAL_DC);
 
         /// @notice No dust
