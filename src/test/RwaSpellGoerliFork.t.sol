@@ -11,7 +11,7 @@ import "dss-interfaces/Interfaces.sol";
 import "./rates.sol";
 import "./addresses_goerli_ces.sol";
 
-import {RwaSpell, SpellAction} from "../spells/RwaSpellGoerli.sol";
+import {RwaSpell, SpellAction} from "../spells/RwaSpellGoerliFork.sol";
 
 interface Hevm {
     function warp(uint256) external;
