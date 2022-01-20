@@ -854,11 +854,8 @@ contract DssSpellTest is DSTest, DSMath {
         hevm.warp(now + 10 days); // Let rate be > 1
 
         // put 1 conti of MKR into this contract to push
-        //        hevm.store(address(gov), bytes32(uint256(2)), bytes32(gov.totalSupply() + 1));
-        //        hevm.store(address(gov), keccak256(abi.encode(address(this), uint256(3))), bytes32(uint256(1)));
         hevm.store(address(rwagem), keccak256(abi.encode(address(this), uint256(0))), bytes32(uint256(2 * WAD)));
         hevm.store(address(rwagem), bytes32(uint256(2)), bytes32(uint256(rwagem.totalSupply() + 2 * WAD)));
-        //        hevm.store(address(rwagem), keccak256(abi.encode(address(this), uint256(1))), bytes32(uint256(1 ether)));
         // setting address(this) as operator
         hevm.store(address(rwaurn), keccak256(abi.encode(address(this), uint256(3))), bytes32(uint256(1)));
 
