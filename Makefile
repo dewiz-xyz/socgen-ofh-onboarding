@@ -22,15 +22,15 @@ size:; ./scripts/contract-size.sh ${file} ${contract} ${args}
 
 # mainnet
 deploy-mainnet: export ETH_RPC_URL = $(call network,mainnet)
-deploy-mainnet: check-api-key; @./scripts/deploy-mainnet.sh mainnet
+deploy-mainnet: check-api-key; @./scripts/deploy-mainnet.sh
 
 # goerli
 deploy-goerli: export ETH_RPC_URL = $(call network,goerli)
-deploy-goerli: check-api-key; @./scripts/deploy-goerli.sh goerli
+deploy-goerli: check-api-key; @./scripts/deploy-goerli.sh
 
 # goerli CES fork
 deploy-ces-goerli: export ETH_RPC_URL = $(call network,goerli)
-deploy-ces-goerli: check-api-key; @./scripts/deploy-ces-goerli.sh goerli
+deploy-ces-goerli: check-api-key; @./scripts/deploy-ces-goerli.sh
 
 # verify on Etherscan
 verify:; ETH_RPC_URL=$(call network,$(network_name)) dapp verify-contract $(contract) $(contract_address)

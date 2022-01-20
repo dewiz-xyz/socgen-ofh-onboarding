@@ -40,7 +40,7 @@ if command -v tput >/dev/null 2>&1; then
 fi
 
 # ensure ETH_FROM is set and give a meaningful error message
-[[ -z ${ETH_FROM} ]] && die "ETH_FROM not found, please set it and re-run the last command."
+[[ -z "$ETH_FROM" ]] && die "ETH_FROM not found, please set it and re-run the last command."
 
 # Make sure address is checksummed
 [ "$ETH_FROM" != "$(seth --to-checksum-address "$ETH_FROM")" ] && \

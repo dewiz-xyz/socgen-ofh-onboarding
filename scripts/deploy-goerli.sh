@@ -4,7 +4,7 @@ set -eo pipefail
 
 source "${BASH_SOURCE%/*}/common.sh"
 
-[[ "$ETH_RPC_URL" && "$(seth chain)" == "$1" ]] || die "Please set a $1 ETH_RPC_URL"
+[[ "$ETH_RPC_URL" && "$(seth chain)" == "goerli" ]] || die "Please set a goerli ETH_RPC_URL"
 
 
 # shellcheck disable=SC1091
