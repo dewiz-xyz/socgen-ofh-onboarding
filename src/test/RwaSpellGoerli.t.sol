@@ -9,7 +9,7 @@ import "ds-math/math.sol";
 import "ds-test/test.sol";
 import "dss-interfaces/Interfaces.sol";
 import "./rates.sol";
-import "./addresses_goerli.sol";
+import "./addresses_goerli_ces.sol";
 
 import {RwaSpell, SpellAction} from "../spells/RwaSpellGoerli.sol";
 
@@ -108,7 +108,7 @@ interface RwaLiquidationLike {
 }
 
 contract EndSpellAction {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
 
     function execute() public {
         EndAbstract(CHANGELOG.getAddress("MCD_END")).cage();
@@ -116,7 +116,7 @@ contract EndSpellAction {
 }
 
 contract TestSpell {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
     DSPauseAbstract public pause = DSPauseAbstract(CHANGELOG.getAddress("MCD_PAUSE"));
     address public action;
     bytes32 public tag;
@@ -159,7 +159,7 @@ contract EndSpell is TestSpell {
 }
 
 contract CullSpellAction {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
     bytes32 constant ilk = "RWA007SGFWOFH1-A";
 
     function execute() public {
@@ -178,7 +178,7 @@ contract CullSpell is TestSpell {
 }
 
 contract CureSpellAction {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
     bytes32 constant ilk = "RWA007SGFWOFH1-A";
 
     function execute() public {
@@ -194,7 +194,7 @@ contract CureSpell is TestSpell {
 }
 
 contract TellSpellAction {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
     bytes32 constant ilk = "RWA007SGFWOFH1-A";
 
     function execute() public {
@@ -211,7 +211,7 @@ contract TellSpell is TestSpell {
 }
 
 contract BumpSpellAction {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
     bytes32 constant ilk = "RWA007SGFWOFH1-A";
     uint256 constant WAD = 10**18;
 

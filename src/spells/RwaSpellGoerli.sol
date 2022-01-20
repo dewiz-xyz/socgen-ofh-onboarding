@@ -226,7 +226,7 @@ contract SpellAction {
 }
 
 contract RwaSpell {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
 
     DSPauseAbstract public pause = DSPauseAbstract(CHANGELOG.getAddress("MCD_PAUSE"));
     address public action;
