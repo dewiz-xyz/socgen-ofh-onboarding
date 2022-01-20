@@ -17,8 +17,8 @@ test-remote:; dapp test --rpc-url $(call network,goerli) # --ffi # enable if you
 test-local:; dapp test --rpc  # --ffi # enable if you need the `ffi` cheat code on HEVM
 clean:; dapp clean
 lint:; yarn run lint
-estimate:; ./scripts/estimate-gas.sh ${contract}
-size:; ./scripts/contract-size.sh ${contract}
+estimate:; ./scripts/estimate-gas.sh ${file} ${contract} ${args}
+size:; ./scripts/contract-size.sh ${file} ${contract} ${args}
 
 # mainnet
 deploy-mainnet: export ETH_RPC_URL = $(call network,mainnet)

@@ -1,39 +1,27 @@
 #!/bin/bash
 
-set -e
+set -eo pipefail
 
-[[ "$ETH_RPC_URL" && "$(seth chain)" == "$1" ]] || {
-    echo "Please set a $1 ETH_RPC_URL"
-    exit 1
-}
+source "${BASH_SOURCE%/*}/common.sh"
+
+
+[[ "$ETH_RPC_URL" && "$(seth chain)" == "$1" ]] || die "Please set a $1 ETH_RPC_URL"
 
 # shellcheck disable=SC1091
-source ./scripts/build-env-addresses.sh ces-goerli >/dev/null 2>&1
+source "${BASH_SOURCE%/*}/build-env-addresses.sh" ces-goerli >/dev/null 2>&1
 
 export ETH_GAS=6000000
 
 if [ -z "$MIP21_LIQUIDATION_ORACLE" ]; then
-    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_VAL" ] || {
-        echo "Please set MIP21_LIQUIDATION_ORACLE_INIT_VAL param"
-        exit 1
-    }
-
-    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_DOC" ] || {
-        echo "Please set MIP21_LIQUIDATION_ORACLE_INIT_DOC param"
-        exit 1
-    }
-
-    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_TAU" ] || {
-        echo "Please set MIP21_LIQUIDATION_ORACLE_INIT_TAU param"
-        exit 1
-    }
+    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_VAL" ] || die "Please set MIP21_LIQUIDATION_ORACLE_INIT_VAL param"
+    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_DOC" ] || die "Please set MIP21_LIQUIDATION_ORACLE_INIT_DOC param"
+    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_TAU" ] || die "Please set MIP21_LIQUIDATION_ORACLE_INIT_TAU param"
 fi
-
 
 # TODO: confirm if name/symbol is going to follow the RWA convention
 # TODO: confirm with DAO at the time of mainnet deployment if OFH will indeed be 007
-[[ -z "$NAME" ]] && NAME="RWA-007-SGF-wOFH-1"
-[[ -z "$SYMBOL" ]] && SYMBOL="RWA007SGFWOFH1"
+[[ -z "$NAME" ]] && NAME="RWA-007"
+[[ -z "$SYMBOL" ]] && SYMBOL="RWA007"
 #
 # WARNING (2021-09-08): The system cannot currently accomodate any LETTER beyond
 # "A".  To add more letters, we will need to update the PIP naming convention
@@ -74,8 +62,7 @@ make build
 
 
 # tokenize it
-# RWA_WRAPPER_TOKEN=$(dapp create "src/TokenWrapper.sol:TokenWrapper" \"$NAME\" \"$SYMBOL\")
-RWA_WRAPPER_TOKEN=$(dapp create TokenWrapper "$RWA_OFH_TOKEN")
+[[ -z "$RWA_WRAPPER_TOKEN" ]] && RWA_WRAPPER_TOKEN=$(dapp create TokenWrapper "$RWA_OFH_TOKEN")
 
 # route it
 [[ -z "$RWA_OUTPUT_CONDUIT" ]] && {
@@ -115,7 +102,7 @@ seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
 }
 
 # price it
-if [ -z "$MIP21_LIQUIDATION_ORACLE" ]; then
+[[ -z "$MIP21_LIQUIDATION_ORACLE" ]] && {
     MIP21_LIQUIDATION_ORACLE=$(dapp create RwaLiquidationOracle "$MCD_VAT" "$MCD_VOW")
 
     seth send "$MIP21_LIQUIDATION_ORACLE" 'init(bytes32,uint256,string,uint48)' \
@@ -126,7 +113,7 @@ if [ -z "$MIP21_LIQUIDATION_ORACLE" ]; then
 
     seth send "$MIP21_LIQUIDATION_ORACLE" 'rely(address)' "$MCD_PAUSE_PROXY"
     seth send "$MIP21_LIQUIDATION_ORACLE" 'deny(address)' "$ETH_FROM"
-fi
+}
 
 # print it
 echo "OPERATOR: ${OPERATOR}"

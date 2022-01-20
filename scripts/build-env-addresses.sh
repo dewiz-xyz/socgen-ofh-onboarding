@@ -7,6 +7,8 @@
 # Run as script and write to file to save exports to source file
 #    `bash ./scripts/build-env-addresses.sh [ network ] > env-addresses-network`
 
+set -eo pipefail
+
 function validate_url() {
   if [[ $(curl -I ${1} 2>&1 | grep -E 'HTTP/(1.1|2) [23][0-9]+') ]]; then
     return 0
@@ -26,7 +28,7 @@ if [[ $_ != "${0}" ]]; then
 fi
 
 if [ -z "${1}" ]; then
-  echo "Please specify the network [ mainnet, goerli, ces-goerli ] or a file path as an argument."
+  echo "Please specify the network [ mainnet, goerli, ces-goerli ] or a file path as an argument." >&2
   [ -z "${PS1}" ] && exit || return
 fi
 
@@ -37,16 +39,16 @@ elif [ "${1}" == "mainnet" ]; then
 elif [ "${1}" == "ces-goerli" ]; then
   URL="https://raw.githubusercontent.com/ClioFinance/ces-goerli/master/contracts.json"
 else
-  echo "# Invalid network ${1}"
+  echo "# Invalid network ${1}" >&2
   [ -z "${PS1}" ] && exit || return
 fi
 
 if validate_url "${URL}"; then
-  echo "# Deployment addresses generated from:"
-  echo "# ${URL}"
+  echo "# Deployment addresses generated from:" >&2
+  echo "# ${URL}" >&2
   ADDRESSES_RAW="$(curl -Ls "${URL}")"
 else
-  echo "# Invalid URL ${URL}"
+  echo "# Invalid URL ${URL}" >&2
   [ -z "${PS1}" ] && exit || return
 fi
 
