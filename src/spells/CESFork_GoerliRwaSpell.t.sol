@@ -8,10 +8,16 @@ import "ds-value/value.sol";
 import "ds-math/math.sol";
 import "ds-test/test.sol";
 import "dss-interfaces/Interfaces.sol";
-import "./rates.sol";
-import "./addresses_goerli_ces.sol";
+import "./helpers/Rates.sol";
+import "./helpers/CESFork_GoerliAddresses.sol";
 
+<<<<<<<< HEAD:src/spells/helpers/RwaSpellGoerliFork.t.sol
 import {RwaSpell, SpellAction} from "../spells/RwaSpellGoerliFork.sol";
+|||||||| parent of 51ea739 (refactor: reorganize file structure to match the agreed convention):src/test/RwaSpellGoerli.t.sol
+import {RwaSpell, SpellAction} from "../spells/RwaSpellGoerli.sol";
+========
+import {RwaSpell, SpellAction} from "./CESFork_GoerliRwaSpell.sol";
+>>>>>>>> 51ea739 (refactor: reorganize file structure to match the agreed convention):src/spells/CESFork_GoerliRwaSpell.t.sol
 
 interface Hevm {
     function warp(uint256) external;
