@@ -679,7 +679,7 @@ contract DssSpellTest is DSTest, DSMath {
     //     scheduleWaitAndCastFailLate();
     // }
 
-    function test_CESFork_SpellIsCast() public {
+    function testSpellIsCast() public {
         string memory description = new RwaSpell().description();
         assertTrue(bytes(description).length > 0);
         // DS-Test can't handle strings directly, so cast to a bytes32.
@@ -704,7 +704,7 @@ contract DssSpellTest is DSTest, DSMath {
         // checkCollateralValues(afterSpell);
     }
 
-    function test_CESFork_ChainlogValues() public {
+    function testChainlogValues() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -719,7 +719,7 @@ contract DssSpellTest is DSTest, DSMath {
         assertEq(chainlog.getAddress("MIP21_LIQUIDATION_ORACLE"), addr.addr("MIP21_LIQUIDATION_ORACLE"));
     }
 
-    function test_CESFork_SpellIsCast_RWA007_INTEGRATION_BUMP() public {
+    function testSpellIsCast_RWA007_INTEGRATION_BUMP() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -740,7 +740,7 @@ contract DssSpellTest is DSTest, DSMath {
         assertEq(DSValueAbstract(pip).read(), bytes32(1070 * WAD));
     }
 
-    function test_CESFork_SpellIsCast_RWA007_INTEGRATION_TELL() public {
+    function testSpellIsCast_RWA007_INTEGRATION_TELL() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -765,7 +765,7 @@ contract DssSpellTest is DSTest, DSMath {
         assertTrue(!oracle.good("RWA007-A"));
     }
 
-    function test_CESFork_SpellIsCast_RWA007_INTEGRATION_TELL_CURE_GOOD() public {
+    function testSpellIsCast_RWA007_INTEGRATION_TELL_CURE_GOOD() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -796,7 +796,7 @@ contract DssSpellTest is DSTest, DSMath {
         assertEq(uint256(toc), 0);
     }
 
-    function test_CESFork_FailSpellIsCast_RWA007_INTEGRATION_CURE() public {
+    function testFailSpellIsCast_RWA007_INTEGRATION_CURE() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -812,7 +812,7 @@ contract DssSpellTest is DSTest, DSMath {
         cureSpell.cast();
     }
 
-    function test_CESFork_SpellIsCast_RWA007_INTEGRATION_TELL_CULL() public {
+    function testSpellIsCast_RWA007_INTEGRATION_TELL_CULL() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -844,7 +844,7 @@ contract DssSpellTest is DSTest, DSMath {
         assertEq(DSValueAbstract(pip).read(), bytes32(0));
     }
 
-    function test_CESFork_SpellIsCast_RWA007_OPERATOR_LOCK_DRAW_CONDUITS_WIPE_FREE() public {
+    function testSpellIsCast_RWA007_OPERATOR_LOCK_DRAW_CONDUITS_WIPE_FREE() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -939,7 +939,7 @@ contract DssSpellTest is DSTest, DSMath {
         assertEq(ink, 0);
     }
 
-    function test_CESFork_SpellIsCast_RWA007_END() public {
+    function testSpellIsCast_RWA007_END() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
