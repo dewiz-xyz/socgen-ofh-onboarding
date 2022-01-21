@@ -8,10 +8,10 @@ import "ds-value/value.sol";
 import "ds-math/math.sol";
 import "ds-test/test.sol";
 import "dss-interfaces/Interfaces.sol";
-import "./rates.sol";
-import "./addresses_goerli.sol";
+import "./helpers/Rates.sol";
+import "./helpers/GoerliAddresses.sol";
 
-import {RwaSpell, SpellAction} from "../spells/RwaSpellGoerli.sol";
+import {RwaSpell, SpellAction} from "../spells/GoerliRwaSpell.sol";
 
 interface Hevm {
     function warp(uint256) external;
