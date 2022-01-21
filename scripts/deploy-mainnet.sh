@@ -2,15 +2,15 @@
 #
 # bash scripts/deploy-mainnet.sh
 
-set -e
+set -eo pipefail
 
-[[ "$ETH_RPC_URL" && "$(seth chain)" == "$1" ]] || {
-    echo "Please set a $1 ETH_RPC_URL";
-    exit 1;
-}
+source "${BASH_SOURCE%/*}/common.sh"
+
+[[ "$ETH_RPC_URL" && "$(seth chain)" == "ethlive" ]] || die "Please set a mainnet ETH_RPC_URL"
+
 
 # shellcheck disable=SC1091
-source ./scripts/build-env-addresses.sh mainnet > /dev/null 2>&1
+source "${BASH_SOURCE%/*}/build-env-addresses.sh" mainnet >/dev/null 2>&1
 
 # TODO: confirm for mainnet deployment
 export ETH_GAS=6000000

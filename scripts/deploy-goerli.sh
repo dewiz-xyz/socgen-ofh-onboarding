@@ -1,21 +1,21 @@
 #!/bin/bash
 
-set -e
+set -eo pipefail
 
-[[ "$ETH_RPC_URL" && "$(seth chain)" == "$1" ]] || {
-    echo "Please set a $1 ETH_RPC_URL"
-    exit 1
-}
+source "${BASH_SOURCE%/*}/common.sh"
+
+[[ "$ETH_RPC_URL" && "$(seth chain)" == "goerli" ]] || die "Please set a goerli ETH_RPC_URL"
+
 
 # shellcheck disable=SC1091
-source ./scripts/build-env-addresses.sh goerli >/dev/null 2>&1
+source "${BASH_SOURCE%/*}/build-env-addresses.sh" goerli >/dev/null 2>&1
 
 export ETH_GAS=6000000
 
 # TODO: confirm if name/symbol is going to follow the RWA convention
 # TODO: confirm with DAO at the time of mainnet deployment if OFH will indeed be 007
-[[ -z "$NAME" ]] && NAME="RWA-007-SGF-wOFH-1"
-[[ -z "$SYMBOL" ]] && SYMBOL="RWA007SGFWOFH1"
+[[ -z "$NAME" ]] && NAME="RWA-007"
+[[ -z "$SYMBOL" ]] && SYMBOL="RWA007"
 #
 # WARNING (2021-09-08): The system cannot currently accomodate any LETTER beyond
 # "A".  To add more letters, we will need to update the PIP naming convention
@@ -28,9 +28,6 @@ export ETH_GAS=6000000
 # ! TODO: check with team/PE if this is still the case
 #
 [[ -z "$LETTER" ]] && LETTER="A"
-
-# [[ -z "$MIP21_LIQUIDATION_ORACLE" ]] && MIP21_LIQUIDATION_ORACLE="0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF"
-# TODO: confirm liquidations handling - no liquidations for the time being
 
 ZERO_ADDRESS="0x0000000000000000000000000000000000000000"
 
@@ -52,8 +49,7 @@ make build
 
 
 # tokenize it
-# RWA_WRAPPER_TOKEN=$(dapp create "src/TokenWrapper.sol:TokenWrapper" \"$NAME\" \"$SYMBOL\")
-RWA_WRAPPER_TOKEN=$(dapp create TokenWrapper "$RWA_OFH_TOKEN")
+[[ -z "$RWA_WRAPPER_TOKEN" ]] && RWA_WRAPPER_TOKEN=$(dapp create TokenWrapper "$RWA_OFH_TOKEN")
 
 # route it
 [[ -z "$RWA_OUTPUT_CONDUIT" ]] && {
