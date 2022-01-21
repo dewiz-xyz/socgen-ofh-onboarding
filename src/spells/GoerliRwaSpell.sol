@@ -92,23 +92,25 @@ contract SpellAction {
     ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
 
     /*
-        OPERATOR: 0x4C4b57c6da0b4f8a519eEEc3F719A39F3B9f6F64
+
+
+        OPERATOR: 0xB01F99C6Ff70D0b16E6bE86F3FCc2871D445cdcA
         TRUST1: 0x597084d145e96Ae2e89E1c9d8DEE6d43d3557898
         TRUST2: 0xCB84430E410Df2dbDE0dF04Cf7711E656C90BDa2
-        ILK: RWA007SGFWOFH1-A
-        RWA007SGFWOFH1: 0xAba7dF23843d021be1D0c3f489810C927cdBD561
-        MCD_JOIN_RWA007SGFWOFH1_A: 0x8dA7F4A346F0f4D4F050020e2E38373E5845A24B
-        RWA007SGFWOFH1_A_URN: 0x04B3767659FCb9E4C263ac6191864E815C831aDC
-        RWA007SGFWOFH1_A_INPUT_CONDUIT: 0x7e32D3E0e03493314592ff70dB9629b1bc0dd421
-        RWA007SGFWOFH1_A_OUTPUT_CONDUIT: 0x3357477a9049C9bC3a4917A0beC71Ad96F9e857C
+        ILK: RWA007-A
+        RWA007: 0xF8d289bD665B4580f2abD9CEa7bD82bD9c039b06
+        MCD_JOIN_RWA007_A: 0xC5F5D7e6cb812919a93f3E50e5b4Bf40630029ce
+        RWA007_A_URN: 0x78e044E5e8EeD7188D147b5dE01d325819D91077
+        RWA007_A_INPUT_CONDUIT: 0xAd6953a82105F77D09C75DeFC6993326eafcBA21
+        RWA007_A_OUTPUT_CONDUIT: 0x6c81462253F2C37C7C6612f5b2F3F90a68827BA8
         MIP21_LIQUIDATION_ORACLE: 0x362dfE51E4f91a8257B8276435792095EE5d85C3
     */
-    address constant RWA007SGFWOFH1_OPERATOR = 0x4C4b57c6da0b4f8a519eEEc3F719A39F3B9f6F64;
-    address constant RWA007SGFWOFH1_GEM = 0xAba7dF23843d021be1D0c3f489810C927cdBD561;
-    address constant MCD_JOIN_RWA007SGFWOFH1_A = 0x8dA7F4A346F0f4D4F050020e2E38373E5845A24B;
-    address constant RWA007SGFWOFH1_A_URN = 0x04B3767659FCb9E4C263ac6191864E815C831aDC;
-    address constant RWA007SGFWOFH1_A_INPUT_CONDUIT = 0x7e32D3E0e03493314592ff70dB9629b1bc0dd421;
-    address constant RWA007SGFWOFH1_A_OUTPUT_CONDUIT = 0x3357477a9049C9bC3a4917A0beC71Ad96F9e857C;
+    address constant RWA007_OPERATOR = 0xB01F99C6Ff70D0b16E6bE86F3FCc2871D445cdcA;
+    address constant RWA007_GEM = 0xF8d289bD665B4580f2abD9CEa7bD82bD9c039b06;
+    address constant MCD_JOIN_RWA007_A = 0xC5F5D7e6cb812919a93f3E50e5b4Bf40630029ce;
+    address constant RWA007_A_URN = 0x78e044E5e8EeD7188D147b5dE01d325819D91077;
+    address constant RWA007_A_INPUT_CONDUIT = 0xAd6953a82105F77D09C75DeFC6993326eafcBA21;
+    address constant RWA007_A_OUTPUT_CONDUIT = 0x6c81462253F2C37C7C6612f5b2F3F90a68827BA8;
     address constant MIP21_LIQUIDATION_ORACLE = 0x362dfE51E4f91a8257B8276435792095EE5d85C3;
     address constant DIIS_GROUP = address(0); // TODO
 
@@ -121,9 +123,9 @@ contract SpellAction {
     uint256 public constant RAY = 10**27;
     uint256 public constant RAD = 10**45;
 
-    uint256 constant RWA007SGHWOFH1_A_INITIAL_DC = 10000000 * RAD; // TODO RWA team should provide
-    uint256 constant RWA007SGHWOFH1_A_INITIAL_PRICE = 1060 * WAD; // TODO RWA team should provide
-    uint48 constant RWA007SGHWOFH1_A_TAU = 300; // TODO RWA team should provide
+    uint256 constant RWA007_A_INITIAL_DC = 10000000 * RAD; // TODO RWA team should provide
+    uint256 constant RWA007_A_INITIAL_PRICE = 1060 * WAD; // TODO RWA team should provide
+    uint48 constant RWA007_A_TAU = 300; // TODO RWA team should provide
 
     /**
      * @notice MIP13c3-SP4 Declaration of Intent & Commercial Points -
@@ -142,26 +144,26 @@ contract SpellAction {
         /// @notice RWA007-SGFWOFH1-A collateral deploy
 
         /// @notice Set ilk bytes32 variable
-        bytes32 ilk = "RWA007SGFWOFH1-A";
+        bytes32 ilk = "RWA007-A";
 
         /// @notice add RWA007SGHWOFH1 contract to the changelog
-        CHANGELOG.setAddress("RWA007SGFWOFH1", RWA007SGFWOFH1_GEM);
-        CHANGELOG.setAddress("MCD_JOIN_RWA007SGFWOFH1_A", MCD_JOIN_RWA007SGFWOFH1_A);
+        CHANGELOG.setAddress("RWA007", RWA007_GEM);
+        CHANGELOG.setAddress("MCD_JOIN_RWA007_A", MCD_JOIN_RWA007_A);
         CHANGELOG.setAddress("MIP21_LIQUIDATION_ORACLE", MIP21_LIQUIDATION_ORACLE);
-        CHANGELOG.setAddress("RWA007SGFWOFH1_A_URN", RWA007SGFWOFH1_A_URN);
-        CHANGELOG.setAddress("RWA007SGFWOFH1_A_INPUT_CONDUIT", RWA007SGFWOFH1_A_INPUT_CONDUIT);
-        CHANGELOG.setAddress("RWA007SGFWOFH1_A_OUTPUT_CONDUIT", RWA007SGFWOFH1_A_OUTPUT_CONDUIT);
+        CHANGELOG.setAddress("RWA007_A_URN", RWA007_A_URN);
+        CHANGELOG.setAddress("RWA007_A_INPUT_CONDUIT", RWA007_A_INPUT_CONDUIT);
+        CHANGELOG.setAddress("RWA007_A_OUTPUT_CONDUIT", RWA007_A_OUTPUT_CONDUIT);
 
         /// @notice bump changelog version
         // TODO make sure to update this version on mainnet
         CHANGELOG.setVersion("1.0.0");
 
         /// @notice Sanity checks
-        require(GemJoinAbstract(MCD_JOIN_RWA007SGFWOFH1_A).vat() == MCD_VAT, "join-vat-not-match");
-        require(GemJoinAbstract(MCD_JOIN_RWA007SGFWOFH1_A).ilk() == ilk, "join-ilk-not-match");
-        require(GemJoinAbstract(MCD_JOIN_RWA007SGFWOFH1_A).gem() == RWA007SGFWOFH1_GEM, "join-gem-not-match");
+        require(GemJoinAbstract(MCD_JOIN_RWA007_A).vat() == MCD_VAT, "join-vat-not-match");
+        require(GemJoinAbstract(MCD_JOIN_RWA007_A).ilk() == ilk, "join-ilk-not-match");
+        require(GemJoinAbstract(MCD_JOIN_RWA007_A).gem() == RWA007_GEM, "join-gem-not-match");
         require(
-            GemJoinAbstract(MCD_JOIN_RWA007SGFWOFH1_A).dec() == DSTokenAbstract(RWA007SGFWOFH1_GEM).decimals(),
+            GemJoinAbstract(MCD_JOIN_RWA007_A).dec() == DSTokenAbstract(RWA007_GEM).decimals(),
             "join-dec-not-match"
         );
 
@@ -171,14 +173,9 @@ contract SpellAction {
          * tau: 5 minutes
          */
         // TODO: this should be verified with RWA Team (5 min for testing is good)
-        RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).init(
-            ilk,
-            RWA007SGHWOFH1_A_INITIAL_PRICE,
-            DOC,
-            RWA007SGHWOFH1_A_TAU
-        );
+        RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).init(ilk, RWA007_A_INITIAL_PRICE, DOC, RWA007_A_TAU);
         (, address pip, , ) = RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).ilks(ilk);
-        CHANGELOG.setAddress("PIP_RWA007SGFWOFH1", pip);
+        CHANGELOG.setAddress("PIP_RWA007", pip);
 
         /// @notice Set price feed for RWA007SGHWOFH1
         SpotAbstract(MCD_SPOT).file(ilk, "pip", pip);
@@ -189,14 +186,14 @@ contract SpellAction {
         JugAbstract(MCD_JUG).init(ilk);
 
         /// @notice Allow RWA007SGHWOFH1 Join to modify Vat registry
-        VatAbstract(MCD_VAT).rely(MCD_JOIN_RWA007SGFWOFH1_A);
+        VatAbstract(MCD_VAT).rely(MCD_JOIN_RWA007_A);
 
         /// @notice Allow RwaLiquidationOracle to modify Vat registry
         VatAbstract(MCD_VAT).rely(MIP21_LIQUIDATION_ORACLE);
 
         /// @notice 1000 debt ceiling
-        VatAbstract(MCD_VAT).file(ilk, "line", RWA007SGHWOFH1_A_INITIAL_DC);
-        VatAbstract(MCD_VAT).file("Line", VatAbstract(MCD_VAT).Line() + RWA007SGHWOFH1_A_INITIAL_DC);
+        VatAbstract(MCD_VAT).file(ilk, "line", RWA007_A_INITIAL_DC);
+        VatAbstract(MCD_VAT).file("Line", VatAbstract(MCD_VAT).Line() + RWA007_A_INITIAL_DC);
 
         /// @notice No dust
         // VatAbstract(MCD_VAT).file(ilk, "dust", 0)
@@ -211,17 +208,17 @@ contract SpellAction {
         SpotAbstract(MCD_SPOT).poke(ilk);
 
         /// @notice give the urn permissions on the join adapter
-        GemJoinAbstract(MCD_JOIN_RWA007SGFWOFH1_A).rely(RWA007SGFWOFH1_A_URN);
+        GemJoinAbstract(MCD_JOIN_RWA007_A).rely(RWA007_A_URN);
 
         /// @notice set up the urn
-        RwaUrnLike(RWA007SGFWOFH1_A_URN).hope(RWA007SGFWOFH1_OPERATOR);
+        RwaUrnLike(RWA007_A_URN).hope(RWA007_OPERATOR);
 
         /// @notice set up output conduit
-        RwaOutputConduitLike(RWA007SGFWOFH1_A_OUTPUT_CONDUIT).hope(RWA007SGFWOFH1_OPERATOR);
+        RwaOutputConduitLike(RWA007_A_OUTPUT_CONDUIT).hope(RWA007_OPERATOR);
 
         /// @notice whitelist DIIS Group in the conduits
-        RwaOutputConduitLike(RWA007SGFWOFH1_A_OUTPUT_CONDUIT).mate(DIIS_GROUP);
-        RwaInputConduitLike(RWA007SGFWOFH1_A_INPUT_CONDUIT).mate(DIIS_GROUP);
+        RwaOutputConduitLike(RWA007_A_OUTPUT_CONDUIT).mate(DIIS_GROUP);
+        RwaInputConduitLike(RWA007_A_INPUT_CONDUIT).mate(DIIS_GROUP);
     }
 }
 
