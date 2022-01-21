@@ -160,12 +160,12 @@ contract EndSpell is TestSpell {
 
 contract CullSpellAction {
     ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
-    bytes32 constant ilk = "RWA007SGFWOFH1-A";
+    bytes32 constant ilk = "RWA007-A";
 
     function execute() public {
         RwaLiquidationLike(CHANGELOG.getAddress("MIP21_LIQUIDATION_ORACLE")).cull(
             ilk,
-            CHANGELOG.getAddress("RWA007SGFWOFH1_A_URN")
+            CHANGELOG.getAddress("RWA007_A_URN")
         );
     }
 }
@@ -179,7 +179,7 @@ contract CullSpell is TestSpell {
 
 contract CureSpellAction {
     ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
-    bytes32 constant ilk = "RWA007SGFWOFH1-A";
+    bytes32 constant ilk = "RWA007-A";
 
     function execute() public {
         RwaLiquidationLike(CHANGELOG.getAddress("MIP21_LIQUIDATION_ORACLE")).cure(ilk);
@@ -195,7 +195,7 @@ contract CureSpell is TestSpell {
 
 contract TellSpellAction {
     ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
-    bytes32 constant ilk = "RWA007SGFWOFH1-A";
+    bytes32 constant ilk = "RWA007-A";
 
     function execute() public {
         VatAbstract(CHANGELOG.getAddress("MCD_VAT")).file(ilk, "line", 0);
@@ -212,7 +212,7 @@ contract TellSpell is TestSpell {
 
 contract BumpSpellAction {
     ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
-    bytes32 constant ilk = "RWA007SGFWOFH1-A";
+    bytes32 constant ilk = "RWA007-A";
     uint256 constant WAD = 10**18;
 
     function execute() public {
@@ -294,13 +294,13 @@ contract DssSpellTest is DSTest, DSMath {
 
     ChainlogAbstract chainlog = ChainlogAbstract(addr.addr("CHANGELOG"));
 
-    bytes32 constant ilk = "RWA007SGFWOFH1-A";
-    DSTokenAbstract rwagem = DSTokenAbstract(addr.addr("RWA007SGFWOFH1"));
-    GemJoinAbstract rwajoin = GemJoinAbstract(addr.addr("MCD_JOIN_RWA007SGFWOFH1_A"));
+    bytes32 constant ilk = "RWA007-A";
+    DSTokenAbstract rwagem = DSTokenAbstract(addr.addr("RWA007"));
+    GemJoinAbstract rwajoin = GemJoinAbstract(addr.addr("MCD_JOIN_RWA007_A"));
     RwaLiquidationLike oracle = RwaLiquidationLike(addr.addr("MIP21_LIQUIDATION_ORACLE"));
-    RwaUrnLike rwaurn = RwaUrnLike(addr.addr("RWA007SGFWOFH1_A_URN"));
-    RwaInputConduitLike rwaconduitin = RwaInputConduitLike(addr.addr("RWA007SGFWOFH1_A_INPUT_CONDUIT"));
-    RwaOutputConduitLike rwaconduitout = RwaOutputConduitLike(addr.addr("RWA007SGFWOFH1_A_OUTPUT_CONDUIT"));
+    RwaUrnLike rwaurn = RwaUrnLike(addr.addr("RWA007_A_URN"));
+    RwaInputConduitLike rwaconduitin = RwaInputConduitLike(addr.addr("RWA007_A_INPUT_CONDUIT"));
+    RwaOutputConduitLike rwaconduitout = RwaOutputConduitLike(addr.addr("RWA007_A_OUTPUT_CONDUIT"));
 
     address makerDeployer06 = 0xda0fab060e6cc7b1C0AA105d29Bd50D71f036711;
 
@@ -424,7 +424,7 @@ contract DssSpellTest is DSTest, DSMath {
         //
         // Test for all collateral based changes here
         //
-        afterSpell.collaterals["RWA007SGFWOFH1-A"] = CollateralValues({ // TODO
+        afterSpell.collaterals["RWA007-A"] = CollateralValues({ // TODO
             line: 1000, // In whole Dai units
             dust: 0, // In whole Dai units
             pct: 200, // In basis points
@@ -711,15 +711,15 @@ contract DssSpellTest is DSTest, DSMath {
         }
         assertTrue(spell.done());
 
-        assertEq(chainlog.getAddress("RWA007SGFWOFH1"), addr.addr("RWA007SGFWOFH1"));
-        assertEq(chainlog.getAddress("MCD_JOIN_RWA007SGFWOFH1_A"), addr.addr("MCD_JOIN_RWA007SGFWOFH1_A"));
-        assertEq(chainlog.getAddress("RWA007SGFWOFH1_A_URN"), addr.addr("RWA007SGFWOFH1_A_URN"));
-        assertEq(chainlog.getAddress("RWA007SGFWOFH1_A_INPUT_CONDUIT"), addr.addr("RWA007SGFWOFH1_A_INPUT_CONDUIT"));
-        assertEq(chainlog.getAddress("RWA007SGFWOFH1_A_OUTPUT_CONDUIT"), addr.addr("RWA007SGFWOFH1_A_OUTPUT_CONDUIT"));
+        assertEq(chainlog.getAddress("RWA007"), addr.addr("RWA007"));
+        assertEq(chainlog.getAddress("MCD_JOIN_RWA007_A"), addr.addr("MCD_JOIN_RWA007_A"));
+        assertEq(chainlog.getAddress("RWA007_A_URN"), addr.addr("RWA007_A_URN"));
+        assertEq(chainlog.getAddress("RWA007_A_INPUT_CONDUIT"), addr.addr("RWA007_A_INPUT_CONDUIT"));
+        assertEq(chainlog.getAddress("RWA007_A_OUTPUT_CONDUIT"), addr.addr("RWA007_A_OUTPUT_CONDUIT"));
         assertEq(chainlog.getAddress("MIP21_LIQUIDATION_ORACLE"), addr.addr("MIP21_LIQUIDATION_ORACLE"));
     }
 
-    function test_CESFork_SpellIsCast_RWA007SGFWOFH1_INTEGRATION_BUMP() public {
+    function test_CESFork_SpellIsCast_RWA007_INTEGRATION_BUMP() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -733,14 +733,14 @@ contract DssSpellTest is DSTest, DSMath {
 
         uint256 castTime = block.timestamp + pause.delay();
         hevm.warp(castTime);
-        (, address pip, , ) = oracle.ilks("RWA007SGFWOFH1-A");
+        (, address pip, , ) = oracle.ilks("RWA007-A");
 
         assertEq(DSValueAbstract(pip).read(), bytes32(1060 * WAD));
         bumpSpell.cast();
         assertEq(DSValueAbstract(pip).read(), bytes32(1070 * WAD));
     }
 
-    function test_CESFork_SpellIsCast_RWA007SGFWOFH1_INTEGRATION_TELL() public {
+    function test_CESFork_SpellIsCast_RWA007_INTEGRATION_TELL() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -754,18 +754,18 @@ contract DssSpellTest is DSTest, DSMath {
 
         uint256 castTime = block.timestamp + pause.delay();
         hevm.warp(castTime);
-        (, , , uint48 tocPre) = oracle.ilks("RWA007SGFWOFH1-A");
+        (, , , uint48 tocPre) = oracle.ilks("RWA007-A");
         assertTrue(tocPre == 0);
-        assertTrue(oracle.good("RWA007SGFWOFH1-A"));
+        assertTrue(oracle.good("RWA007-A"));
         tellSpell.cast();
-        (, , , uint48 tocPost) = oracle.ilks("RWA007SGFWOFH1-A");
+        (, , , uint48 tocPost) = oracle.ilks("RWA007-A");
         assertTrue(tocPost > 0);
-        assertTrue(oracle.good("RWA007SGFWOFH1-A"));
+        assertTrue(oracle.good("RWA007-A"));
         hevm.warp(block.timestamp + 600);
-        assertTrue(!oracle.good("RWA007SGFWOFH1-A"));
+        assertTrue(!oracle.good("RWA007-A"));
     }
 
-    function test_CESFork_SpellIsCast_RWA007SGFWOFH1_INTEGRATION_TELL_CURE_GOOD() public {
+    function test_CESFork_SpellIsCast_RWA007_INTEGRATION_TELL_CURE_GOOD() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -796,7 +796,7 @@ contract DssSpellTest is DSTest, DSMath {
         assertEq(uint256(toc), 0);
     }
 
-    function test_CESFork_FailSpellIsCast_RWA007SGFWOFH1_INTEGRATION_CURE() public {
+    function test_CESFork_FailSpellIsCast_RWA007_INTEGRATION_CURE() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -812,13 +812,13 @@ contract DssSpellTest is DSTest, DSMath {
         cureSpell.cast();
     }
 
-    function test_CESFork_SpellIsCast_RWA007SGFWOFH1_INTEGRATION_TELL_CULL() public {
+    function test_CESFork_SpellIsCast_RWA007_INTEGRATION_TELL_CULL() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
             assertTrue(spell.done());
         }
-        assertTrue(oracle.good("RWA007SGFWOFH1-A"));
+        assertTrue(oracle.good("RWA007-A"));
 
         tellSpell = new TellSpell();
         vote(address(tellSpell));
@@ -828,9 +828,9 @@ contract DssSpellTest is DSTest, DSMath {
         uint256 castTime = block.timestamp + pause.delay();
         hevm.warp(castTime);
         tellSpell.cast();
-        assertTrue(oracle.good("RWA007SGFWOFH1-A"));
+        assertTrue(oracle.good("RWA007-A"));
         hevm.warp(block.timestamp + 600);
-        assertTrue(!oracle.good("RWA007SGFWOFH1-A"));
+        assertTrue(!oracle.good("RWA007-A"));
 
         cullSpell = new CullSpell();
         vote(address(cullSpell));
@@ -839,12 +839,12 @@ contract DssSpellTest is DSTest, DSMath {
         castTime = block.timestamp + pause.delay();
         hevm.warp(castTime);
         cullSpell.cast();
-        assertTrue(!oracle.good("RWA007SGFWOFH1-A"));
-        (, address pip, , ) = oracle.ilks("RWA007SGFWOFH1-A");
+        assertTrue(!oracle.good("RWA007-A"));
+        (, address pip, , ) = oracle.ilks("RWA007-A");
         assertEq(DSValueAbstract(pip).read(), bytes32(0));
     }
 
-    function test_CESFork_SpellIsCast_RWA007SGFWOFH1_OPERATOR_LOCK_DRAW_CONDUITS_WIPE_FREE() public {
+    function test_CESFork_SpellIsCast_RWA007_OPERATOR_LOCK_DRAW_CONDUITS_WIPE_FREE() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -853,6 +853,7 @@ contract DssSpellTest is DSTest, DSMath {
 
         hevm.warp(now + 10 days); // Let rate be > 1
 
+        uint256 totalSupplyBeforeCheat = rwagem.totalSupply();
         // put 1 conti of MKR into this contract to push
         hevm.store(address(rwagem), keccak256(abi.encode(address(this), uint256(0))), bytes32(uint256(2 * WAD)));
         hevm.store(address(rwagem), bytes32(uint256(2)), bytes32(uint256(rwagem.totalSupply() + 2 * WAD)));
@@ -861,7 +862,7 @@ contract DssSpellTest is DSTest, DSMath {
 
         (uint256 preInk, uint256 preArt) = vat.urns(ilk, address(rwaurn));
 
-        assertEq(rwagem.totalSupply(), 2 * WAD);
+        assertEq(rwagem.totalSupply(), totalSupplyBeforeCheat + 2 * WAD);
         assertEq(rwagem.balanceOf(address(this)), 2 * WAD);
         assertEq(rwaurn.can(address(this)), 1);
 
@@ -870,7 +871,7 @@ contract DssSpellTest is DSTest, DSMath {
         assertEq(dai.balanceOf(address(rwaconduitout)), 0);
         rwaurn.draw(1 * WAD);
 
-        (, uint256 rate, , , ) = vat.ilks("RWA007SGFWOFH1-A");
+        (, uint256 rate, , , ) = vat.ilks("RWA007-A");
 
         uint256 dustInVat = vat.dai(address(rwaurn));
 
@@ -909,9 +910,9 @@ contract DssSpellTest is DSTest, DSMath {
         (ink, ) = vat.urns(ilk, address(this));
         assertEq(ink, 0);
 
-        jug.drip("RWA007SGFWOFH1-A");
+        jug.drip("RWA007-A");
 
-        (, rate, , , ) = vat.ilks("RWA007SGFWOFH1-A");
+        (, rate, , , ) = vat.ilks("RWA007-A");
 
         uint256 daiToPay = (art * rate - dustInVat) / RAY + 1; // extra wei rounding
 
@@ -938,7 +939,7 @@ contract DssSpellTest is DSTest, DSMath {
         assertEq(ink, 0);
     }
 
-    function test_CESFork_SpellIsCast_RWA007SGFWOFH1_END() public {
+    function test_CESFork_SpellIsCast_RWA007_END() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
