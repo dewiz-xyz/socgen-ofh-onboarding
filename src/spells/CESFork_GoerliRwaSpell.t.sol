@@ -510,7 +510,16 @@ contract DssSpellTest is DSTest, DSMath {
         // We have failed if we reach here
         assertTrue(false, "TestError/GiveTokens-slot-not-found");
     }
-    function vote(address spell_) internal {
+    function vote(address spell_) internal {      
+        if (chief.live() == 0){
+            giveTokens(gov, 999999999999 ether);
+            gov.approve(address(chief), uint256(-1));
+            chief.lock(80001 ether); //must be greater than launch threshold
+            address[] memory slate = new address[](1);
+            slate[0] = address(0);
+            chief.vote(slate);
+            chief.launch();
+        }
         if (chief.hat() != spell_) {
             giveTokens(gov, 999999999999 ether);
             gov.approve(address(chief), uint256(-1));
