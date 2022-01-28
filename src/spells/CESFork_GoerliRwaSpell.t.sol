@@ -975,7 +975,7 @@ contract DssSpellTest is DSTest, DSMath {
             keccak256(abi.encode(address(addr.addr("MCD_JOIN_DAI")), uint256(5))),
             bytes32(vatDai)
         ); // Forcing extra dai balance for MCD_JOIN_DAI on the Vat
-        hevm.store(address(dai), bytes32(uint256(1)), bytes32(currentDaiSupply + daiToPay)); // Forcing extra DAI total supply to accomodate the accumulated fee
+        hevm.store(address(dai), bytes32(uint256(1)), bytes32(currentDaiSupply + (daiToPay - art))); // Forcing extra DAI total supply to accomodate the accumulated fee
         hevm.store(address(dai), keccak256(abi.encode(address(this), uint256(2))), bytes32(daiToPay)); // Forcing extra DAI balance to pay accumulated fee
         // wards
         hevm.store(address(rwaconduitin), keccak256(abi.encode(address(this), uint256(0))), bytes32(uint256(1)));
