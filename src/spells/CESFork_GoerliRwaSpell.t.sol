@@ -21,6 +21,8 @@ interface Hevm {
         bytes32,
         bytes32
     ) external;
+
+    function load(address,bytes32) external view returns (bytes32);
 }
 
 interface RwaInputConduitLike {
@@ -108,7 +110,7 @@ interface RwaLiquidationLike {
 }
 
 contract EndSpellAction {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x7EafEEa64bF6F79A79853F4A660e0960c821BA50);
 
     function execute() public {
         EndAbstract(CHANGELOG.getAddress("MCD_END")).cage();
@@ -116,7 +118,7 @@ contract EndSpellAction {
 }
 
 contract TestSpell {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x7EafEEa64bF6F79A79853F4A660e0960c821BA50);
     DSPauseAbstract public pause = DSPauseAbstract(CHANGELOG.getAddress("MCD_PAUSE"));
     address public action;
     bytes32 public tag;
@@ -159,7 +161,7 @@ contract EndSpell is TestSpell {
 }
 
 contract CullSpellAction {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x7EafEEa64bF6F79A79853F4A660e0960c821BA50);
     bytes32 constant ilk = "RWA007-A";
 
     function execute() public {
@@ -178,7 +180,7 @@ contract CullSpell is TestSpell {
 }
 
 contract CureSpellAction {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x7EafEEa64bF6F79A79853F4A660e0960c821BA50);
     bytes32 constant ilk = "RWA007-A";
 
     function execute() public {
@@ -194,7 +196,7 @@ contract CureSpell is TestSpell {
 }
 
 contract TellSpellAction {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x7EafEEa64bF6F79A79853F4A660e0960c821BA50);
     bytes32 constant ilk = "RWA007-A";
 
     function execute() public {
@@ -211,7 +213,7 @@ contract TellSpell is TestSpell {
 }
 
 contract BumpSpellAction {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x7EafEEa64bF6F79A79853F4A660e0960c821BA50);
     bytes32 constant ilk = "RWA007-A";
     uint256 constant WAD = 10**18;
 
@@ -463,8 +465,7 @@ contract DssSpellTest is DSTest, DSMath {
         hevm.warp(castTime);
         spell.cast();
     }
-
-    function scheduleWaitAndCastFailLate() public {
+        function scheduleWaitAndCastFailLate() public {
         spell.schedule();
 
         uint256 castTime = block.timestamp + pause.delay();
@@ -477,27 +478,88 @@ contract DssSpellTest is DSTest, DSMath {
         spell.cast();
     }
 
-    function vote(address _spell) private {
-        if (chief.hat() != _spell) {
-            hevm.store(address(gov), bytes32(uint256(2)), bytes32(gov.totalSupply() + 999999999999 ether));
-            hevm.store(
-                address(gov),
-                keccak256(abi.encode(address(this), uint256(3))),
-                bytes32(uint256(999999999999 ether))
+    function giveTokens(DSTokenAbstract token, uint256 amount) internal {
+        // Edge case - balance is already set for some reason
+        if (token.balanceOf(address(this)) == amount) return;
+
+        for (uint256 i = 0; i < 200; i++) {
+            // Scan the storage for the balance storage slot
+            bytes32 prevValue = hevm.load(
+                address(token),
+                keccak256(abi.encode(address(this), uint256(i)))
             );
-            gov.approve(address(chief), uint256(-1));
-            chief.lock(sub(gov.balanceOf(address(this)), 1 ether));
-
-            assertTrue(!DSSpellAbstract(_spell).done());
-
-            address[] memory yays = new address[](1);
-            yays[0] = _spell;
-
-            chief.vote(yays);
-            chief.lift(_spell);
+            hevm.store(
+                address(token),
+                keccak256(abi.encode(address(this), uint256(i))),
+                bytes32(amount)
+            );
+            if (token.balanceOf(address(this)) == amount) {
+                // Found it
+                return;
+            } else {
+                // Keep going after restoring the original value
+                hevm.store(
+                    address(token),
+                    keccak256(abi.encode(address(this), uint256(i))),
+                    prevValue
+                );
+            }
         }
-        assertEq(chief.hat(), _spell);
+    
+
+        // We have failed if we reach here
+        assertTrue(false, "TestError/GiveTokens-slot-not-found");
     }
+    function vote(address spell_) internal {
+        
+        if (chief.live() == 0){
+            giveTokens(gov, 999999999999 ether);
+            gov.approve(address(chief), uint256(-1));
+            chief.lock(999999999999 ether);
+            address[] memory slate = new address[](1);
+            slate[0] = address(0);
+            chief.vote(slate);
+            chief.launch();
+        }
+        if (chief.hat() != spell_) {
+            giveTokens(gov, 999999999999 ether);
+            gov.approve(address(chief), uint256(-1));
+            chief.lock(999999999999 ether);
+
+            address[] memory slate = new address[](1);
+
+            assertTrue(!DSSpellAbstract(spell_).done());
+
+            slate[0] = spell_;
+
+            chief.vote(slate);
+            chief.lift(spell_);
+            assertTrue(chief.hat() == spell_);
+        }
+        assertEq(chief.hat(), spell_);
+    }
+
+    // function vote(address _spell) private {
+    //     if (chief.hat() != _spell) {
+    //         hevm.store(address(gov), bytes32(uint256(2)), bytes32(gov.totalSupply() + 999999999999 ether));
+    //         hevm.store(
+    //             address(gov),
+    //             keccak256(abi.encode(address(this), uint256(3))),
+    //             bytes32(uint256(999999999999 ether))
+    //         );
+    //         gov.approve(address(chief), uint256(-1));
+    //         chief.lock(sub(gov.balanceOf(address(this)), 1 ether));
+
+    //         assertTrue(!DSSpellAbstract(_spell).done());
+
+    //         address[] memory yays = new address[](1);
+    //         yays[0] = _spell;
+
+    //         chief.vote(yays);
+    //         chief.lift(_spell);
+    //     }
+    //     assertEq(chief.hat(), _spell);
+    // }
 
     function scheduleWaitAndCast() public {
         spell.schedule();
