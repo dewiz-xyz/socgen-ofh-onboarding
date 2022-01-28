@@ -22,7 +22,7 @@ interface Hevm {
         bytes32
     ) external;
 
-    function load(address,bytes32) external view returns (bytes32);
+    function load(address, bytes32) external view returns (bytes32);
 }
 
 interface RwaInputConduitLike {
@@ -465,7 +465,8 @@ contract DssSpellTest is DSTest, DSMath {
         hevm.warp(castTime);
         spell.cast();
     }
-        function scheduleWaitAndCastFailLate() public {
+
+    function scheduleWaitAndCastFailLate() public {
         spell.schedule();
 
         uint256 castTime = block.timestamp + pause.delay();
@@ -484,34 +485,23 @@ contract DssSpellTest is DSTest, DSMath {
 
         for (uint256 i = 0; i < 200; i++) {
             // Scan the storage for the balance storage slot
-            bytes32 prevValue = hevm.load(
-                address(token),
-                keccak256(abi.encode(address(this), uint256(i)))
-            );
-            hevm.store(
-                address(token),
-                keccak256(abi.encode(address(this), uint256(i))),
-                bytes32(amount)
-            );
+            bytes32 prevValue = hevm.load(address(token), keccak256(abi.encode(address(this), uint256(i))));
+            hevm.store(address(token), keccak256(abi.encode(address(this), uint256(i))), bytes32(amount));
             if (token.balanceOf(address(this)) == amount) {
                 // Found it
                 return;
             } else {
                 // Keep going after restoring the original value
-                hevm.store(
-                    address(token),
-                    keccak256(abi.encode(address(this), uint256(i))),
-                    prevValue
-                );
+                hevm.store(address(token), keccak256(abi.encode(address(this), uint256(i))), prevValue);
             }
         }
-    
 
         // We have failed if we reach here
         assertTrue(false, "TestError/GiveTokens-slot-not-found");
     }
-    function vote(address spell_) internal {      
-        if (chief.live() == 0){
+
+    function vote(address spell_) internal {
+        if (chief.live() == 0) {
             giveTokens(gov, 999999999999 ether);
             gov.approve(address(chief), uint256(-1));
             chief.lock(80001 ether); //must be greater than launch threshold
@@ -976,8 +966,17 @@ contract DssSpellTest is DSTest, DSMath {
         (, rate, , , ) = vat.ilks("RWA007-A");
 
         uint256 daiToPay = (art * rate - dustInVat) / RAY + 1; // extra wei rounding
+        uint256 vatDai = daiToPay * RAY;
 
-        hevm.store(address(dai), keccak256(abi.encode(address(this), uint256(2))), bytes32(uint256(daiToPay))); // Forcing extra DAI balance to pay accumulated fee
+        uint256 currentDaiSupply = dai.totalSupply();
+
+        hevm.store(
+            address(vat),
+            keccak256(abi.encode(address(addr.addr("MCD_JOIN_DAI")), uint256(5))),
+            bytes32(vatDai)
+        ); // Forcing extra dai balance for MCD_JOIN_DAI on the Vat
+        hevm.store(address(dai), bytes32(uint256(1)), bytes32(currentDaiSupply + daiToPay)); // Forcing extra DAI total supply to accomodate the accumulated fee
+        hevm.store(address(dai), keccak256(abi.encode(address(this), uint256(2))), bytes32(daiToPay)); // Forcing extra DAI balance to pay accumulated fee
         // wards
         hevm.store(address(rwaconduitin), keccak256(abi.encode(address(this), uint256(0))), bytes32(uint256(1)));
         // may
@@ -990,6 +989,8 @@ contract DssSpellTest is DSTest, DSMath {
 
         assertEq(dai.balanceOf(address(rwaurn)), daiToPay);
         assertEq(dai.balanceOf(address(rwaconduitin)), 0);
+
+        assertEq(vat.dai(address(addr.addr("MCD_JOIN_DAI"))), vatDai);
 
         rwaurn.wipe(daiToPay);
         rwaurn.free(1 * WAD);

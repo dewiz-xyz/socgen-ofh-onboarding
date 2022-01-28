@@ -32,24 +32,26 @@ if [ -z "${1}" ]; then
   [ -z "${PS1}" ] && exit || return
 fi
 
-if [ "${1}" == "goerli" ]; then
-  URL="https://changelog.makerdao.com/releases/goerli/active/contracts.json"
-elif [ "${1}" == "mainnet" ]; then
-  URL="https://changelog.makerdao.com/releases/mainnet/active/contracts.json"
-elif [ "${1}" == "ces-goerli" ]; then
-  URL="https://raw.githubusercontent.com/ClioFinance/ces-goerli/master/contracts.json"
-else
-  echo "# Invalid network ${1}" >&2
-  [ -z "${PS1}" ] && exit || return
-fi
+if [ -z "$ADDRESSES_RAW" ]; then
+  if [ "${1}" == "goerli" ]; then
+    URL="https://changelog.makerdao.com/releases/goerli/active/contracts.json"
+  elif [ "${1}" == "mainnet" ]; then
+    URL="https://changelog.makerdao.com/releases/mainnet/active/contracts.json"
+  elif [ "${1}" == "ces-goerli" ]; then
+    URL="https://raw.githubusercontent.com/ClioFinance/ces-goerli/master/contracts.json"
+  else
+    echo "# Invalid network ${1}" >&2
+    [ -z "${PS1}" ] && exit || return
+  fi
 
-if validate_url "${URL}"; then
-  echo "# Deployment addresses generated from:" >&2
-  echo "# ${URL}" >&2
-  ADDRESSES_RAW="$(curl -Ls "${URL}")"
-else
-  echo "# Invalid URL ${URL}" >&2
-  [ -z "${PS1}" ] && exit || return
+  if validate_url "${URL}"; then
+    echo "# Deployment addresses generated from:" >&2
+    echo "# ${URL}" >&2
+    ADDRESSES_RAW="$(curl -Ls "${URL}")"
+  else
+    echo "# Invalid URL ${URL}" >&2
+    [ -z "${PS1}" ] && exit || return
+  fi
 fi
 
 OUTPUT=$(jq -r 'to_entries | map(.key + "|" + (.value | tostring)) | .[]' <<<"${ADDRESSES_RAW}" | \
