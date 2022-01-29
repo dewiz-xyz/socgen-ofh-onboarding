@@ -123,7 +123,7 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
     }
 
     /**
-     * @notice Revokes `usr` admin access from this contract.
+     * @notice Revokes `usr` operator access from this contract.
      * @param usr The user address.
      */
     function nope(address usr) external auth {
