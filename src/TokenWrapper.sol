@@ -50,6 +50,7 @@ library DSMathCustom {
  * @dev Assumes OFH has `0` decimals (integer/non-fractional token) and normalizes `mint()/burn()` to have `18` decimals.
  */
 contract TokenWrapper is ITokenWrapper, ERC20 {
+    /// @notice OFH address
     OFHTokenLike public immutable token;
 
     /// @notice Addresses with admin access on this contract. `wards[usr]`
