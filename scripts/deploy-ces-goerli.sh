@@ -12,12 +12,6 @@ source "${BASH_SOURCE%/*}/build-env-addresses.sh" ces-goerli >/dev/null 2>&1
 
 export ETH_GAS=6000000
 
-if [ -z "$MIP21_LIQUIDATION_ORACLE" ]; then
-    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_VAL" ] || die "Please set MIP21_LIQUIDATION_ORACLE_INIT_VAL param"
-    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_DOC" ] || die "Please set MIP21_LIQUIDATION_ORACLE_INIT_DOC param"
-    [ ! -z "$MIP21_LIQUIDATION_ORACLE_INIT_TAU" ] || die "Please set MIP21_LIQUIDATION_ORACLE_INIT_TAU param"
-fi
-
 # TODO: confirm if name/symbol is going to follow the RWA convention
 # TODO: confirm with DAO at the time of mainnet deployment if OFH will indeed be 007
 [[ -z "$NAME" ]] && NAME="RWA-007"
@@ -104,12 +98,6 @@ seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
 # price it
 [[ -z "$MIP21_LIQUIDATION_ORACLE" ]] && {
     MIP21_LIQUIDATION_ORACLE=$(dapp create RwaLiquidationOracle "$MCD_VAT" "$MCD_VOW")
-
-    seth send "$MIP21_LIQUIDATION_ORACLE" 'init(bytes32,uint256,string,uint48)' \
-        "$ILK_ENCODED" \
-        "$MIP21_LIQUIDATION_ORACLE_INIT_VAL" \
-        "$MIP21_LIQUIDATION_ORACLE_INIT_DOC" \
-        "$MIP21_LIQUIDATION_ORACLE_INIT_TAU"
 
     seth send "$MIP21_LIQUIDATION_ORACLE" 'rely(address)' "$MCD_PAUSE_PROXY"
     seth send "$MIP21_LIQUIDATION_ORACLE" 'deny(address)' "$ETH_FROM"

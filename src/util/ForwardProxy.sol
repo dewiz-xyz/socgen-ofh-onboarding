@@ -62,7 +62,7 @@ contract ForwardProxy is Proxy {
             // Call the implementation.
             // out and outsize are 0 because we don't know the size yet.
             // let result := delegatecall(gas(), implementation, 0, calldatasize(), 0, 0)
-            let result := call(gas(), implementation, 0, 0, calldatasize(), 0, 0)
+            let result := call(gas(), implementation, callvalue(), 0, calldatasize(), 0, 0)
 
             // Copy the returned data.
             returndatacopy(0, 0, returndatasize())

@@ -20,7 +20,7 @@
   },
   "scripts": {
     "prepare": "husky install",
-    "prepublishOnly": "copyfiles -u 1 \"./src/**/*.sol\" --exclude \"./src/test/**/*.sol\" ./",
+    "prepublishOnly": "copyfiles -u 1 \"./src/**/*.sol\" --exclude \"./src/spells/test/**/*.sol\" ./",
     "postpublish": "rimraf ./*.sol",
     "prepack": "yarn prepublishOnly",
     "postpack": "yarn postpublish",

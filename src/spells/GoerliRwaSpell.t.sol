@@ -9,9 +9,9 @@ import "ds-math/math.sol";
 import "ds-test/test.sol";
 import "dss-interfaces/Interfaces.sol";
 import "./helpers/Rates.sol";
-import "./helpers/CESFork_GoerliAddresses.sol";
+import "./helpers/GoerliAddresses.sol";
 
-import {RwaSpell, SpellAction} from "./CESFork_GoerliRwaSpell.sol";
+import {RwaSpell, SpellAction} from "../spells/GoerliRwaSpell.sol";
 
 interface Hevm {
     function warp(uint256) external;
@@ -108,7 +108,7 @@ interface RwaLiquidationLike {
 }
 
 contract EndSpellAction {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
 
     function execute() public {
         EndAbstract(CHANGELOG.getAddress("MCD_END")).cage();
@@ -116,7 +116,7 @@ contract EndSpellAction {
 }
 
 contract TestSpell {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
     DSPauseAbstract public pause = DSPauseAbstract(CHANGELOG.getAddress("MCD_PAUSE"));
     address public action;
     bytes32 public tag;
@@ -159,7 +159,7 @@ contract EndSpell is TestSpell {
 }
 
 contract CullSpellAction {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
     bytes32 constant ilk = "RWA007-A";
 
     function execute() public {
@@ -178,7 +178,7 @@ contract CullSpell is TestSpell {
 }
 
 contract CureSpellAction {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
     bytes32 constant ilk = "RWA007-A";
 
     function execute() public {
@@ -194,7 +194,7 @@ contract CureSpell is TestSpell {
 }
 
 contract TellSpellAction {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
     bytes32 constant ilk = "RWA007-A";
 
     function execute() public {
@@ -211,7 +211,7 @@ contract TellSpell is TestSpell {
 }
 
 contract BumpSpellAction {
-    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x6a4D20288D43bDe175842a78e7C30381045550f3);
+    ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
     bytes32 constant ilk = "RWA007-A";
     uint256 constant WAD = 10**18;
 
@@ -853,8 +853,8 @@ contract DssSpellTest is DSTest, DSMath {
 
         hevm.warp(now + 10 days); // Let rate be > 1
 
-        uint256 totalSupplyBeforeCheat = rwagem.totalSupply();
         // put 1 conti of MKR into this contract to push
+        uint256 gemTotalSupplyBeforeCheat = rwagem.totalSupply();
         hevm.store(address(rwagem), keccak256(abi.encode(address(this), uint256(0))), bytes32(uint256(2 * WAD)));
         hevm.store(address(rwagem), bytes32(uint256(2)), bytes32(uint256(rwagem.totalSupply() + 2 * WAD)));
         // setting address(this) as operator
@@ -862,7 +862,7 @@ contract DssSpellTest is DSTest, DSMath {
 
         (uint256 preInk, uint256 preArt) = vat.urns(ilk, address(rwaurn));
 
-        assertEq(rwagem.totalSupply(), totalSupplyBeforeCheat + 2 * WAD);
+        assertEq(rwagem.totalSupply(), gemTotalSupplyBeforeCheat + 2 * WAD);
         assertEq(rwagem.balanceOf(address(this)), 2 * WAD);
         assertEq(rwaurn.can(address(this)), 1);
 

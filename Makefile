@@ -13,27 +13,24 @@ solc:; nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA
 
 # Build & test
 build:; dapp build
-test-remote:; dapp test --rpc-url $(call network,goerli) # --ffi # enable if you need the `ffi` cheat code on HEVM
-test-local:; dapp test --rpc  # --ffi # enable if you need the `ffi` cheat code on HEVM
+test-remote: check-api-key; dapp test --rpc-url $(call alchemy-url,goerli) # --ffi # enable if you need the `ffi` cheat code on HEVM
+test-local:; ETH_RPC_URL='http://localhost:8545' dapp test --rpc  # --ffi # enable if you need the `ffi` cheat code on HEVM
 clean:; dapp clean
 lint:; yarn run lint
 estimate:; ./scripts/estimate-gas.sh ${file} ${contract} ${args}
 size:; ./scripts/contract-size.sh ${file} ${contract} ${args}
 
 # mainnet
-deploy-mainnet: export ETH_RPC_URL = $(call network,mainnet)
-deploy-mainnet: check-api-key; @./scripts/deploy-mainnet.sh
+deploy-mainnet: check-api-key; @ETH_RPC_URL=$(call alchemy-url,mainnet) ./scripts/deploy-mainnet.sh
 
 # goerli
-deploy-goerli: export ETH_RPC_URL = $(call network,goerli)
-deploy-goerli: check-api-key; @./scripts/deploy-goerli.sh
+deploy-goerli: check-api-key; @ETH_RPC_URL=$(call alchemy-url,goerli) ./scripts/deploy-goerli.sh
 
 # goerli CES fork
-deploy-ces-goerli: export ETH_RPC_URL = $(call network,goerli)
-deploy-ces-goerli: check-api-key; @./scripts/deploy-ces-goerli.sh
+deploy-ces-goerli: check-api-key; @ETH_RPC_URL=$(call alchemy-url,goerli) ./scripts/deploy-ces-goerli.sh
 
 # verify on Etherscan
-verify:; ETH_RPC_URL=$(call network,$(network_name)) dapp verify-contract $(contract) $(contract_address)
+verify:; ETH_RPC_URL=$(call alchemy-url,$(network_name)) dapp verify-contract $(contract) $(contract_address)
 
 check-api-key:
 ifndef ALCHEMY_API_KEY
@@ -43,6 +40,6 @@ endif
 # Returns the URL to deploy to a hosted node.
 # Requires the ALCHEMY_API_KEY env var to be set.
 # The first argument determines the network (mainnet / rinkeby / ropsten / kovan / goerli)
-define network
+define alchemy-url
 https://eth-$1.alchemyapi.io/v2/${ALCHEMY_API_KEY}
 endef
