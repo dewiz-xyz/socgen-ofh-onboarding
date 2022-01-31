@@ -64,16 +64,16 @@ contract RwaInputConduit {
      */
     event Hate(address indexed usr);
     /**
-     * @notice `_wad` amount of Dai was pushed to `_to`
-     * @param _to The RwaUrn address
-     * @param _wad The amount of Dai
+     * @notice `wad` amount of Dai was pushed to `to`
+     * @param to The RwaUrn address
+     * @param wad The amount of Dai
      */
     event Push(address indexed to, uint256 wad);
 
     /**
      * @notice Define addresses and gives `msg.sender` admin access.
-     * @param _dai Dai address.
-     * @param _to RwaUrn address.
+     * @param _dai Dai token contract address.
+     * @param _to RwaUrn contract address.
      */
     constructor(address _dai, address _to) public {
         dai = DSTokenLike(_dai);
