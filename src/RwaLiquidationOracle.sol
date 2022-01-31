@@ -1,12 +1,3 @@
-/*//////////////////////////////////////////////////////////////
-//                          WARNING                           //
-//                                                            //
-// This is NOT the contract currently being used on the live  //
-// system. To get the implementation currently in use, check  //
-// https://changelog.makerdao.com/ and look for               //
-// `MIP21_LIQUIDATION_ORACLE`                                 //
-//////////////////////////////////////////////////////////////*/
-
 // Copyright (C) 2020, 2021 Lev Livnev <lev@liv.nev.org.uk>
 // Copyright (C) 2022 Dai Foundation
 //
@@ -49,11 +40,20 @@ library DSMathCustom {
  * @dev One instance of contract can be used for many RWA collateral types.
  */
 contract RwaLiquidationOracle {
+
+    /**
+    * @notice Ilk metadata struct
+    * @dev 4-member struct:
+    * @member string hash, of borrower's agrrement with MakerDAO.
+    * @member address pip, An Oracle for liquitation of real-world assets (RWA).
+    * @member uint48 tau, remediation period.
+    * @member uint48 toc, timestamp when liquidation was initiated.
+    */
     struct Ilk {
-        string doc; // hash of borrower's agrrement with MakerDAO.
-        address pip; // DSValue tracking nominal loan value.
-        uint48 tau; // remediation period.
-        uint48 toc; // timestamp when liquidation was initiated.
+        string doc;
+        address pip;
+        uint48 tau;
+        uint48 toc;
     }
 
     /// @notice Core module address.
