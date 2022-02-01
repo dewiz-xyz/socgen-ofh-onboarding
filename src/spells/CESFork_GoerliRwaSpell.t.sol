@@ -165,7 +165,7 @@ contract CullSpellAction {
     bytes32 constant ilk = "RWA007-A";
 
     function execute() public {
-        RwaLiquidationLike(CHANGELOG.getAddress("MIP21_LIQUIDATION_ORACLE")).cull(
+        RwaLiquidationLike(CHANGELOG.getAddress("MIP21_LIQUIDATION_ORACLE_2")).cull(
             ilk,
             CHANGELOG.getAddress("RWA007_A_URN")
         );
@@ -184,7 +184,7 @@ contract CureSpellAction {
     bytes32 constant ilk = "RWA007-A";
 
     function execute() public {
-        RwaLiquidationLike(CHANGELOG.getAddress("MIP21_LIQUIDATION_ORACLE")).cure(ilk);
+        RwaLiquidationLike(CHANGELOG.getAddress("MIP21_LIQUIDATION_ORACLE_2")).cure(ilk);
     }
 }
 
@@ -201,7 +201,7 @@ contract TellSpellAction {
 
     function execute() public {
         VatAbstract(CHANGELOG.getAddress("MCD_VAT")).file(ilk, "line", 0);
-        RwaLiquidationLike(CHANGELOG.getAddress("MIP21_LIQUIDATION_ORACLE")).tell(ilk);
+        RwaLiquidationLike(CHANGELOG.getAddress("MIP21_LIQUIDATION_ORACLE_2")).tell(ilk);
     }
 }
 
@@ -218,7 +218,7 @@ contract BumpSpellAction {
     uint256 constant WAD = 10**18;
 
     function execute() public {
-        RwaLiquidationLike(CHANGELOG.getAddress("MIP21_LIQUIDATION_ORACLE")).bump(ilk, 1070 * WAD);
+        RwaLiquidationLike(CHANGELOG.getAddress("MIP21_LIQUIDATION_ORACLE_2")).bump(ilk, 15000 * WAD);
     }
 }
 
@@ -299,7 +299,7 @@ contract DssSpellTest is DSTest, DSMath {
     bytes32 constant ilk = "RWA007-A";
     DSTokenAbstract rwagem = DSTokenAbstract(addr.addr("RWA007"));
     GemJoinAbstract rwajoin = GemJoinAbstract(addr.addr("MCD_JOIN_RWA007_A"));
-    RwaLiquidationLike oracle = RwaLiquidationLike(addr.addr("MIP21_LIQUIDATION_ORACLE"));
+    RwaLiquidationLike oracle = RwaLiquidationLike(addr.addr("MIP21_LIQUIDATION_ORACLE_2"));
     RwaUrnLike rwaurn = RwaUrnLike(addr.addr("RWA007_A_URN"));
     RwaInputConduitLike rwaconduitin = RwaInputConduitLike(addr.addr("RWA007_A_INPUT_CONDUIT"));
     RwaOutputConduitLike rwaconduitout = RwaOutputConduitLike(addr.addr("RWA007_A_OUTPUT_CONDUIT"));
@@ -767,7 +767,7 @@ contract DssSpellTest is DSTest, DSMath {
         assertEq(chainlog.getAddress("RWA007_A_URN"), addr.addr("RWA007_A_URN"));
         assertEq(chainlog.getAddress("RWA007_A_INPUT_CONDUIT"), addr.addr("RWA007_A_INPUT_CONDUIT"));
         assertEq(chainlog.getAddress("RWA007_A_OUTPUT_CONDUIT"), addr.addr("RWA007_A_OUTPUT_CONDUIT"));
-        assertEq(chainlog.getAddress("MIP21_LIQUIDATION_ORACLE"), addr.addr("MIP21_LIQUIDATION_ORACLE"));
+        assertEq(chainlog.getAddress("MIP21_LIQUIDATION_ORACLE_2"), addr.addr("MIP21_LIQUIDATION_ORACLE_2"));
     }
 
     function testSpellIsCast_RWA007_INTEGRATION_BUMP() public {
@@ -786,9 +786,9 @@ contract DssSpellTest is DSTest, DSMath {
         hevm.warp(castTime);
         (, address pip, , ) = oracle.ilks("RWA007-A");
 
-        assertEq(DSValueAbstract(pip).read(), bytes32(1060 * WAD));
+        assertEq(DSValueAbstract(pip).read(), bytes32(13000 * WAD));
         bumpSpell.cast();
-        assertEq(DSValueAbstract(pip).read(), bytes32(1070 * WAD));
+        assertEq(DSValueAbstract(pip).read(), bytes32(15000 * WAD));
     }
 
     function testSpellIsCast_RWA007_INTEGRATION_TELL() public {

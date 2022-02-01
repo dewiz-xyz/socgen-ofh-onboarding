@@ -37,18 +37,19 @@ library DSMathCustom {
  * @author Lev Livnev <lev@liv.nev.org.uk>
  * @author Henrique Barcelos <henrique@clio.finance>
  * @title An Oracle for liquitation of real-world assets (RWA).
+ * @dev This contract differs from the original [RwaLiquidationOracle](https://github.com/makerdao/MIP21-RWA-Example/blob/master/src/RwaLiquidationOracle.sol)
+ * because `bump()` is allowed to decrease the value of the underlying asset.
  * @dev One instance of contract can be used for many RWA collateral types.
  */
-contract RwaLiquidationOracle {
-
+contract RwaLiquidationOracle2 {
     /**
-    * @notice Ilk metadata struct
-    * @dev 4-member struct:
-    * @member string hash, of borrower's agrrement with MakerDAO.
-    * @member address pip, An Oracle for liquitation of real-world assets (RWA).
-    * @member uint48 tau, remediation period.
-    * @member uint48 toc, timestamp when liquidation was initiated.
-    */
+     * @notice Ilk metadata struct
+     * @dev 4-member struct:
+     * @member string hash, of borrower's agrrement with MakerDAO.
+     * @member address pip, An Oracle for liquitation of real-world assets (RWA).
+     * @member uint48 tau, remediation period.
+     * @member uint48 toc, timestamp when liquidation was initiated.
+     */
     struct Ilk {
         string doc;
         address pip;
@@ -215,7 +216,6 @@ contract RwaLiquidationOracle {
         require(address(pip) != address(0), "RwaOracle/unknown-ilk");
         require(ilks[ilk].toc == 0, "RwaOracle/in-remediation");
 
-        require(val >= uint256(pip.read()), "RwaOracle/decreasing-val");
         pip.poke(bytes32(val));
 
         emit Bump(ilk, val);
