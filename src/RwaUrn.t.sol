@@ -130,10 +130,6 @@ contract RwaOperator is TryCaller {
     function canFree(uint256 wad) public returns (bool) {
         return this.tryCall(address(outC), abi.encodeWithSignature("free(uint256)", wad));
     }
-
-    function recap(uint256 wad) public {
-        urn.recap(wad);
-    }
 }
 
 contract RwaMate is TryCaller {
@@ -233,25 +229,25 @@ contract RwaUrnTest is DSTest, DSMath {
         vat.rely(address(daiJoin));
         dai.setOwner(address(daiJoin));
 
-        vat.init("RWA007SGFWOFH1-A");
+        vat.init("RWA007-A");
         vat.file("Line", 100 * rad(CEILING));
-        vat.file("RWA007SGFWOFH1-A", "line", rad(CEILING));
+        vat.file("RWA007-A", "line", rad(CEILING));
 
-        jug.init("RWA007SGFWOFH1-A");
-        jug.file("RWA007SGFWOFH1-A", "duty", EIGHT_PCT);
+        jug.init("RWA007-A");
+        jug.file("RWA007-A", "duty", EIGHT_PCT);
 
         oracle = new RwaLiquidationOracle(address(vat), VOW);
-        oracle.init("RWA007SGFWOFH1-A", wmul(CEILING, 1.1 ether), DOC, TAU);
+        oracle.init("RWA007-A", wmul(CEILING, 1.1 ether), DOC, TAU);
         vat.rely(address(oracle));
-        (, address pip, , ) = oracle.ilks("RWA007SGFWOFH1-A");
+        (, address pip, , ) = oracle.ilks("RWA007-A");
 
         spotter = new Spotter(address(vat));
         vat.rely(address(spotter));
-        spotter.file("RWA007SGFWOFH1-A", "mat", RAY);
-        spotter.file("RWA007SGFWOFH1-A", "pip", pip);
-        spotter.poke("RWA007SGFWOFH1-A");
+        spotter.file("RWA007-A", "mat", RAY);
+        spotter.file("RWA007-A", "pip", pip);
+        spotter.poke("RWA007-A");
 
-        gemJoin = new AuthGemJoin(address(vat), "RWA007SGFWOFH1-A", address(wrapper));
+        gemJoin = new AuthGemJoin(address(vat), "RWA007-A", address(wrapper));
         vat.rely(address(gemJoin));
 
         outConduit = new RwaOutputConduit(address(dai));
@@ -351,7 +347,7 @@ contract RwaUrnTest is DSTest, DSMath {
 
         assertEq(vat.dai(address(urn)), 0);
 
-        (uint256 ink, uint256 art) = vat.urns("RWA007SGFWOFH1-A", address(urn));
+        (uint256 ink, uint256 art) = vat.urns("RWA007-A", address(urn));
         assertEq(ink, 0);
         assertEq(art, 0);
 
@@ -362,8 +358,8 @@ contract RwaUrnTest is DSTest, DSMath {
 
         assertLe(vat.dai(address(urn)), dustLimit);
 
-        (, uint256 rate, , , ) = vat.ilks("RWA007SGFWOFH1-A");
-        (ink, art) = vat.urns("RWA007SGFWOFH1-A", address(urn));
+        (, uint256 rate, , , ) = vat.ilks("RWA007-A");
+        (ink, art) = vat.urns("RWA007-A", address(urn));
         assertEq(ink, 1 ether);
         assertLe((art * rate) - rad(199 ether), dustLimit);
 
@@ -417,7 +413,7 @@ contract RwaUrnTest is DSTest, DSMath {
         assertTrue(!op.canFree(1 ether));
 
         op.free(0.4 ether);
-        (uint256 ink, uint256 art) = vat.urns("RWA007SGFWOFH1-A", address(urn));
+        (uint256 ink, uint256 art) = vat.urns("RWA007-A", address(urn));
         // 100 < art < 101 because of accumulated interest
         assertLt(art - 100 ether, 1 ether);
         assertEq(ink, 0.6 ether);
@@ -438,13 +434,13 @@ contract RwaUrnTest is DSTest, DSMath {
         op.lock(1 ether);
 
         hevm.warp(now + drawTime);
-        jug.drip("RWA007SGFWOFH1-A");
+        jug.drip("RWA007-A");
         op.draw(drawAmount);
         op.pick(address(rec));
         mate.pushOut();
 
         hevm.warp(now + wipeTime);
-        jug.drip("RWA007SGFWOFH1-A");
+        jug.drip("RWA007-A");
         rec.transfer(address(inConduit), wipeAmount);
         assertEq(dai.balanceOf(address(inConduit)), wipeAmount);
 
@@ -461,14 +457,14 @@ contract RwaUrnTest is DSTest, DSMath {
         drawTime = drawTime % 15 days; // 0-15 days
         wipeTime = wipeTime % 15 days; // 0-15 days
 
-        (uint256 ink, uint256 art) = vat.urns("RWA007SGFWOFH1-A", address(urn));
+        (uint256 ink, uint256 art) = vat.urns("RWA007-A", address(urn));
         assertEq(ink, 0);
         assertEq(art, 0);
 
         op.lock(1 ether);
 
         hevm.warp(block.timestamp + drawTime);
-        jug.drip("RWA007SGFWOFH1-A");
+        jug.drip("RWA007-A");
 
         op.draw(drawAmount);
 
@@ -477,8 +473,8 @@ contract RwaUrnTest is DSTest, DSMath {
         // A draw should leave less than 2 RAY dust
         assertLt(urnVatDust, 2 * RAY);
 
-        (, uint256 rate, , , ) = vat.ilks("RWA007SGFWOFH1-A");
-        (ink, art) = vat.urns("RWA007SGFWOFH1-A", address(urn));
+        (, uint256 rate, , , ) = vat.ilks("RWA007-A");
+        (ink, art) = vat.urns("RWA007-A", address(urn));
         assertEq(ink, 1 ether);
         assertLe((art * rate) - rad(drawAmount), urnVatDust);
 
@@ -487,9 +483,9 @@ contract RwaUrnTest is DSTest, DSMath {
         mate.pushOut();
 
         hevm.warp(block.timestamp + wipeTime);
-        jug.drip("RWA007SGFWOFH1-A");
+        jug.drip("RWA007-A");
 
-        (, rate, , , ) = vat.ilks("RWA007SGFWOFH1-A");
+        (, rate, , , ) = vat.ilks("RWA007-A");
 
         uint256 fullWipeAmount = (art * rate) / RAY;
         if (fullWipeAmount * RAY < art * rate) {
@@ -515,7 +511,7 @@ contract RwaUrnTest is DSTest, DSMath {
         mate.pushIn();
         op.wipe(fullWipeAmount);
 
-        (, art) = vat.urns("RWA007SGFWOFH1-A", address(urn));
+        (, art) = vat.urns("RWA007-A", address(urn));
         assertEq(art, 0);
 
         uint256 newUrnVatDust = vat.dai(address(urn));
@@ -539,7 +535,7 @@ contract RwaUrnTest is DSTest, DSMath {
         rando.wipe(200 ether);
         rando.free(1 ether);
 
-        (uint256 ink, uint256 art) = vat.urns("RWA007SGFWOFH1-A", address(urn));
+        (uint256 ink, uint256 art) = vat.urns("RWA007-A", address(urn));
         assertEq(ink, 0);
         assertEq(art, 0);
         assertEq(wrapper.balanceOf(address(rando)), 1 ether);
