@@ -21,10 +21,14 @@ import {ITokenWrapper, OFHTokenLike} from "./ITokenWrapper.sol";
 
 /**
  * @title An extension/subset of `DSMath` containing only the methods required in this file.
+ * @dev TokenWrapper contract directly uses 'wad' method for unit conversion.
  */
 library DSMathCustom {
     uint256 internal constant WAD = 10**18;
 
+    /**
+     * @dev Safe multiplication function to avoid uint256 overflows
+     */
     function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require(y == 0 || (z = x * y) / y == x, "DSMath/mul-overflow");
     }
@@ -42,10 +46,11 @@ library DSMathCustom {
 
 /**
  * @author Henrique Barcelos <henrique@clio.finance>
- * @title Wraps the underlying OFH token.
- * @dev Assumes OFH has `0` decimals and normalizes `mint()/burn()` to have `18` decimals.
+ * @title Wraps the underlying OFH token and mints equivalent WOFH.
+ * @dev Assumes OFH has `0` decimals (integer/non-fractional token) and normalizes `mint()/burn()` to have `18` decimals.
  */
 contract TokenWrapper is ITokenWrapper, ERC20 {
+    /// @notice OFH token contract address
     OFHTokenLike public immutable token;
 
     /// @notice Addresses with admin access on this contract. `wards[usr]`
@@ -85,8 +90,8 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
     }
 
     /**
-     * @notice Creates a token wrapper for a OFH token implementation.
-     * @param token_ The OFH token implementation.
+     * @notice Creates a token wrapper for a OFH token logic implementation.
+     * @param token_ The OFH token deployed address.
      */
     constructor(address token_) public ERC20("Wrapped OFH", "wOFH") {
         token = OFHTokenLike(token_);
@@ -133,9 +138,8 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
 
     /**
      * @notice Wraps the underlying token `value` and mints wrapper tokens into `gal`'s balance.
-     * @dev The `totalSupply` of the wrapped token MUST be less than or equal to the underlying token balance of the current contract.
      * @param gal The address to receive the minted wrapped tokens.
-     * @param value The value to be wrapped.
+     * @param value The integer token value to be wrapped.
      */
     function wrap(address gal, uint256 value) external override operator {
         doWrap(gal, value);
@@ -143,16 +147,17 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
 
     /**
      * @notice Wraps the underlying token `value` and mints wrapper tokens into `msg.sender`'s balance.
-     * @dev The `totalSupply` of the wrapped token MUST be less than or equal to the underlying token balance of the current contract.
-     * @param value The `wei` value to be wrapped.
+     * @param value The integer token value to be wrapped.
      */
     function wrap(uint256 value) external override operator {
         doWrap(msg.sender, value);
     }
 
     /**
-     * @dev Wraps the underlying token `value` and mints wrapper tokens into `msg.sender`'s balance.
-     * @param value The `wei` value to be wrapped.
+     * @notice Wraps the underlying token `value` and mints wrapper tokens into `msg.sender`'s balance.
+     * @dev The `totalSupply` of the wrapped token MUST be less than or equal to the underlying token balance of the current contract at all times.
+     * @param gal The address to receive the minted wrapped tokens.
+     * @param value The integer token value to be wrapped.
      */
     function doWrap(address gal, uint256 value) private {
         // Normalizes the amount to have 18 decimals. Assumes that `token` has 0 decimals.
@@ -165,16 +170,10 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
     }
 
     /**
-     * TODO: what should be done when users will end up with only fractions of the token?
-     * (ES is one example, but there could be others.)
-     * In this case the `_burn` balance check will fail and the tokens will be stuck in the contract
-     * until the user can get a hold of a full token.
-     * This could potentially lead to a griefing attack where a single party can deny the unwraping of
-     * tokens simply by refusing to collaborate in a token aggregation.
-     *
      * @notice Unwraps the tokens by burning the due amount.
      * @param gal The address to receive the underlying tokens.
-     * @param value The `wei` value to be unwrapped.
+     * @param value The integer token value to be unwrapped.
+     * @dev Contract expects "value" amount to be a whole/non-fractional WOFH token. Fractional balances cannot be unwrapped.
      */
     function unwrap(address gal, uint256 value) public override {
         // Normalizes the amount to have 18 decimals. Assumes that `token` has 0 decimals.
@@ -185,7 +184,7 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
 
     /**
      * @notice Unwraps the tokens by burning the due amount. Sends the underlying tokens to `msg.sender`.
-     * @param value The `wei` value to be unwrapped.
+     * @param value The integer token value to be unwrapped.
      */
     function unwrap(uint256 value) external override {
         unwrap(msg.sender, value);

@@ -209,7 +209,7 @@ contract RwaUrn {
     }
 
     /**
-     * @notice Revokes `usr` admin access from this contract.
+     * @notice Revokes `usr` operator access from this contract.
      * @param usr The user address.
      */
     function nope(address usr) external auth {
@@ -251,7 +251,7 @@ contract RwaUrn {
         require(wad <= 2**255 - 1, "RwaUrn/overflow");
 
         DSTokenAbstract(gemJoin.gem()).transferFrom(msg.sender, address(this), wad);
-        // join with address this
+        // join with this contract's address
         gemJoin.join(address(this), wad);
         vat.frob(gemJoin.ilk(), address(this), address(this), address(this), int256(wad), 0);
 
@@ -306,7 +306,7 @@ contract RwaUrn {
     }
 
     /**
-     * @notice Flushes out any outstanding Dai balance to `outputConduit`.
+     * @notice Flushes out any outstanding Dai balance to `outputConduit` address.
      * @dev Can only be called after `cage()` has been called on the Vat.
      */
     function quit() external {
