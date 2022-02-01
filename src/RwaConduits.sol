@@ -284,7 +284,7 @@ contract RwaOutputConduit {
      * @param who The user address.
      */
     function kiss(address who) public auth {
-        who[usr] = 1;
+        bud[who] = 1;
         emit Kiss(who);
     }
 

@@ -43,6 +43,8 @@ interface Hevm {
         bytes32,
         bytes32
     ) external;
+
+    function load(address, bytes32) external returns (bytes32);
 }
 
 contract TokenUser {
@@ -128,6 +130,10 @@ contract RwaOperator is TryCaller {
     function canFree(uint256 wad) public returns (bool) {
         return this.tryCall(address(outC), abi.encodeWithSignature("free(uint256)", wad));
     }
+
+    function recap(uint256 wad) public {
+        urn.recap(wad);
+    }
 }
 
 contract RwaMate is TryCaller {
@@ -153,6 +159,18 @@ contract RwaMate is TryCaller {
 
     function canPushIn() public returns (bool) {
         return this.tryCall(address(inC), abi.encodeWithSignature("push()"));
+    }
+}
+
+contract RwaGov is TryCaller {
+    RwaUrn internal urn;
+
+    constructor(RwaUrn urn_) public {
+        urn = urn_;
+    }
+
+    function recap(uint256 wad) public {
+        urn.recap(wad);
     }
 }
 
@@ -182,11 +200,13 @@ contract RwaUrnTest is DSTest, DSMath {
     RwaOperator internal op;
     RwaMate internal mate;
     TokenUser internal rec;
+    RwaGov internal gov;
 
     // Debt ceiling of 1000 DAI
     string internal constant DOC = "Please sign this";
     uint256 internal constant CEILING = 200 ether;
     uint256 internal constant EIGHT_PCT = 1000000002440418608258400030;
+    uint256 internal constant URN_GEMS_LIMIT = 400 ether;
 
     uint48 internal constant TAU = 2 weeks;
 
@@ -198,7 +218,7 @@ contract RwaUrnTest is DSTest, DSMath {
         hevm = Hevm(address(CHEAT_CODE));
         hevm.warp(104411200);
 
-        token = new MockOFH(400);
+        token = new MockOFH(500);
         wrapper = new TokenWrapper(address(token));
         wrapper.hope(address(this));
 
@@ -236,19 +256,28 @@ contract RwaUrnTest is DSTest, DSMath {
 
         outConduit = new RwaOutputConduit(address(dai));
 
-        urn = new RwaUrn(address(vat), address(jug), address(gemJoin), address(daiJoin), address(outConduit));
+        urn = new RwaUrn(
+            address(vat),
+            address(jug),
+            address(gemJoin),
+            address(daiJoin),
+            address(outConduit),
+            URN_GEMS_LIMIT
+        );
         gemJoin.rely(address(urn));
         inConduit = new RwaInputConduit(address(dai), address(urn));
 
         op = new RwaOperator(urn, outConduit, inConduit);
         mate = new RwaMate(outConduit, inConduit);
         rec = new TokenUser(dai);
+        gov = new RwaGov(urn);
 
         // Wraps all tokens into `op` balance
-        token.transfer(address(wrapper), 400);
-        wrapper.wrap(address(op), 400);
+        token.transfer(address(wrapper), 500);
+        wrapper.wrap(address(op), 500);
 
         urn.hope(address(op));
+        urn.rely(address(gov));
 
         inConduit.mate(address(mate));
         outConduit.mate(address(mate));
@@ -546,5 +575,65 @@ contract RwaUrnTest is DSTest, DSMath {
         mate.pushIn();
 
         urn.quit();
+    }
+
+    function testFailOnGemLimitExceed() public {
+        op.lock(URN_GEMS_LIMIT + 1 ether);
+    }
+
+    function testIncreaseGemValueOnLock() public {
+        uint256 gems = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        uint256 gemsLimit = uint256(hevm.load(address(urn), bytes32(uint256(3))));
+        assertEq(gems, 0);
+        assertEq(gemsLimit, URN_GEMS_LIMIT);
+
+        uint256 amount = URN_GEMS_LIMIT;
+        op.lock(amount);
+        uint256 gemsAfter = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        assertEq(gemsAfter, amount);
+    }
+
+    function testDecreaseGemValueOnFree() public {
+        uint256 gems = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        assertEq(gems, 0);
+
+        op.lock(1 ether);
+        op.draw(200 ether);
+
+        uint256 gemsAfterDraw = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        assertEq(gemsAfterDraw, 1 ether);
+
+        // op nominats the receiver
+        op.pick(address(rec));
+        mate.pushOut();
+
+        hevm.warp(block.timestamp + 30 days);
+
+        rec.transfer(address(inConduit), 100 ether);
+
+        mate.pushIn();
+        op.wipe(100 ether);
+
+        // Since only ~half of the loan was repaid, op cannot free the total amount locked
+        assertTrue(!op.canFree(1 ether));
+
+        op.free(0.4 ether);
+
+        uint256 gemsAfterFree = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        assertEq(gemsAfterFree, 0.6 ether);
+    }
+
+    function testFailUnAuthorizedRecapCall() public {
+        op.recap(600 ether);
+    }
+
+    function testCanCallRecap() public {
+        uint256 gemsLimitBefore = uint256(hevm.load(address(urn), bytes32(uint256(3))));
+        assertEq(gemsLimitBefore, URN_GEMS_LIMIT);
+
+        gov.recap(600 ether);
+
+        uint256 gemsLimitAfter = uint256(hevm.load(address(urn), bytes32(uint256(3))));
+        assertEq(gemsLimitAfter, 600 ether);
     }
 }

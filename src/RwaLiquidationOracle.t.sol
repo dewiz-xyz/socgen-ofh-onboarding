@@ -220,7 +220,14 @@ contract RwaLiquidationOracleTest is DSTest, DSMath {
 
         outConduit = new RwaOutputConduit(address(dai));
 
-        urn = new RwaUrn(address(vat), address(jug), address(gemJoin), address(daiJoin), address(outConduit));
+        urn = new RwaUrn(
+            address(vat),
+            address(jug),
+            address(gemJoin),
+            address(daiJoin),
+            address(outConduit),
+            400 ether
+        );
         gemJoin.rely(address(urn));
         inConduit = new RwaInputConduit(address(dai), address(urn));
 
@@ -344,7 +351,14 @@ contract RwaLiquidationOracleTest is DSTest, DSMath {
     }
 
     function testCullMultipleUrns() public {
-        RwaUrn urn2 = new RwaUrn(address(vat), address(jug), address(gemJoin), address(daiJoin), address(outConduit));
+        RwaUrn urn2 = new RwaUrn(
+            address(vat),
+            address(jug),
+            address(gemJoin),
+            address(daiJoin),
+            address(outConduit),
+            400 ether
+        );
         gemJoin.rely(address(urn2));
 
         RwaOperator op2 = new RwaOperator(urn2, outConduit, inConduit);
