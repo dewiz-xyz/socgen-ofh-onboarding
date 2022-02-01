@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+// RwaUrn2: A capped vault for Real-World Assets (RWA).
+// @dev This vault implements `gemCap`, the maximum amount of gem the urn can hold.
+
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.6.8 <0.7.0;
 
@@ -23,6 +26,7 @@ import {VatAbstract, JugAbstract, DSTokenAbstract, GemJoinAbstract, DaiJoinAbstr
  * @title An extension/subset of `DSMath` containing only the methods required in this file.
  */
 library DSMathCustom {
+    uint256 internal constant WAD = 10**18;
     uint256 internal constant RAY = 10**27;
 
     function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
@@ -45,10 +49,17 @@ library DSMathCustom {
     }
 
     /**
-     * @dev Converts `wad` (10^18) into a `rad` (10^45) by multiplying it by RAY (10^27).
+     * @dev Converts wei into a `wad` (10^18) by multiplying it by WAD (10^18).
      *  - wad: used for token balances
      *  - ray: used for interest rates
      *  - rad: used for Dai balances inside the Vat
+     */
+    function wad(uint256 wei_) internal pure returns (uint256 z) {
+        return mul(wei_, WAD);
+    }
+
+    /**
+     * @dev Converts `wad` (10^18) into a `rad` (10^45) by multiplying it by RAY (10^27).
      */
     function rad(uint256 wad) internal pure returns (uint256 z) {
         return mul(wad, RAY);
@@ -56,7 +67,10 @@ library DSMathCustom {
 }
 
 /**
- * @title A vault for Real-World Assets (RWA).
+ * @author Kaue Cano <kaue@clio.finance>
+ * @author Lev Livnev <lev@liv.nev.org.uk>
+ * @title RwaUrn2: A capped vault for Real-World Assets (RWA).
+ * @dev This vault implements `gemCap`, the maximum amount of gem the urn can hold.
  */
 contract RwaUrn {
     /// @notice Core module address.
@@ -69,6 +83,11 @@ contract RwaUrn {
     JugAbstract public jug;
     /// @notice The destination of Dai drawn from this urn.
     address public outputConduit;
+
+    /// @notice Quantity of gem deposited in the contract at a particular time.
+    uint256 public gems = 0;
+    /// @notice Maximum amount of tokens this contract can lock
+    uint256 public gemCap;
 
     /// @notice Addresses with admin access on this contract. `wards[usr]`
     mapping(address => uint256) public wards;
@@ -134,6 +153,13 @@ contract RwaUrn {
      */
     event Quit(address indexed usr, uint256 wad);
 
+    /**
+     * @notice The urn max gem amount was updatec.
+     * @dev Only `auth` addresses can change this.
+     * @param wad The new gemCap.
+     */
+    event Recap(uint256 wad);
+
     modifier auth() {
         require(wards[msg.sender] == 1, "RwaUrn/not-authorized");
         _;
@@ -150,21 +176,25 @@ contract RwaUrn {
      * @param gemJoin_ Adapter to mint/burn Dai tokens.
      * @param daiJoin_ Stability fee management module.
      * @param outputConduit_ Destination of Dai drawn from this urn.
+     * @param gemCap_ Maximum gem amount this urn can lock.
      */
     constructor(
         address vat_,
         address jug_,
         address gemJoin_,
         address daiJoin_,
-        address outputConduit_
+        address outputConduit_,
+        uint256 gemCap_
     ) public {
         require(outputConduit_ != address(0), "RwaUrn/invalid-conduit");
+        require(gemCap_ > 0, "RwaUrn/invalid-gemcap");
 
         vat = VatAbstract(vat_);
         jug = JugAbstract(jug_);
         gemJoin = GemJoinAbstract(gemJoin_);
         daiJoin = DaiJoinAbstract(daiJoin_);
         outputConduit = outputConduit_;
+        gemCap = gemCap_;
 
         wards[msg.sender] = 1;
 
@@ -172,6 +202,7 @@ contract RwaUrn {
         DaiAbstract(DaiJoinAbstract(daiJoin_).dai()).approve(daiJoin_, type(uint256).max);
         VatAbstract(vat_).hope(daiJoin_);
 
+        emit Recap(gemCap_);
         emit Rely(msg.sender);
         emit File("outputConduit", outputConduit_);
         emit File("jug", jug_);
@@ -239,6 +270,17 @@ contract RwaUrn {
         emit File(what, data);
     }
 
+    /**
+     * @notice Updates the max gem amount this contract can lock.
+     * @param wad Gem amount.
+     */
+    function recap(uint256 wad) external auth {
+        require(wad <= 2**255 - 1, "RwaUrn/overflow");
+        gemCap = wad;
+
+        emit Recap(wad);
+    }
+
     /*//////////////////////////////////
               Vault Operation
     //////////////////////////////////*/
@@ -249,11 +291,15 @@ contract RwaUrn {
      */
     function lock(uint256 wad) external operator {
         require(wad <= 2**255 - 1, "RwaUrn/overflow");
+        require(DSMathCustom.add(gems, wad) <= gemCap, "RwaUrn/gemcap-exceeded");
 
         DSTokenAbstract(gemJoin.gem()).transferFrom(msg.sender, address(this), wad);
         // join with this contract's address
         gemJoin.join(address(this), wad);
         vat.frob(gemJoin.ilk(), address(this), address(this), address(this), int256(wad), 0);
+
+        // update current gem amount
+        gems = DSMathCustom.add(gems, wad);
 
         emit Lock(msg.sender, wad);
     }
@@ -267,6 +313,10 @@ contract RwaUrn {
 
         vat.frob(gemJoin.ilk(), address(this), address(this), address(this), -int256(wad), 0);
         gemJoin.exit(msg.sender, wad);
+
+        // update current gem amount
+        gems = DSMathCustom.sub(gems, wad);
+
         emit Free(msg.sender, wad);
     }
 
