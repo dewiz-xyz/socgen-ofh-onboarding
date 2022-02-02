@@ -229,7 +229,7 @@ contract BumpSpell is TestSpell {
     }
 }
 
-contract DssSpellTest is DSTest, DSMath {
+contract CESFork_DssSpellTest is DSTest, DSMath {
     // populate with mainnet spell if needed
     address constant GOERLI_SPELL = address(0);
     // this needs to be updated

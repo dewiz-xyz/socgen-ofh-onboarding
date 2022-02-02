@@ -38,7 +38,7 @@ if [ -z "$ADDRESSES_RAW" ]; then
   elif [ "${1}" == "mainnet" ]; then
     URL="https://changelog.makerdao.com/releases/mainnet/active/contracts.json"
   elif [ "${1}" == "ces-goerli" ]; then
-    URL="https://raw.githubusercontent.com/ClioFinance/ces-goerli/master/contracts.json"
+    URL="https://raw.githubusercontent.com/clio-finance/ces-goerli/master/contracts.json"
   else
     echo "# Invalid network ${1}" >&2
     [ -z "${PS1}" ] && exit || return
