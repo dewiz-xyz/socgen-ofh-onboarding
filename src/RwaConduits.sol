@@ -322,7 +322,7 @@ contract RwaOutputConduit {
         require(to != address(0), "RwaOutputConduit/to-not-picked");
         uint256 balance = dai.balanceOf(address(this));
         address recipient = to;
-        /// defaults `to` to address(0) fo flow is restarted
+        // sets `to` to address(0) so the flow is restarted
         to = address(0);
 
         dai.transfer(recipient, balance);
