@@ -290,7 +290,7 @@ contract RwaUrn2 {
     function lock(uint256 wad) external operator {
         require(wad <= 2**255 - 1, "RwaUrn2/overflow");
 
-        (uint256 ink, ) = (vat.urns(gemJoin.ilk(), address(this));
+        (uint256 ink, ) = vat.urns(gemJoin.ilk(), address(this));
         require(DSMathCustom.add(ink, wad) <= gemCap, "RwaUrn2/gemcap-exceeded");
 
         DSTokenAbstract(gemJoin.gem()).transferFrom(msg.sender, address(this), wad);

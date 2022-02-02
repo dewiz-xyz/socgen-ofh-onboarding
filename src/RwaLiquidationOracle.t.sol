@@ -16,7 +16,7 @@ import {MockOFH} from "./mock/MockOFH.sol";
 import {OFHTokenLike} from "./ITokenWrapper.sol";
 import {TokenWrapper} from "./TokenWrapper.sol";
 import {RwaInputConduit, RwaOutputConduit} from "./RwaConduits.sol";
-import {RwaUrn} from "./RwaUrn.sol";
+import {RwaUrn2} from "./RwaUrn.sol";
 import {RwaLiquidationOracle} from "./RwaLiquidationOracle.sol";
 
 interface Hevm {
@@ -59,12 +59,12 @@ contract TryCaller {
 }
 
 contract RwaOperator is TryCaller {
-    RwaUrn internal urn;
+    RwaUrn2 internal urn;
     RwaOutputConduit internal outC;
     RwaInputConduit internal inC;
 
     constructor(
-        RwaUrn urn_,
+        RwaUrn2 urn_,
         RwaOutputConduit outC_,
         RwaInputConduit inC_
     ) public {
@@ -158,7 +158,7 @@ contract RwaLiquidationOracleTest is DSTest, DSMath {
     AuthGemJoin internal gemJoin;
 
     RwaLiquidationOracle internal oracle;
-    RwaUrn internal urn;
+    RwaUrn2 internal urn;
 
     RwaOutputConduit internal outConduit;
     RwaInputConduit internal inConduit;
@@ -220,7 +220,7 @@ contract RwaLiquidationOracleTest is DSTest, DSMath {
 
         outConduit = new RwaOutputConduit(address(dai));
 
-        urn = new RwaUrn(
+        urn = new RwaUrn2(
             address(vat),
             address(jug),
             address(gemJoin),
@@ -351,7 +351,7 @@ contract RwaLiquidationOracleTest is DSTest, DSMath {
     }
 
     function testCullMultipleUrns() public {
-        RwaUrn urn2 = new RwaUrn(
+        RwaUrn2 urn2 = new RwaUrn2(
             address(vat),
             address(jug),
             address(gemJoin),

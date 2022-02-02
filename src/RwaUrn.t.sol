@@ -33,7 +33,7 @@ import {OFHTokenLike} from "./ITokenWrapper.sol";
 import {TokenWrapper} from "./TokenWrapper.sol";
 import {RwaInputConduit, RwaOutputConduit} from "./RwaConduits.sol";
 import {RwaLiquidationOracle} from "./RwaLiquidationOracle.sol";
-import {RwaUrn} from "./RwaUrn.sol";
+import {RwaUrn2} from "./RwaUrn.sol";
 
 interface Hevm {
     function warp(uint256) external;
@@ -77,12 +77,12 @@ contract TryCaller {
 }
 
 contract RwaOperator is TryCaller {
-    RwaUrn internal urn;
+    RwaUrn2 internal urn;
     RwaOutputConduit internal outC;
     RwaInputConduit internal inC;
 
     constructor(
-        RwaUrn urn_,
+        RwaUrn2 urn_,
         RwaOutputConduit outC_,
         RwaInputConduit inC_
     ) public {
@@ -130,6 +130,10 @@ contract RwaOperator is TryCaller {
     function canFree(uint256 wad) public returns (bool) {
         return this.tryCall(address(outC), abi.encodeWithSignature("free(uint256)", wad));
     }
+
+    function recap(uint256 wad) public {
+        urn.recap(wad);
+    }
 }
 
 contract RwaMate is TryCaller {
@@ -159,9 +163,9 @@ contract RwaMate is TryCaller {
 }
 
 contract RwaGov is TryCaller {
-    RwaUrn internal urn;
+    RwaUrn2 internal urn;
 
-    constructor(RwaUrn urn_) public {
+    constructor(RwaUrn2 urn_) public {
         urn = urn_;
     }
 
@@ -188,7 +192,7 @@ contract RwaUrnTest is DSTest, DSMath {
     AuthGemJoin internal gemJoin;
 
     RwaLiquidationOracle internal oracle;
-    RwaUrn internal urn;
+    RwaUrn2 internal urn;
 
     RwaOutputConduit internal outConduit;
     RwaInputConduit internal inConduit;
@@ -252,7 +256,7 @@ contract RwaUrnTest is DSTest, DSMath {
 
         outConduit = new RwaOutputConduit(address(dai));
 
-        urn = new RwaUrn(
+        urn = new RwaUrn2(
             address(vat),
             address(jug),
             address(gemJoin),
@@ -578,26 +582,27 @@ contract RwaUrnTest is DSTest, DSMath {
     }
 
     function testIncreaseGemValueOnLock() public {
-        uint256 gems = uint256(hevm.load(address(urn), bytes32(uint256(2))));
-        uint256 gemsLimit = uint256(hevm.load(address(urn), bytes32(uint256(3))));
-        assertEq(gems, 0);
+        (uint256 ink, ) = vat.urns("RWA007-A", address(urn));
+        uint256 gemsLimit = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        assertEq(ink, 0);
         assertEq(gemsLimit, URN_GEMS_LIMIT);
 
         uint256 amount = URN_GEMS_LIMIT;
         op.lock(amount);
-        uint256 gemsAfter = uint256(hevm.load(address(urn), bytes32(uint256(2))));
-        assertEq(gemsAfter, amount);
+
+        (uint256 inkAfter, ) = vat.urns("RWA007-A", address(urn));
+        assertEq(inkAfter, amount);
     }
 
     function testDecreaseGemValueOnFree() public {
-        uint256 gems = uint256(hevm.load(address(urn), bytes32(uint256(2))));
-        assertEq(gems, 0);
+        (uint256 ink, ) = vat.urns("RWA007-A", address(urn));
+        assertEq(ink, 0);
 
         op.lock(1 ether);
         op.draw(200 ether);
 
-        uint256 gemsAfterDraw = uint256(hevm.load(address(urn), bytes32(uint256(2))));
-        assertEq(gemsAfterDraw, 1 ether);
+        (uint256 inkAfterDraw, ) = vat.urns("RWA007-A", address(urn));
+        assertEq(inkAfterDraw, 1 ether);
 
         // op nominats the receiver
         op.pick(address(rec));
@@ -615,8 +620,8 @@ contract RwaUrnTest is DSTest, DSMath {
 
         op.free(0.4 ether);
 
-        uint256 gemsAfterFree = uint256(hevm.load(address(urn), bytes32(uint256(2))));
-        assertEq(gemsAfterFree, 0.6 ether);
+        (uint256 inkAfterFree, ) = vat.urns("RWA007-A", address(urn));
+        assertEq(inkAfterFree, 0.6 ether);
     }
 
     function testFailUnAuthorizedRecapCall() public {
@@ -624,12 +629,12 @@ contract RwaUrnTest is DSTest, DSMath {
     }
 
     function testCanCallRecap() public {
-        uint256 gemsLimitBefore = uint256(hevm.load(address(urn), bytes32(uint256(3))));
+        uint256 gemsLimitBefore = uint256(hevm.load(address(urn), bytes32(uint256(2))));
         assertEq(gemsLimitBefore, URN_GEMS_LIMIT);
 
         gov.recap(600 ether);
 
-        uint256 gemsLimitAfter = uint256(hevm.load(address(urn), bytes32(uint256(3))));
+        uint256 gemsLimitAfter = uint256(hevm.load(address(urn), bytes32(uint256(2))));
         assertEq(gemsLimitAfter, 600 ether);
     }
 }
