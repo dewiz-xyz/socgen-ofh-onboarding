@@ -5,7 +5,7 @@ set -eo pipefail
 source "${BASH_SOURCE%/*}/common.sh"
 
 [[ "$ETH_RPC_URL" && "$(seth chain)" == "goerli" ]] || die "Please set a goerli ETH_RPC_URL"
-[[ "$RWA_GEM_LIMIT" ]] || die "Please set RWA_GEM_LIMIT"
+[[ "$RWA_URN_GEM_LIMIT" ]] || die "Please set RWA_URN_GEM_LIMIT"
 
 
 # shellcheck disable=SC1091
@@ -69,7 +69,7 @@ RWA_JOIN=$(dapp create AuthGemJoin "$MCD_VAT" "$ILK_ENCODED" "$RWA_WRAPPER_TOKEN
 seth send "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY"
 
 # urn it
-RWA_URN=$(dapp create RwaUrn "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT" $RWA_GEM_LIMIT)
+RWA_URN=$(dapp create RwaUrn "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT" $RWA_URN_GEM_LIMIT)
 seth send "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY"
 seth send "$RWA_URN" 'deny(address)' "$ETH_FROM"
 
