@@ -84,8 +84,6 @@ contract RwaUrn2 {
     /// @notice The destination of Dai drawn from this urn.
     address public outputConduit;
 
-    /// @notice Quantity of gem deposited in the contract at a particular time.
-    uint256 public gems = 0;
     /// @notice Maximum amount of tokens this contract can lock
     uint256 public gemCap;
 
@@ -161,12 +159,12 @@ contract RwaUrn2 {
     event Recap(uint256 wad);
 
     modifier auth() {
-        require(wards[msg.sender] == 1, "RwaUrn/not-authorized");
+        require(wards[msg.sender] == 1, "RwaUrn2/not-authorized");
         _;
     }
 
     modifier operator() {
-        require(can[msg.sender] == 1, "RwaUrn/not-operator");
+        require(can[msg.sender] == 1, "RwaUrn2/not-operator");
         _;
     }
 
@@ -186,8 +184,8 @@ contract RwaUrn2 {
         address outputConduit_,
         uint256 gemCap_
     ) public {
-        require(outputConduit_ != address(0), "RwaUrn/invalid-conduit");
-        require(gemCap_ > 0, "RwaUrn/invalid-gemcap");
+        require(outputConduit_ != address(0), "RwaUrn2/invalid-conduit");
+        require(gemCap_ > 0, "RwaUrn2/invalid-gemcap");
 
         vat = VatAbstract(vat_);
         jug = JugAbstract(jug_);
@@ -259,12 +257,12 @@ contract RwaUrn2 {
      */
     function file(bytes32 what, address data) external auth {
         if (what == "outputConduit") {
-            require(data != address(0), "RwaUrn/invalid-conduit");
+            require(data != address(0), "RwaUrn2/invalid-conduit");
             outputConduit = data;
         } else if (what == "jug") {
             jug = JugAbstract(data);
         } else {
-            revert("RwaUrn/unrecognised-param");
+            revert("RwaUrn2/unrecognised-param");
         }
 
         emit File(what, data);
@@ -275,7 +273,7 @@ contract RwaUrn2 {
      * @param wad Gem amount.
      */
     function recap(uint256 wad) external auth {
-        require(wad <= 2**255 - 1, "RwaUrn/overflow");
+        require(wad <= 2**255 - 1, "RwaUrn2/overflow");
         gemCap = wad;
 
         emit Recap(wad);
@@ -290,16 +288,15 @@ contract RwaUrn2 {
      * @param wad The amount to lock.
      */
     function lock(uint256 wad) external operator {
-        require(wad <= 2**255 - 1, "RwaUrn/overflow");
-        require(DSMathCustom.add(gems, wad) <= gemCap, "RwaUrn/gemcap-exceeded");
+        require(wad <= 2**255 - 1, "RwaUrn2/overflow");
+
+        (uint256 ink, ) = (vat.urns(gemJoin.ilk(), address(this));
+        require(DSMathCustom.add(ink, wad) <= gemCap, "RwaUrn2/gemcap-exceeded");
 
         DSTokenAbstract(gemJoin.gem()).transferFrom(msg.sender, address(this), wad);
         // join with this contract's address
         gemJoin.join(address(this), wad);
         vat.frob(gemJoin.ilk(), address(this), address(this), address(this), int256(wad), 0);
-
-        // update current gem amount
-        gems = DSMathCustom.add(gems, wad);
 
         emit Lock(msg.sender, wad);
     }
@@ -309,13 +306,10 @@ contract RwaUrn2 {
      * @param wad The amount to free.
      */
     function free(uint256 wad) external operator {
-        require(wad <= 2**255, "RwaUrn/overflow");
+        require(wad <= 2**255, "RwaUrn2/overflow");
 
         vat.frob(gemJoin.ilk(), address(this), address(this), address(this), -int256(wad), 0);
         gemJoin.exit(msg.sender, wad);
-
-        // update current gem amount
-        gems = DSMathCustom.sub(gems, wad);
 
         emit Free(msg.sender, wad);
     }
@@ -330,7 +324,7 @@ contract RwaUrn2 {
         (, uint256 rate, , , ) = vat.ilks(ilk);
 
         uint256 dart = DSMathCustom.divup(DSMathCustom.rad(wad), rate);
-        require(dart <= 2**255 - 1, "RwaUrn/overflow");
+        require(dart <= 2**255 - 1, "RwaUrn2/overflow");
 
         vat.frob(ilk, address(this), address(this), address(this), 0, int256(dart));
         daiJoin.exit(outputConduit, wad);
@@ -349,7 +343,7 @@ contract RwaUrn2 {
         (, uint256 rate, , , ) = vat.ilks(ilk);
 
         uint256 dart = DSMathCustom.rad(wad) / rate;
-        require(dart <= 2**255, "RwaUrn/overflow");
+        require(dart <= 2**255, "RwaUrn2/overflow");
 
         vat.frob(ilk, address(this), address(this), address(this), 0, -int256(dart));
         emit Wipe(msg.sender, wad);
@@ -360,7 +354,7 @@ contract RwaUrn2 {
      * @dev Can only be called after `cage()` has been called on the Vat.
      */
     function quit() external {
-        require(vat.live() == 0, "RwaUrn/vat-still-live");
+        require(vat.live() == 0, "RwaUrn2/vat-still-live");
 
         DSTokenAbstract dai = DSTokenAbstract(daiJoin.dai());
         uint256 wad = dai.balanceOf(address(this));
