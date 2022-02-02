@@ -72,7 +72,7 @@ library DSMathCustom {
  * @title RwaUrn2: A capped vault for Real-World Assets (RWA).
  * @dev This vault implements `gemCap`, the maximum amount of gem the urn can hold.
  */
-contract RwaUrn {
+contract RwaUrn2 {
     /// @notice Core module address.
     VatAbstract public immutable vat;
     /// @notice The GemJoin adapter for the gem in this urn.
