@@ -76,18 +76,18 @@ RWA_JOIN=$(dapp create AuthGemJoin "$MCD_VAT" "$ILK_ENCODED" "$RWA_WRAPPER_TOKEN
 seth send "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY"
 
 # urn it
-RWA_URN=$(dapp create RwaUrn "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT" $RWA_URN_GEM_LIMIT)
-seth send "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY"
-seth send "$RWA_URN" 'deny(address)' "$ETH_FROM"
+RWA_URN_2=$(dapp create RwaUrn2 "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT" $RWA_URN_2_GEM_LIMIT)
+seth send "$RWA_URN_2" 'rely(address)' "$MCD_PAUSE_PROXY"
+seth send "$RWA_URN_2" 'deny(address)' "$ETH_FROM"
 
 # rely it
-seth send "$RWA_JOIN" 'rely(address)' "$RWA_URN"
+seth send "$RWA_JOIN" 'rely(address)' "$RWA_URN_2"
 # deny it
 seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
 
 # connect it
 [[ -z "$RWA_INPUT_CONDUIT" ]] && {
-    RWA_INPUT_CONDUIT=$(dapp create RwaInputConduit "$MCD_DAI" "$RWA_URN")
+    RWA_INPUT_CONDUIT=$(dapp create RwaInputConduit "$MCD_DAI" "$RWA_URN_2")
 
     # trust addresses for goerli
     seth send "$RWA_INPUT_CONDUIT" 'mate(address)' "$MATE"
@@ -112,7 +112,7 @@ echo "MATE: ${MATE}"
 echo "ILK: ${ILK}"
 echo "${SYMBOL}: ${RWA_WRAPPER_TOKEN}"
 echo "MCD_JOIN_${SYMBOL}_${LETTER}: ${RWA_JOIN}"
-echo "${SYMBOL}_${LETTER}_URN: ${RWA_URN}"
+echo "${SYMBOL}_${LETTER}_URN: ${RWA_URN_2}"
 echo "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT}"
 echo "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT: ${RWA_OUTPUT_CONDUIT}"
 echo "MIP21_LIQUIDATION_ORACLE: ${MIP21_LIQUIDATION_ORACLE}"
