@@ -49,16 +49,6 @@ library DSMathCustom {
     }
 
     /**
-     * @dev Converts wei into a `wad` (10^18) by multiplying it by WAD (10^18).
-     *  - wad: used for token balances
-     *  - ray: used for interest rates
-     *  - rad: used for Dai balances inside the Vat
-     */
-    function wad(uint256 wei_) internal pure returns (uint256 z) {
-        return mul(wei_, WAD);
-    }
-
-    /**
      * @dev Converts `wad` (10^18) into a `rad` (10^45) by multiplying it by RAY (10^27).
      */
     function rad(uint256 wad) internal pure returns (uint256 z) {
