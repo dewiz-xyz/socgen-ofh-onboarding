@@ -37,7 +37,7 @@ library DSMathCustom {
  * @author Lev Livnev <lev@liv.nev.org.uk>
  * @author Henrique Barcelos <henrique@clio.finance>
  * @title An Oracle for liquitation of real-world assets (RWA).
- * @dev This contract differs from the original [RwaLiquidationOracle](https://github.com/makerdao/MIP21-RWA-Example/blob/master/src/RwaLiquidationOracle.sol)
+ * @dev This contract differs from the original [RwaLiquidationOracle](https://github.com/makerdao/MIP21-RWA-Example/blob/fce06885ff89d10bf630710d4f6089c5bba94b4d/src/RwaLiquidationOracle.sol)
  * because `bump()` is allowed to decrease the value of the underlying asset.
  * @dev One instance of contract can be used for many RWA collateral types.
  */
