@@ -7,7 +7,7 @@ set -eo pipefail
 source "${BASH_SOURCE%/*}/common.sh"
 
 [[ "$ETH_RPC_URL" && "$(seth chain)" == "ethlive" ]] || die "Please set a mainnet ETH_RPC_URL"
-[[ "$RWA_URN_GEM_LIMIT" ]] || die "Please set RWA_URN_GEM_LIMIT"
+[[ "$RWA_URN_2_GEM_LIMIT" ]] || die "Please set RWA_URN_2_GEM_LIMIT"
 
 
 # shellcheck disable=SC1091

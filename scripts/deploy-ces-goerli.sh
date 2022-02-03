@@ -5,7 +5,7 @@ set -eo pipefail
 source "${BASH_SOURCE%/*}/common.sh"
 
 [[ "$ETH_RPC_URL" && "$(seth chain)" == "goerli" ]] || die "Please set a goerli ETH_RPC_URL"
-[[ "$RWA_URN_GEM_LIMIT" ]] || die "Please set RWA_URN_GEM_LIMIT"
+[[ "$RWA_URN_2_GEM_LIMIT" ]] || die "Please set RWA_URN_2_GEM_LIMIT"
 
 # shellcheck disable=SC1091
 source "${BASH_SOURCE%/*}/build-env-addresses.sh" ces-goerli >/dev/null 2>&1
