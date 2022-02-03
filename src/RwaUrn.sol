@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+// RwaUrn2: A capped vault for Real-World Assets (RWA).
+// @dev This vault implements `gemCap`, the maximum amount of gem the urn can hold.
+
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.6.8 <0.7.0;
 
@@ -23,6 +26,7 @@ import {VatAbstract, JugAbstract, DSTokenAbstract, GemJoinAbstract, DaiJoinAbstr
  * @title An extension/subset of `DSMath` containing only the methods required in this file.
  */
 library DSMathCustom {
+    uint256 internal constant WAD = 10**18;
     uint256 internal constant RAY = 10**27;
 
     function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
@@ -46,9 +50,6 @@ library DSMathCustom {
 
     /**
      * @dev Converts `wad` (10^18) into a `rad` (10^45) by multiplying it by RAY (10^27).
-     *  - wad: used for token balances
-     *  - ray: used for interest rates
-     *  - rad: used for Dai balances inside the Vat
      */
     function rad(uint256 wad) internal pure returns (uint256 z) {
         return mul(wad, RAY);
@@ -56,9 +57,12 @@ library DSMathCustom {
 }
 
 /**
- * @title A vault for Real-World Assets (RWA).
+ * @author Kaue Cano <kaue@clio.finance>
+ * @author Lev Livnev <lev@liv.nev.org.uk>
+ * @title RwaUrn2: A capped vault for Real-World Assets (RWA).
+ * @dev This vault implements `gemCap`, the maximum amount of gem the urn can hold.
  */
-contract RwaUrn {
+contract RwaUrn2 {
     /// @notice Core module address.
     VatAbstract public immutable vat;
     /// @notice The GemJoin adapter for the gem in this urn.
@@ -69,6 +73,9 @@ contract RwaUrn {
     JugAbstract public jug;
     /// @notice The destination of Dai drawn from this urn.
     address public outputConduit;
+
+    /// @notice Maximum amount of tokens this contract can lock
+    uint256 public gemCap;
 
     /// @notice Addresses with admin access on this contract. `wards[usr]`
     mapping(address => uint256) public wards;
@@ -134,13 +141,20 @@ contract RwaUrn {
      */
     event Quit(address indexed usr, uint256 wad);
 
+    /**
+     * @notice The urn max gem amount was updated.
+     * @dev Only `auth` addresses can change this.
+     * @param wad The new gemCap.
+     */
+    event Recap(uint256 wad);
+
     modifier auth() {
-        require(wards[msg.sender] == 1, "RwaUrn/not-authorized");
+        require(wards[msg.sender] == 1, "RwaUrn2/not-authorized");
         _;
     }
 
     modifier operator() {
-        require(can[msg.sender] == 1, "RwaUrn/not-operator");
+        require(can[msg.sender] == 1, "RwaUrn2/not-operator");
         _;
     }
 
@@ -150,21 +164,25 @@ contract RwaUrn {
      * @param gemJoin_ Adapter to mint/burn Dai tokens.
      * @param daiJoin_ Stability fee management module.
      * @param outputConduit_ Destination of Dai drawn from this urn.
+     * @param gemCap_ Maximum gem amount this urn can lock.
      */
     constructor(
         address vat_,
         address jug_,
         address gemJoin_,
         address daiJoin_,
-        address outputConduit_
+        address outputConduit_,
+        uint256 gemCap_
     ) public {
-        require(outputConduit_ != address(0), "RwaUrn/invalid-conduit");
+        require(outputConduit_ != address(0), "RwaUrn2/invalid-conduit");
+        require(gemCap_ > 0, "RwaUrn2/invalid-gemcap");
 
         vat = VatAbstract(vat_);
         jug = JugAbstract(jug_);
         gemJoin = GemJoinAbstract(gemJoin_);
         daiJoin = DaiJoinAbstract(daiJoin_);
         outputConduit = outputConduit_;
+        gemCap = gemCap_;
 
         wards[msg.sender] = 1;
 
@@ -172,6 +190,7 @@ contract RwaUrn {
         DaiAbstract(DaiJoinAbstract(daiJoin_).dai()).approve(daiJoin_, type(uint256).max);
         VatAbstract(vat_).hope(daiJoin_);
 
+        emit Recap(gemCap_);
         emit Rely(msg.sender);
         emit File("outputConduit", outputConduit_);
         emit File("jug", jug_);
@@ -228,15 +247,26 @@ contract RwaUrn {
      */
     function file(bytes32 what, address data) external auth {
         if (what == "outputConduit") {
-            require(data != address(0), "RwaUrn/invalid-conduit");
+            require(data != address(0), "RwaUrn2/invalid-conduit");
             outputConduit = data;
         } else if (what == "jug") {
             jug = JugAbstract(data);
         } else {
-            revert("RwaUrn/unrecognised-param");
+            revert("RwaUrn2/unrecognised-param");
         }
 
         emit File(what, data);
+    }
+
+    /**
+     * @notice Updates the max gem amount this contract can lock.
+     * @param wad Gem amount.
+     */
+    function recap(uint256 wad) external auth {
+        require(wad <= 2**255 - 1, "RwaUrn2/overflow");
+        gemCap = wad;
+
+        emit Recap(wad);
     }
 
     /*//////////////////////////////////
@@ -248,7 +278,10 @@ contract RwaUrn {
      * @param wad The amount to lock.
      */
     function lock(uint256 wad) external operator {
-        require(wad <= 2**255 - 1, "RwaUrn/overflow");
+        require(wad <= 2**255 - 1, "RwaUrn2/overflow");
+
+        (uint256 ink, ) = vat.urns(gemJoin.ilk(), address(this));
+        require(DSMathCustom.add(ink, wad) <= gemCap, "RwaUrn2/gemcap-exceeded");
 
         DSTokenAbstract(gemJoin.gem()).transferFrom(msg.sender, address(this), wad);
         // join with this contract's address
@@ -263,10 +296,11 @@ contract RwaUrn {
      * @param wad The amount to free.
      */
     function free(uint256 wad) external operator {
-        require(wad <= 2**255, "RwaUrn/overflow");
+        require(wad <= 2**255, "RwaUrn2/overflow");
 
         vat.frob(gemJoin.ilk(), address(this), address(this), address(this), -int256(wad), 0);
         gemJoin.exit(msg.sender, wad);
+
         emit Free(msg.sender, wad);
     }
 
@@ -280,7 +314,7 @@ contract RwaUrn {
         (, uint256 rate, , , ) = vat.ilks(ilk);
 
         uint256 dart = DSMathCustom.divup(DSMathCustom.rad(wad), rate);
-        require(dart <= 2**255 - 1, "RwaUrn/overflow");
+        require(dart <= 2**255 - 1, "RwaUrn2/overflow");
 
         vat.frob(ilk, address(this), address(this), address(this), 0, int256(dart));
         daiJoin.exit(outputConduit, wad);
@@ -299,7 +333,7 @@ contract RwaUrn {
         (, uint256 rate, , , ) = vat.ilks(ilk);
 
         uint256 dart = DSMathCustom.rad(wad) / rate;
-        require(dart <= 2**255, "RwaUrn/overflow");
+        require(dart <= 2**255, "RwaUrn2/overflow");
 
         vat.frob(ilk, address(this), address(this), address(this), 0, -int256(dart));
         emit Wipe(msg.sender, wad);
@@ -310,7 +344,7 @@ contract RwaUrn {
      * @dev Can only be called after `cage()` has been called on the Vat.
      */
     function quit() external {
-        require(vat.live() == 0, "RwaUrn/vat-still-live");
+        require(vat.live() == 0, "RwaUrn2/vat-still-live");
 
         DSTokenAbstract dai = DSTokenAbstract(daiJoin.dai());
         uint256 wad = dai.balanceOf(address(this));

@@ -17,7 +17,7 @@ import {MockOFH} from "./mock/MockOFH.sol";
 import {OFHTokenLike} from "./ITokenWrapper.sol";
 import {TokenWrapper} from "./TokenWrapper.sol";
 import {RwaInputConduit2, RwaOutputConduit2} from "./RwaConduits.sol";
-import {RwaUrn} from "./RwaUrn.sol";
+import {RwaUrn2} from "./RwaUrn.sol";
 import {RwaLiquidationOracle2} from "./RwaLiquidationOracle.sol";
 
 interface Hevm {
@@ -60,12 +60,12 @@ contract TryCaller {
 }
 
 contract RwaOperator is TryCaller {
-    RwaUrn internal urn;
+    RwaUrn2 internal urn;
     RwaOutputConduit2 internal outC;
     RwaInputConduit2 internal inC;
 
     constructor(
-        RwaUrn urn_,
+        RwaUrn2 urn_,
         RwaOutputConduit2 outC_,
         RwaInputConduit2 inC_
     ) public {
@@ -159,7 +159,7 @@ contract RwaLiquidationOracleTest is DSTest, DSMath {
     AuthGemJoin internal gemJoin;
 
     RwaLiquidationOracle2 internal oracle;
-    RwaUrn internal urn;
+    RwaUrn2 internal urn;
 
     RwaOutputConduit2 internal outConduit;
     RwaInputConduit2 internal inConduit;
@@ -221,7 +221,14 @@ contract RwaLiquidationOracleTest is DSTest, DSMath {
 
         outConduit = new RwaOutputConduit2(address(dai));
 
-        urn = new RwaUrn(address(vat), address(jug), address(gemJoin), address(daiJoin), address(outConduit));
+        urn = new RwaUrn2(
+            address(vat),
+            address(jug),
+            address(gemJoin),
+            address(daiJoin),
+            address(outConduit),
+            400 ether
+        );
         gemJoin.rely(address(urn));
         inConduit = new RwaInputConduit2(address(dai), address(urn));
 
@@ -345,7 +352,14 @@ contract RwaLiquidationOracleTest is DSTest, DSMath {
     }
 
     function testCullMultipleUrns() public {
-        RwaUrn urn2 = new RwaUrn(address(vat), address(jug), address(gemJoin), address(daiJoin), address(outConduit));
+        RwaUrn2 urn2 = new RwaUrn2(
+            address(vat),
+            address(jug),
+            address(gemJoin),
+            address(daiJoin),
+            address(outConduit),
+            400 ether
+        );
         gemJoin.rely(address(urn2));
 
         RwaOperator op2 = new RwaOperator(urn2, outConduit, inConduit);

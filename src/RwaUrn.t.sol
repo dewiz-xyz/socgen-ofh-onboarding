@@ -33,7 +33,7 @@ import {OFHTokenLike} from "./ITokenWrapper.sol";
 import {TokenWrapper} from "./TokenWrapper.sol";
 import {RwaInputConduit2, RwaOutputConduit2} from "./RwaConduits.sol";
 import {RwaLiquidationOracle2} from "./RwaLiquidationOracle.sol";
-import {RwaUrn} from "./RwaUrn.sol";
+import {RwaUrn2} from "./RwaUrn.sol";
 
 interface Hevm {
     function warp(uint256) external;
@@ -43,6 +43,8 @@ interface Hevm {
         bytes32,
         bytes32
     ) external;
+
+    function load(address, bytes32) external returns (bytes32);
 }
 
 contract TokenUser {
@@ -75,12 +77,12 @@ contract TryCaller {
 }
 
 contract RwaOperator is TryCaller {
-    RwaUrn internal urn;
+    RwaUrn2 internal urn;
     RwaOutputConduit2 internal outC;
     RwaInputConduit2 internal inC;
 
     constructor(
-        RwaUrn urn_,
+        RwaUrn2 urn_,
         RwaOutputConduit2 outC_,
         RwaInputConduit2 inC_
     ) public {
@@ -128,6 +130,10 @@ contract RwaOperator is TryCaller {
     function canFree(uint256 wad) public returns (bool) {
         return this.tryCall(address(outC), abi.encodeWithSignature("free(uint256)", wad));
     }
+
+    function recap(uint256 wad) public {
+        urn.recap(wad);
+    }
 }
 
 contract RwaMate is TryCaller {
@@ -156,6 +162,18 @@ contract RwaMate is TryCaller {
     }
 }
 
+contract RwaGov is TryCaller {
+    RwaUrn2 internal urn;
+
+    constructor(RwaUrn2 urn_) public {
+        urn = urn_;
+    }
+
+    function recap(uint256 wad) public {
+        urn.recap(wad);
+    }
+}
+
 contract RwaUrnTest is DSTest, DSMath {
     bytes20 internal constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
 
@@ -174,7 +192,7 @@ contract RwaUrnTest is DSTest, DSMath {
     AuthGemJoin internal gemJoin;
 
     RwaLiquidationOracle2 internal oracle;
-    RwaUrn internal urn;
+    RwaUrn2 internal urn;
 
     RwaOutputConduit2 internal outConduit;
     RwaInputConduit2 internal inConduit;
@@ -182,11 +200,13 @@ contract RwaUrnTest is DSTest, DSMath {
     RwaOperator internal op;
     RwaMate internal mate;
     TokenUser internal rec;
+    RwaGov internal gov;
 
     // Debt ceiling of 1000 DAI
     string internal constant DOC = "Please sign this";
     uint256 internal constant CEILING = 200 ether;
     uint256 internal constant EIGHT_PCT = 1000000002440418608258400030;
+    uint256 internal constant URN_GEMS_LIMIT = 400 ether;
 
     uint48 internal constant TAU = 2 weeks;
 
@@ -198,7 +218,7 @@ contract RwaUrnTest is DSTest, DSMath {
         hevm = Hevm(address(CHEAT_CODE));
         hevm.warp(104411200);
 
-        token = new MockOFH(400);
+        token = new MockOFH(500);
         wrapper = new TokenWrapper(address(token));
         wrapper.hope(address(this));
 
@@ -213,42 +233,51 @@ contract RwaUrnTest is DSTest, DSMath {
         vat.rely(address(daiJoin));
         dai.setOwner(address(daiJoin));
 
-        vat.init("RWA007");
+        vat.init("RWA007-A");
         vat.file("Line", 100 * rad(CEILING));
-        vat.file("RWA007", "line", rad(CEILING));
+        vat.file("RWA007-A", "line", rad(CEILING));
 
-        jug.init("RWA007");
-        jug.file("RWA007", "duty", EIGHT_PCT);
+        jug.init("RWA007-A");
+        jug.file("RWA007-A", "duty", EIGHT_PCT);
 
         oracle = new RwaLiquidationOracle2(address(vat), VOW);
-        oracle.init("RWA007", wmul(CEILING, 1.1 ether), DOC, TAU);
+        oracle.init("RWA007-A", wmul(CEILING, 1.1 ether), DOC, TAU);
         vat.rely(address(oracle));
-        (, address pip, , ) = oracle.ilks("RWA007");
+        (, address pip, , ) = oracle.ilks("RWA007-A");
 
         spotter = new Spotter(address(vat));
         vat.rely(address(spotter));
-        spotter.file("RWA007", "mat", RAY);
-        spotter.file("RWA007", "pip", pip);
-        spotter.poke("RWA007");
+        spotter.file("RWA007-A", "mat", RAY);
+        spotter.file("RWA007-A", "pip", pip);
+        spotter.poke("RWA007-A");
 
-        gemJoin = new AuthGemJoin(address(vat), "RWA007", address(wrapper));
+        gemJoin = new AuthGemJoin(address(vat), "RWA007-A", address(wrapper));
         vat.rely(address(gemJoin));
 
         outConduit = new RwaOutputConduit2(address(dai));
 
-        urn = new RwaUrn(address(vat), address(jug), address(gemJoin), address(daiJoin), address(outConduit));
+        urn = new RwaUrn2(
+            address(vat),
+            address(jug),
+            address(gemJoin),
+            address(daiJoin),
+            address(outConduit),
+            URN_GEMS_LIMIT
+        );
         gemJoin.rely(address(urn));
         inConduit = new RwaInputConduit2(address(dai), address(urn));
 
         op = new RwaOperator(urn, outConduit, inConduit);
         mate = new RwaMate(outConduit, inConduit);
         rec = new TokenUser(dai);
+        gov = new RwaGov(urn);
 
         // Wraps all tokens into `op` balance
-        token.transfer(address(wrapper), 400);
-        wrapper.wrap(address(op), 400);
+        token.transfer(address(wrapper), 500);
+        wrapper.wrap(address(op), 500);
 
         urn.hope(address(op));
+        urn.rely(address(gov));
 
         inConduit.mate(address(mate));
         outConduit.mate(address(mate));
@@ -322,7 +351,7 @@ contract RwaUrnTest is DSTest, DSMath {
 
         assertEq(vat.dai(address(urn)), 0);
 
-        (uint256 ink, uint256 art) = vat.urns("RWA007", address(urn));
+        (uint256 ink, uint256 art) = vat.urns("RWA007-A", address(urn));
         assertEq(ink, 0);
         assertEq(art, 0);
 
@@ -333,8 +362,8 @@ contract RwaUrnTest is DSTest, DSMath {
 
         assertLe(vat.dai(address(urn)), dustLimit);
 
-        (, uint256 rate, , , ) = vat.ilks("RWA007");
-        (ink, art) = vat.urns("RWA007", address(urn));
+        (, uint256 rate, , , ) = vat.ilks("RWA007-A");
+        (ink, art) = vat.urns("RWA007-A", address(urn));
         assertEq(ink, 1 ether);
         assertLe((art * rate) - rad(199 ether), dustLimit);
 
@@ -388,7 +417,7 @@ contract RwaUrnTest is DSTest, DSMath {
         assertTrue(!op.canFree(1 ether));
 
         op.free(0.4 ether);
-        (uint256 ink, uint256 art) = vat.urns("RWA007", address(urn));
+        (uint256 ink, uint256 art) = vat.urns("RWA007-A", address(urn));
         // 100 < art < 101 because of accumulated interest
         assertLt(art - 100 ether, 1 ether);
         assertEq(ink, 0.6 ether);
@@ -409,13 +438,13 @@ contract RwaUrnTest is DSTest, DSMath {
         op.lock(1 ether);
 
         hevm.warp(now + drawTime);
-        jug.drip("RWA007");
+        jug.drip("RWA007-A");
         op.draw(drawAmount);
         op.pick(address(rec));
         mate.pushOut();
 
         hevm.warp(now + wipeTime);
-        jug.drip("RWA007");
+        jug.drip("RWA007-A");
         rec.transfer(address(inConduit), wipeAmount);
         assertEq(dai.balanceOf(address(inConduit)), wipeAmount);
 
@@ -432,14 +461,14 @@ contract RwaUrnTest is DSTest, DSMath {
         drawTime = drawTime % 15 days; // 0-15 days
         wipeTime = wipeTime % 15 days; // 0-15 days
 
-        (uint256 ink, uint256 art) = vat.urns("RWA007", address(urn));
+        (uint256 ink, uint256 art) = vat.urns("RWA007-A", address(urn));
         assertEq(ink, 0);
         assertEq(art, 0);
 
         op.lock(1 ether);
 
         hevm.warp(block.timestamp + drawTime);
-        jug.drip("RWA007");
+        jug.drip("RWA007-A");
 
         op.draw(drawAmount);
 
@@ -448,8 +477,8 @@ contract RwaUrnTest is DSTest, DSMath {
         // A draw should leave less than 2 RAY dust
         assertLt(urnVatDust, 2 * RAY);
 
-        (, uint256 rate, , , ) = vat.ilks("RWA007");
-        (ink, art) = vat.urns("RWA007", address(urn));
+        (, uint256 rate, , , ) = vat.ilks("RWA007-A");
+        (ink, art) = vat.urns("RWA007-A", address(urn));
         assertEq(ink, 1 ether);
         assertLe((art * rate) - rad(drawAmount), urnVatDust);
 
@@ -458,9 +487,9 @@ contract RwaUrnTest is DSTest, DSMath {
         mate.pushOut();
 
         hevm.warp(block.timestamp + wipeTime);
-        jug.drip("RWA007");
+        jug.drip("RWA007-A");
 
-        (, rate, , , ) = vat.ilks("RWA007");
+        (, rate, , , ) = vat.ilks("RWA007-A");
 
         uint256 fullWipeAmount = (art * rate) / RAY;
         if (fullWipeAmount * RAY < art * rate) {
@@ -486,7 +515,7 @@ contract RwaUrnTest is DSTest, DSMath {
         mate.pushIn();
         op.wipe(fullWipeAmount);
 
-        (, art) = vat.urns("RWA007", address(urn));
+        (, art) = vat.urns("RWA007-A", address(urn));
         assertEq(art, 0);
 
         uint256 newUrnVatDust = vat.dai(address(urn));
@@ -510,7 +539,7 @@ contract RwaUrnTest is DSTest, DSMath {
         rando.wipe(200 ether);
         rando.free(1 ether);
 
-        (uint256 ink, uint256 art) = vat.urns("RWA007", address(urn));
+        (uint256 ink, uint256 art) = vat.urns("RWA007-A", address(urn));
         assertEq(ink, 0);
         assertEq(art, 0);
         assertEq(wrapper.balanceOf(address(rando)), 1 ether);
@@ -546,5 +575,66 @@ contract RwaUrnTest is DSTest, DSMath {
         mate.pushIn();
 
         urn.quit();
+    }
+
+    function testFailOnGemLimitExceed() public {
+        op.lock(URN_GEMS_LIMIT + 1 ether);
+    }
+
+    function testIncreaseGemValueOnLock() public {
+        (uint256 ink, ) = vat.urns("RWA007-A", address(urn));
+        uint256 gemsLimit = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        assertEq(ink, 0);
+        assertEq(gemsLimit, URN_GEMS_LIMIT);
+
+        uint256 amount = URN_GEMS_LIMIT;
+        op.lock(amount);
+
+        (uint256 inkAfter, ) = vat.urns("RWA007-A", address(urn));
+        assertEq(inkAfter, amount);
+    }
+
+    function testDecreaseGemValueOnFree() public {
+        (uint256 ink, ) = vat.urns("RWA007-A", address(urn));
+        assertEq(ink, 0);
+
+        op.lock(1 ether);
+        op.draw(200 ether);
+
+        (uint256 inkAfterDraw, ) = vat.urns("RWA007-A", address(urn));
+        assertEq(inkAfterDraw, 1 ether);
+
+        // op nominats the receiver
+        op.pick(address(rec));
+        mate.pushOut();
+
+        hevm.warp(block.timestamp + 30 days);
+
+        rec.transfer(address(inConduit), 100 ether);
+
+        mate.pushIn();
+        op.wipe(100 ether);
+
+        // Since only ~half of the loan was repaid, op cannot free the total amount locked
+        assertTrue(!op.canFree(1 ether));
+
+        op.free(0.4 ether);
+
+        (uint256 inkAfterFree, ) = vat.urns("RWA007-A", address(urn));
+        assertEq(inkAfterFree, 0.6 ether);
+    }
+
+    function testFailUnAuthorizedRecapCall() public {
+        op.recap(600 ether);
+    }
+
+    function testCanCallRecap() public {
+        uint256 gemsLimitBefore = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        assertEq(gemsLimitBefore, URN_GEMS_LIMIT);
+
+        gov.recap(600 ether);
+
+        uint256 gemsLimitAfter = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        assertEq(gemsLimitAfter, 600 ether);
     }
 }
