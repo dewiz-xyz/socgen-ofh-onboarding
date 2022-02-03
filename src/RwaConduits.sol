@@ -18,7 +18,7 @@
 pragma solidity ^0.6.12;
 
 /**
- * @title An subset of `DSToken` containing only the methods required in this file.
+ * @title A subset of `DSToken` containing only the methods required in this file.
  */
 interface DSTokenLike {
     function balanceOf(address) external view returns (uint256);
@@ -29,13 +29,17 @@ interface DSTokenLike {
 /**
  * @author Lev Livnev <lev@liv.nev.org.uk>
  * @author Kaue Cano <kaue@clio.finance>
+ * @author Henrique Barcelos <henrique@clio.finance>
  * @title An Input Conduit for real-world assets (RWA).
- * @dev After the deploy the owner must call `mate()` for the DIIS Group wallet.
+ * @dev This contract differs from the original [RwaInputConduit](https://github.com/makerdao/MIP21-RWA-Example/blob/fce06885ff89d10bf630710d4f6089c5bba94b4d/src/RwaConduit.sol#L20-L39):
+ *  - The caller of `push()` is not required to hold MakerDAO governance tokens.
+ *  - The `push()` method is permissioned.
+ *  - `push()` permissions are managed by `mate()`/`hate()` methods.
  */
-contract RwaInputConduit {
+contract RwaInputConduit2 {
     /// @notice Dai token contract address
     DSTokenLike public immutable dai;
-    /// @notice RwaUrn contract address
+    /// @notice RWA urn contract address
     address public immutable to;
 
     /// @notice Addresses with admin access on this contract. `wards[usr]`
@@ -84,7 +88,7 @@ contract RwaInputConduit {
     }
 
     modifier auth() {
-        require(wards[msg.sender] == 1, "RwaInputConduit/not-authorized");
+        require(wards[msg.sender] == 1, "RwaInputConduit2/not-authorized");
         _;
     }
 
@@ -129,7 +133,7 @@ contract RwaInputConduit {
      * @dev `msg.sender` must first receive push acess through mate().
      */
     function push() external {
-        require(may[msg.sender] == 1, "RwaInputConduit/not-mate");
+        require(may[msg.sender] == 1, "RwaInputConduit2/not-mate");
 
         uint256 balance = dai.balanceOf(address(this));
         dai.transfer(to, balance);
@@ -141,9 +145,14 @@ contract RwaInputConduit {
 /**
  * @author Lev Livnev <lev@liv.nev.org.uk>
  * @author Kaue Cano <kaue@clio.finance>
+ * @author Henrique Barcelos <henrique@clio.finance>
  * @title An Output Conduit for real-world assets (RWA).
+ * @dev This contract differs from the original [RwaOutputConduit](https://github.com/makerdao/MIP21-RWA-Example/blob/fce06885ff89d10bf630710d4f6089c5bba94b4d/src/RwaConduit.sol#L41-L118):
+ *  - The caller of `push()` is not required to hold MakerDAO governance tokens.
+ *  - The `push()` method is permissioned.
+ *  - `push()` permissions are managed by `mate()`/`hate()` methods.
  */
-contract RwaOutputConduit {
+contract RwaOutputConduit2 {
     /// @notice Dai token contract address
     DSTokenLike public immutable dai;
     /// @notice Dai output address
@@ -189,23 +198,23 @@ contract RwaOutputConduit {
      */
     event Nope(address indexed usr);
     /**
-     * @notice `usr` was granted kiss permissions.
+     * @notice `usr` was granted permission to be `pick`ed as the recipient .
      * @param who The user address.
      */
     event Kiss(address indexed who);
     /**
-     * @notice `usr` kiss permissions were revoked.
+     * @notice `usr` permission to be `pick`ed as the recipient was revoked.
      * @param who The user address.
      */
     event Diss(address indexed who);
     /**
-     * @notice `who` address was picked as output of push()
+     * @notice `who` address was picked as the recipient.
      * @param who The user address.
      */
     event Pick(address indexed who);
     /**
-     * @notice `wad` amount of Dai was pushed to `to`
-     * @param to The Dai output address
+     * @notice `wad` amount of Dai was pushed to the recipient `to`.
+     * @param to The Dai recipient address
      * @param wad The amount of Dai
      */
     event Push(address indexed to, uint256 wad);
@@ -221,7 +230,7 @@ contract RwaOutputConduit {
     }
 
     modifier auth() {
-        require(wards[msg.sender] == 1, "RwaOutputConduit/not-authorized");
+        require(wards[msg.sender] == 1, "RwaOutputConduit2/not-authorized");
         _;
     }
 
@@ -280,7 +289,7 @@ contract RwaOutputConduit {
     }
 
     /**
-     * @notice Grants `who` kiss permissions to this contract.
+     * @notice Grants `who` permission to be `pick`ed as the recipient.
      * @param who The user address.
      */
     function kiss(address who) public auth {
@@ -289,8 +298,8 @@ contract RwaOutputConduit {
     }
 
     /**
-     * @notice Revokes `who` kiss permissions to this contract.
-     * @dev Resets `to` to address(0) if `who` is current `to` target.
+     * @notice Revokes `who` permission to be `pick`ed as the recipient.
+     * @dev Resets `to` to `address(0)` if `who` is current `to` target.
      * @param who The user address.
      */
     function diss(address who) public auth {
@@ -302,27 +311,27 @@ contract RwaOutputConduit {
     }
 
     /**
-     * @notice Sets `who` address as `to` output target.
-     * @dev `who` address must receive kiss() permissions by auth before this funcion is called.
-     * @param who Output Dai address.
+     * @notice Sets `who` address as the recipient.
+     * @dev `who` address must either be `address(0)` or have been `kiss`ed before.
+     * @param who Recipient Dai address.
      */
     function pick(address who) public {
-        require(can[msg.sender] == 1, "RwaOutputConduit/not-operator");
-        require(bud[who] == 1 || who == address(0), "RwaOutputConduit/not-bud");
+        require(can[msg.sender] == 1, "RwaOutputConduit2/not-operator");
+        require(bud[who] == 1 || who == address(0), "RwaOutputConduit2/not-bud");
         to = who;
         emit Pick(who);
     }
 
     /**
-     * @notice Pushes contract Dai balance into `to` address.
-     * @dev `msg.sender` must first receive push acess through mate() and also kiss() + pick() a `to` address.
+     * @notice Pushes contract Dai balance to the recipient address.
+     * @dev `msg.sender` must have been `mate`d and `to` must have been `pick`ed.
      */
     function push() external {
-        require(may[msg.sender] == 1, "RwaOutputConduit/not-mate");
-        require(to != address(0), "RwaOutputConduit/to-not-picked");
+        require(may[msg.sender] == 1, "RwaOutputConduit2/not-mate");
+        require(to != address(0), "RwaOutputConduit2/to-not-picked");
         uint256 balance = dai.balanceOf(address(this));
         address recipient = to;
-        /// defaults `to` to address(0) fo flow is restarted
+        // sets `to` to address(0) so the flow is restarted
         to = address(0);
 
         dai.transfer(recipient, balance);
