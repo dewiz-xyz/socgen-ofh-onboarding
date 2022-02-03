@@ -21,7 +21,7 @@ import {ITokenWrapper, OFHTokenLike} from "./ITokenWrapper.sol";
 
 /**
  * @author Henrique Barcelos <henrique@clio.finance>
- * @title Wraps the underlying OFH token and mints equivalent wOFH.
+ * @title Wraps the underlying OFH token and mints equivalent WOFH.
  * @dev Assumes OFH has `0` decimals (integer/non-fractional token) and normalizes `mint()/burn()` to have `18` decimals.
  */
 contract TokenWrapper is ITokenWrapper, ERC20 {
@@ -68,7 +68,7 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
      * @notice Creates a token wrapper for a OFH token logic implementation.
      * @param token_ The OFH token deployed address.
      */
-    constructor(address token_) public ERC20("Wrapped OFH", "wOFH") {
+    constructor(address token_) public ERC20("Wrapped OFH", "WOFH") {
         token = OFHTokenLike(token_);
 
         wards[msg.sender] = 1;
