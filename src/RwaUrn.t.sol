@@ -31,7 +31,7 @@ import {AuthGemJoin} from "dss-gem-joins/join-auth.sol";
 import {MockOFH} from "./mock/MockOFH.sol";
 import {OFHTokenLike} from "./ITokenWrapper.sol";
 import {TokenWrapper} from "./TokenWrapper.sol";
-import {RwaInputConduit, RwaOutputConduit} from "./RwaConduits.sol";
+import {RwaInputConduit2, RwaOutputConduit2} from "./RwaConduits.sol";
 import {RwaLiquidationOracle2} from "./RwaLiquidationOracle.sol";
 import {RwaUrn} from "./RwaUrn.sol";
 
@@ -76,13 +76,13 @@ contract TryCaller {
 
 contract RwaOperator is TryCaller {
     RwaUrn internal urn;
-    RwaOutputConduit internal outC;
-    RwaInputConduit internal inC;
+    RwaOutputConduit2 internal outC;
+    RwaInputConduit2 internal inC;
 
     constructor(
         RwaUrn urn_,
-        RwaOutputConduit outC_,
-        RwaInputConduit inC_
+        RwaOutputConduit2 outC_,
+        RwaInputConduit2 inC_
     ) public {
         urn = urn_;
         outC = outC_;
@@ -131,10 +131,10 @@ contract RwaOperator is TryCaller {
 }
 
 contract RwaMate is TryCaller {
-    RwaOutputConduit internal outC;
-    RwaInputConduit internal inC;
+    RwaOutputConduit2 internal outC;
+    RwaInputConduit2 internal inC;
 
-    constructor(RwaOutputConduit outC_, RwaInputConduit inC_) public {
+    constructor(RwaOutputConduit2 outC_, RwaInputConduit2 inC_) public {
         outC = outC_;
         inC = inC_;
     }
@@ -176,8 +176,8 @@ contract RwaUrnTest is DSTest, DSMath {
     RwaLiquidationOracle2 internal oracle;
     RwaUrn internal urn;
 
-    RwaOutputConduit internal outConduit;
-    RwaInputConduit internal inConduit;
+    RwaOutputConduit2 internal outConduit;
+    RwaInputConduit2 internal inConduit;
 
     RwaOperator internal op;
     RwaMate internal mate;
@@ -234,11 +234,11 @@ contract RwaUrnTest is DSTest, DSMath {
         gemJoin = new AuthGemJoin(address(vat), "RWA007", address(wrapper));
         vat.rely(address(gemJoin));
 
-        outConduit = new RwaOutputConduit(address(dai));
+        outConduit = new RwaOutputConduit2(address(dai));
 
         urn = new RwaUrn(address(vat), address(jug), address(gemJoin), address(daiJoin), address(outConduit));
         gemJoin.rely(address(urn));
-        inConduit = new RwaInputConduit(address(dai), address(urn));
+        inConduit = new RwaInputConduit2(address(dai), address(urn));
 
         op = new RwaOperator(urn, outConduit, inConduit);
         mate = new RwaMate(outConduit, inConduit);

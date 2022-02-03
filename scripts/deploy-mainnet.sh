@@ -44,7 +44,7 @@ RWA_TOKEN=$(dapp create "src/TokenWrapper.sol:TokenWrapper")
 seth send "${RWA_TOKEN}" 'transfer(address,uint256)' "$OPERATOR" "$(seth --to-wei 1.0 ether)"
 
 # route it
-[[ -z "$RWA_OUTPUT_CONDUIT" ]] && RWA_OUTPUT_CONDUIT=$(dapp create RwaConduits:RwaOutputConduit "${MCD_DAI}")
+[[ -z "$RWA_OUTPUT_CONDUIT" ]] && RWA_OUTPUT_CONDUIT=$(dapp create RwaConduits:RwaOutputConduit2 "${MCD_DAI}")
 
 if [ "$RWA_OUTPUT_CONDUIT" != "$OPERATOR" ]; then
     seth send "${RWA_OUTPUT_CONDUIT}" 'rely(address)' "${MCD_PAUSE_PROXY}"
@@ -71,7 +71,7 @@ seth send "${RWA_JOIN}" 'rely(address)' "${RWA_URN}"
 seth send "${RWA_JOIN}" 'deny(address)' "${ETH_FROM}"
 
 # connect it
-[[ -z "$RWA_INPUT_CONDUIT" ]] && RWA_INPUT_CONDUIT=$(dapp create RwaConduits:RwaInputConduit "${MCD_DAI}" "${RWA_URN}")
+[[ -z "$RWA_INPUT_CONDUIT_2" ]] && RWA_INPUT_CONDUIT_2=$(dapp create RwaConduits:RwaInputConduit2 "${MCD_DAI}" "${RWA_URN}")
 
 # print it
 echo "OPERATOR: ${OPERATOR}"
@@ -79,5 +79,5 @@ echo "ILK: ${ILK}"
 echo "${SYMBOL}: ${RWA_TOKEN}"
 echo "MCD_JOIN_${SYMBOL}_${LETTER}: ${RWA_JOIN}"
 echo "${SYMBOL}_${LETTER}_URN: ${RWA_URN}"
-echo "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT}"
+echo "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT_2}"
 echo "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT: ${RWA_OUTPUT_CONDUIT}"
