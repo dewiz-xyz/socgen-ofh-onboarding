@@ -5,7 +5,7 @@ set -eo pipefail
 source "${BASH_SOURCE%/*}/common.sh"
 
 [[ "$ETH_RPC_URL" && "$(seth chain)" == "goerli" ]] || die "Please set a goerli ETH_RPC_URL"
-[[ "$RWA_URN_2_GEM_LIMIT" ]] || die "Please set RWA_URN_2_GEM_LIMIT"
+[[ "$RWA_URN_2_GEM_CAP" ]] || die "Please set RWA_URN_2_GEM_CAP"
 
 # shellcheck disable=SC1091
 source "${BASH_SOURCE%/*}/build-env-addresses.sh" ces-goerli >/dev/null 2>&1
@@ -84,7 +84,7 @@ echo "MCD_JOIN_${SYMBOL}_${LETTER}: ${RWA_JOIN}"
 seth send "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY"
 
 # urn it
-RWA_URN_2=$(dapp create RwaUrn2 "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT" $RWA_URN_2_GEM_LIMIT)
+RWA_URN_2=$(dapp create RwaUrn2 "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT" $RWA_URN_2_GEM_CAP)
 echo "${SYMBOL}_${LETTER}_URN: ${RWA_URN}"
 seth send "$RWA_URN_2" 'rely(address)' "$MCD_PAUSE_PROXY"
 seth send "$RWA_URN_2" 'deny(address)' "$ETH_FROM"
