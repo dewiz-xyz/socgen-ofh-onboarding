@@ -91,26 +91,14 @@ contract SpellAction {
     //     https://changelog.makerdao.com/releases/goerli/latest/contracts.json
     ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
 
-    /*
-        OPERATOR: 0xB01F99C6Ff70D0b16E6bE86F3FCc2871D445cdcA
-        TRUST1: 0x597084d145e96Ae2e89E1c9d8DEE6d43d3557898
-        TRUST2: 0xCB84430E410Df2dbDE0dF04Cf7711E656C90BDa2
-        ILK: RWA007-A
-        RWA007: 0xF8d289bD665B4580f2abD9CEa7bD82bD9c039b06
-        MCD_JOIN_RWA007_A: 0xC5F5D7e6cb812919a93f3E50e5b4Bf40630029ce
-        RWA007_A_URN: 0x78e044E5e8EeD7188D147b5dE01d325819D91077
-        RWA007_A_INPUT_CONDUIT: 0xAd6953a82105F77D09C75DeFC6993326eafcBA21
-        RWA007_A_OUTPUT_CONDUIT: 0x6c81462253F2C37C7C6612f5b2F3F90a68827BA8
-        MIP21_LIQUIDATION_ORACLE: 0x362dfE51E4f91a8257B8276435792095EE5d85C3
-    */
-    address constant RWA007_OPERATOR = 0xB01F99C6Ff70D0b16E6bE86F3FCc2871D445cdcA;
-    address constant RWA007_GEM = 0xF8d289bD665B4580f2abD9CEa7bD82bD9c039b06;
-    address constant MCD_JOIN_RWA007_A = 0xC5F5D7e6cb812919a93f3E50e5b4Bf40630029ce;
-    address constant RWA007_A_URN = 0x78e044E5e8EeD7188D147b5dE01d325819D91077;
-    address constant RWA007_A_INPUT_CONDUIT = 0xAd6953a82105F77D09C75DeFC6993326eafcBA21;
-    address constant RWA007_A_OUTPUT_CONDUIT = 0x6c81462253F2C37C7C6612f5b2F3F90a68827BA8;
-    address constant MIP21_LIQUIDATION_ORACLE = 0x362dfE51E4f91a8257B8276435792095EE5d85C3;
-    address constant DIIS_GROUP = address(0); // TODO
+    address constant RWA007_OPERATOR = address(0); // TODO
+    address constant RWA007_GEM = address(0); // TODO
+    address constant MCD_JOIN_RWA007_A = address(0); // TODO
+    address constant RWA007_A_URN = address(0); // TODO
+    address constant RWA007_A_INPUT_CONDUIT = address(0); // TODO
+    address constant RWA007_A_OUTPUT_CONDUIT = address(0); // TODO
+    address constant MIP21_LIQUIDATION_ORACLE_2 = address(0); // TODO
+    address constant RWA007_MATE = address(0); // TODO
 
     uint256 constant THREE_PCT_RATE = 1000000000937303470807876289; // TODO RWA team should provide this one
 
@@ -147,7 +135,7 @@ contract SpellAction {
         /// @notice add RWA007SGHWOFH1 contract to the changelog
         CHANGELOG.setAddress("RWA007", RWA007_GEM);
         CHANGELOG.setAddress("MCD_JOIN_RWA007_A", MCD_JOIN_RWA007_A);
-        CHANGELOG.setAddress("MIP21_LIQUIDATION_ORACLE", MIP21_LIQUIDATION_ORACLE);
+        CHANGELOG.setAddress("MIP21_LIQUIDATION_ORACLE_2", MIP21_LIQUIDATION_ORACLE_2);
         CHANGELOG.setAddress("RWA007_A_URN", RWA007_A_URN);
         CHANGELOG.setAddress("RWA007_A_INPUT_CONDUIT", RWA007_A_INPUT_CONDUIT);
         CHANGELOG.setAddress("RWA007_A_OUTPUT_CONDUIT", RWA007_A_OUTPUT_CONDUIT);
@@ -166,13 +154,13 @@ contract SpellAction {
         );
 
         /**
-         * @notice init the RwaLiquidationOracle
+         * @notice init the RwaLiquidationOracle2
          * doc: "doc"
          * tau: 5 minutes
          */
         // TODO: this should be verified with RWA Team (5 min for testing is good)
-        RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).init(ilk, RWA007_A_INITIAL_PRICE, DOC, RWA007_A_TAU);
-        (, address pip, , ) = RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).ilks(ilk);
+        RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE_2).init(ilk, RWA007_A_INITIAL_PRICE, DOC, RWA007_A_TAU);
+        (, address pip, , ) = RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE_2).ilks(ilk);
         CHANGELOG.setAddress("PIP_RWA007", pip);
 
         /// @notice Set price feed for RWA007SGHWOFH1
@@ -186,8 +174,8 @@ contract SpellAction {
         /// @notice Allow RWA007SGHWOFH1 Join to modify Vat registry
         VatAbstract(MCD_VAT).rely(MCD_JOIN_RWA007_A);
 
-        /// @notice Allow RwaLiquidationOracle to modify Vat registry
-        VatAbstract(MCD_VAT).rely(MIP21_LIQUIDATION_ORACLE);
+        /// @notice Allow RwaLiquidationOracle2 to modify Vat registry
+        VatAbstract(MCD_VAT).rely(MIP21_LIQUIDATION_ORACLE_2);
 
         /// @notice 1000 debt ceiling
         VatAbstract(MCD_VAT).file(ilk, "line", RWA007_A_INITIAL_DC);
@@ -215,8 +203,8 @@ contract SpellAction {
         RwaOutputConduitLike(RWA007_A_OUTPUT_CONDUIT).hope(RWA007_OPERATOR);
 
         /// @notice whitelist DIIS Group in the conduits
-        RwaOutputConduitLike(RWA007_A_OUTPUT_CONDUIT).mate(DIIS_GROUP);
-        RwaInputConduitLike(RWA007_A_INPUT_CONDUIT).mate(DIIS_GROUP);
+        RwaOutputConduitLike(RWA007_A_OUTPUT_CONDUIT).mate(RWA007_MATE);
+        RwaInputConduitLike(RWA007_A_INPUT_CONDUIT).mate(RWA007_MATE);
     }
 }
 

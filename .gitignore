@@ -1,6 +1,7 @@
 .env
 .eth-password
 out/
+cache/
 node_modules/
 env-addresses-network
 env-addresses-mainnet

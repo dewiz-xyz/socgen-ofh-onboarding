@@ -282,10 +282,14 @@ contract Addresses {
         addr["MCD_JOIN_GUNIV3DAIUSDC1_A"] = 0xFBF4e3bB9B86d24F91Da185E6F4C8D903Fb63C86;
         addr["MCD_CLIP_GUNIV3DAIUSDC1_A"] = 0xFb98C5A49eDd0888e85f6d2CCc7695b5202A6B32;
         addr["MCD_CLIP_CALC_GUNIV3DAIUSDC1_A"] = 0x4652E3a6b4850a0fE50E60B0ac72aBd74199D973;
-        addr["RWA007"] = 0xF8d289bD665B4580f2abD9CEa7bD82bD9c039b06;
-        addr["MCD_JOIN_RWA007_A"] = 0xC5F5D7e6cb812919a93f3E50e5b4Bf40630029ce;
-        addr["RWA007_A_URN"] = 0x78e044E5e8EeD7188D147b5dE01d325819D91077;
-        addr["RWA007_A_INPUT_CONDUIT"] = 0xAd6953a82105F77D09C75DeFC6993326eafcBA21;
-        addr["RWA007_A_OUTPUT_CONDUIT"] = 0x6c81462253F2C37C7C6612f5b2F3F90a68827BA8;
+
+        addr["MIP21_LIQUIDATION_ORACLE_2"] = address(0);
+        addr["RWA007"] = address(0);
+        addr["MCD_JOIN_RWA007_A"] = address(0);
+        addr["RWA007_A_URN"] = address(0);
+        addr["RWA007_A_INPUT_CONDUIT"] = address(0);
+        addr["RWA007_A_OUTPUT_CONDUIT"] = address(0);
+        addr["RWA007_A_OPERATOR"] = address(0);
+        addr["RWA007_A_MATE"] = address(0);
     }
 }

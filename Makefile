@@ -17,6 +17,7 @@ test-remote: check-api-key; dapp test --rpc-url $(call alchemy-url,goerli) # --f
 test-local:; ETH_RPC_URL='http://localhost:8545' dapp test --rpc  # --ffi # enable if you need the `ffi` cheat code on HEVM
 clean:; dapp clean
 lint:; yarn run lint
+flatten:; hevm flatten --source-file ${file} --json-file out/dapp.sol.json
 estimate:; ./scripts/estimate-gas.sh ${file} ${contract} ${args}
 size:; ./scripts/contract-size.sh ${file} ${contract} ${args}
 
