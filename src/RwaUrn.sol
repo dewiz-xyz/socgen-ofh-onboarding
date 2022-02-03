@@ -142,7 +142,7 @@ contract RwaUrn2 {
     event Quit(address indexed usr, uint256 wad);
 
     /**
-     * @notice The urn max gem amount was updatec.
+     * @notice The urn max gem amount was updated.
      * @dev Only `auth` addresses can change this.
      * @param wad The new gemCap.
      */
