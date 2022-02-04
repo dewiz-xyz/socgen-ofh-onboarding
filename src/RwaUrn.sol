@@ -109,6 +109,12 @@ contract RwaUrn2 {
      */
     event File(bytes32 indexed what, address data);
     /**
+     * @notice A contract parameter was updated.
+     * @param what The changed parameter name. Currently the supported values are: "gemCap".
+     * @param data The new value of the parameter.
+     */
+    event File(bytes32 indexed what, uint256 data);
+    /**
      * @notice `wad` amount of the gem was locked in the contract by `usr`.
      * @param usr The operator address.
      * @param wad The amount locked.
@@ -140,13 +146,6 @@ contract RwaUrn2 {
      * @param wad The amount flushed out.
      */
     event Quit(address indexed usr, uint256 wad);
-
-    /**
-     * @notice The urn max gem amount was updated.
-     * @dev Only `auth` addresses can change this.
-     * @param wad The new gemCap.
-     */
-    event Recap(uint256 wad);
 
     modifier auth() {
         require(wards[msg.sender] == 1, "RwaUrn2/not-authorized");
@@ -190,7 +189,7 @@ contract RwaUrn2 {
         DaiAbstract(DaiJoinAbstract(daiJoin_).dai()).approve(daiJoin_, type(uint256).max);
         VatAbstract(vat_).hope(daiJoin_);
 
-        emit Recap(gemCap_);
+        emit File("gemCap", gemCap_);
         emit Rely(msg.sender);
         emit File("outputConduit", outputConduit_);
         emit File("jug", jug_);
@@ -259,14 +258,19 @@ contract RwaUrn2 {
     }
 
     /**
-     * @notice Updates the max gem amount this contract can lock.
-     * @param wad Gem amount.
+     * @notice Updates a contract parameter.
+     * @param what The changed parameter name. `"gemCap"
+     * @param data The new value of the parameter.
      */
-    function recap(uint256 wad) external auth {
-        require(wad <= 2**255 - 1, "RwaUrn2/overflow");
-        gemCap = wad;
+    function file(bytes32 what, uint256 data) external auth {
+        if (what == "gemCap") {
+            require(data <= 2**255 - 1, "RwaUrn2/overflow");
+            gemCap = data;
+        } else {
+            revert("RwaUrn2/unrecognised-param");
+        }
 
-        emit Recap(wad);
+        emit File(what, data);
     }
 
     /*//////////////////////////////////
