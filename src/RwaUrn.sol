@@ -189,10 +189,10 @@ contract RwaUrn2 {
         DaiAbstract(DaiJoinAbstract(daiJoin_).dai()).approve(daiJoin_, type(uint256).max);
         VatAbstract(vat_).hope(daiJoin_);
 
-        emit File("gemCap", gemCap_);
         emit Rely(msg.sender);
         emit File("outputConduit", outputConduit_);
         emit File("jug", jug_);
+        emit File("gemCap", gemCap_);
     }
 
     /*//////////////////////////////////
