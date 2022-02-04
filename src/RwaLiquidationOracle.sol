@@ -21,19 +21,6 @@ import {VatAbstract} from "dss-interfaces/dss/VatAbstract.sol";
 import {DSValue} from "ds-value/value.sol";
 
 /**
- * @title An extension/subset of `DSMath` containing only the methods required in this file.
- */
-library DSMathCustom {
-    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require((z = x + y) >= x, "DSMath/add-overflow");
-    }
-
-    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require(y == 0 || (z = x * y) / y == x, "DSMath/mul-overflow");
-    }
-}
-
-/**
  * @author Lev Livnev <lev@liv.nev.org.uk>
  * @author Henrique Barcelos <henrique@clio.finance>
  * @title An Oracle for liquitation of real-world assets (RWA).
@@ -276,5 +263,18 @@ contract RwaLiquidationOracle2 {
         require(ilks[ilk].pip != address(0), "RwaOracle/unknown-ilk");
 
         return (ilks[ilk].toc == 0 || block.timestamp < DSMathCustom.add(ilks[ilk].toc, ilks[ilk].tau));
+    }
+}
+
+/**
+ * @title An extension/subset of `DSMath` containing only the methods required in this file.
+ */
+library DSMathCustom {
+    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        require((z = x + y) >= x, "DSMath/add-overflow");
+    }
+
+    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        require(y == 0 || (z = x * y) / y == x, "DSMath/mul-overflow");
     }
 }

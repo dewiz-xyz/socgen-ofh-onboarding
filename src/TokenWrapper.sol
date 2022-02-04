@@ -20,31 +20,6 @@ import {ERC20} from "openzeppelin-contracts/token/ERC20/ERC20.sol";
 import {ITokenWrapper, OFHTokenLike} from "./ITokenWrapper.sol";
 
 /**
- * @title An extension/subset of `DSMath` containing only the methods required in this file.
- * @dev TokenWrapper contract directly uses 'wad' method for unit conversion.
- */
-library DSMathCustom {
-    uint256 internal constant WAD = 10**18;
-
-    /**
-     * @dev Safe multiplication function to avoid uint256 overflows
-     */
-    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require(y == 0 || (z = x * y) / y == x, "DSMath/mul-overflow");
-    }
-
-    /**
-     * @dev Converts a uint256 value `val` into a `wad` (10^18) by multiplying it by WAD (10^18).
-     *  - wad: used for token balances
-     *  - ray: used for interest rates
-     *  - rad: used for Dai balances inside the Vat
-     */
-    function wad(uint256 val_) internal pure returns (uint256 z) {
-        return mul(val_, WAD);
-    }
-}
-
-/**
  * @author Henrique Barcelos <henrique@clio.finance>
  * @title Wraps the underlying OFH token and mints equivalent WOFH.
  * @dev Assumes OFH has `0` decimals (integer/non-fractional token) and normalizes `mint()/burn()` to have `18` decimals.
@@ -93,7 +68,7 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
      * @notice Creates a token wrapper for a OFH token logic implementation.
      * @param token_ The OFH token deployed address.
      */
-    constructor(address token_) public ERC20("Wrapped OFH", "wOFH") {
+    constructor(address token_) public ERC20("Wrapped OFH", "WOFH") {
         token = OFHTokenLike(token_);
 
         wards[msg.sender] = 1;
@@ -188,5 +163,30 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
      */
     function unwrap(uint256 value) external override {
         unwrap(msg.sender, value);
+    }
+}
+
+/**
+ * @title An extension/subset of `DSMath` containing only the methods required in this file.
+ * @dev TokenWrapper contract directly uses 'wad' method for unit conversion.
+ */
+library DSMathCustom {
+    uint256 internal constant WAD = 10**18;
+
+    /**
+     * @dev Safe multiplication function to avoid uint256 overflows
+     */
+    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        require(y == 0 || (z = x * y) / y == x, "DSMath/mul-overflow");
+    }
+
+    /**
+     * @dev Converts a uint256 value `val` into a `wad` (10^18) by multiplying it by WAD (10^18).
+     *  - wad: used for token balances
+     *  - ray: used for interest rates
+     *  - rad: used for Dai balances inside the Vat
+     */
+    function wad(uint256 val_) internal pure returns (uint256 z) {
+        return mul(val_, WAD);
     }
 }

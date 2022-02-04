@@ -18,15 +18,6 @@
 pragma solidity ^0.6.12;
 
 /**
- * @title A subset of `DSToken` containing only the methods required in this file.
- */
-interface DSTokenLike {
-    function balanceOf(address) external view returns (uint256);
-
-    function transfer(address, uint256) external returns (uint256);
-}
-
-/**
  * @author Lev Livnev <lev@liv.nev.org.uk>
  * @author Kaue Cano <kaue@clio.finance>
  * @author Henrique Barcelos <henrique@clio.finance>
@@ -337,4 +328,13 @@ contract RwaOutputConduit2 {
         dai.transfer(recipient, balance);
         emit Push(recipient, balance);
     }
+}
+
+/**
+ * @title A subset of `DSToken` containing only the methods required in this file.
+ */
+interface DSTokenLike {
+    function balanceOf(address) external view returns (uint256);
+
+    function transfer(address, uint256) external returns (uint256);
 }
