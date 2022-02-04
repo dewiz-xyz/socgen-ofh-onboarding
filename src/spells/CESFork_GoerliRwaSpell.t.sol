@@ -73,6 +73,8 @@ interface RwaUrnLike {
     function draw(uint256) external;
 
     function wipe(uint256) external;
+
+    function recap(uint256 wad) external;
 }
 
 interface RwaLiquidationLike {
@@ -909,7 +911,7 @@ contract CESFork_DssSpellTest is DSTest, DSMath {
         hevm.store(address(rwagem), keccak256(abi.encode(address(this), uint256(0))), bytes32(uint256(2 * WAD)));
         hevm.store(address(rwagem), bytes32(uint256(2)), bytes32(uint256(rwagem.totalSupply() + 2 * WAD)));
         // setting address(this) as operator
-        hevm.store(address(rwaurn), keccak256(abi.encode(address(this), uint256(3))), bytes32(uint256(1)));
+        hevm.store(address(rwaurn), keccak256(abi.encode(address(this), uint256(4))), bytes32(uint256(1)));
 
         (uint256 preInk, uint256 preArt) = vat.urns(ilk, address(rwaurn));
 
@@ -999,6 +1001,43 @@ contract CESFork_DssSpellTest is DSTest, DSMath {
         assertTrue(art < 4); // wad -> rad conversion in wipe leaves some dust
         (ink, ) = vat.urns(ilk, address(this));
         assertEq(ink, 0);
+    }
+
+    function testFailSpellIsCast_RWA007_OPERATOR_LOCK_ABOVE_LIMIT() public {
+        if (!spell.done()) {
+            vote(address(spell));
+            scheduleWaitAndCast();
+            assertTrue(spell.done());
+        }
+        // setting address(this) as operator
+        hevm.store(address(rwaurn), keccak256(abi.encode(address(this), uint256(4))), bytes32(uint256(1)));
+
+        rwaurn.lock(500 * WAD);
+    }
+
+    function testSpellIsCast_RWA007_URN_ADMIN_CAN_INCREASE_GEM_CAP() public {
+        if (!spell.done()) {
+            vote(address(spell));
+            scheduleWaitAndCast();
+            assertTrue(spell.done());
+        }
+        // setting address(this) as operator
+        hevm.store(address(rwaurn), keccak256(abi.encode(address(this), uint256(3))), bytes32(uint256(1)));
+
+        rwaurn.recap(500 * WAD);
+
+        uint256 newGemCap = uint256(hevm.load(address(rwaurn), bytes32(uint256(2))));
+        assertEq(newGemCap, 500 * WAD);
+    }
+
+    function testFailSpellIsCast_RWA007_URN_FAIL_ON_NOT_OPERATOR_INCREASE_GEM_CAP() public {
+        if (!spell.done()) {
+            vote(address(spell));
+            scheduleWaitAndCast();
+            assertTrue(spell.done());
+        }
+
+        rwaurn.recap(500 * WAD);
     }
 
     function testSpellIsCast_RWA007_END() public {
