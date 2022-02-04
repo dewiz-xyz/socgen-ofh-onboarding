@@ -91,14 +91,14 @@ contract SpellAction {
     //     https://github.com/clio-finance/ces-goerli/blob/master/contracts.json
     ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x7EafEEa64bF6F79A79853F4A660e0960c821BA50);
 
-    address constant RWA007_GEM = 0x4b4476b2A82e05B754BA604B90D039344980691b;
-    address constant MCD_JOIN_RWA007_A = 0x5822f99093106cD5e7BB2d098857b158280078E3;
-    address constant RWA007_A_URN = 0xA03230F742FEE17e72A41C5127C6ff258D441B8E;
-    address constant RWA007_A_INPUT_CONDUIT = 0x5963B7cfaE7E7e9C454a1795c73020C57FB8B4a7;
-    address constant RWA007_A_OUTPUT_CONDUIT = 0xCb71dDbB5e51619610D81bA98D3808E888dE70d7;
-    address constant MIP21_LIQUIDATION_ORACLE_2 = 0xBE4500b7802c3317772A2a3F15d4fddAe2b8116D;
-    address constant RWA007_OPERATOR = 0x7a6C39F9eDe36CDD4D45Edd9aD3Da4B0A23EDBC8;
-    address constant RWA007_MATE = 0x12D38b5bB5bb521A54F59a1Cc49E1e0Eb5466038;
+    address constant MIP21_LIQUIDATION_ORACLE_2 = 0xEC00718D3002D20E8398D642fdC43B0cEF7bCe79;
+    address constant RWA007 = 0xAF7929861cCf659F7e515BD5246F2b4a05c73dCC;
+    address constant MCD_JOIN_RWA007_A = 0xEb5eE7E9d1CEf85DFde3B1ECa47A833CA593A6E7;
+    address constant RWA007_A_URN = 0x465C3a5A1Fc27dC989181685f080aCD76afF92C0;
+    address constant RWA007_A_INPUT_CONDUIT = 0x6A9B0E66D19186C5A3000ea5D28f14CC664814BD;
+    address constant RWA007_A_OUTPUT_CONDUIT = 0xf91d7B5162aD06cFb75936c139ebe881298d8b64;
+    address constant RWA007_A_OPERATOR = 0x505aae157DFF57dccA12AFE66aB7c3806Ff4E963;
+    address constant RWA007_A_MATE = 0x4D3b74Ec4df53769d5b5958636A4Cbb2d1BD21aF;
 
     uint256 constant THREE_PCT_RATE = 1000000000937303470807876289; // TODO RWA team should provide this one
 
@@ -133,7 +133,7 @@ contract SpellAction {
         bytes32 ilk = "RWA007-A";
 
         /// @notice add RWA007SGHWOFH1 contract to the changelog
-        CHANGELOG.setAddress("RWA007", RWA007_GEM);
+        CHANGELOG.setAddress("RWA007", RWA007);
         CHANGELOG.setAddress("MCD_JOIN_RWA007_A", MCD_JOIN_RWA007_A);
         CHANGELOG.setAddress("MIP21_LIQUIDATION_ORACLE_2", MIP21_LIQUIDATION_ORACLE_2);
         CHANGELOG.setAddress("RWA007_A_URN", RWA007_A_URN);
@@ -147,11 +147,8 @@ contract SpellAction {
         /// @notice Sanity checks
         require(GemJoinAbstract(MCD_JOIN_RWA007_A).vat() == MCD_VAT, "join-vat-not-match");
         require(GemJoinAbstract(MCD_JOIN_RWA007_A).ilk() == ilk, "join-ilk-not-match");
-        require(GemJoinAbstract(MCD_JOIN_RWA007_A).gem() == RWA007_GEM, "join-gem-not-match");
-        require(
-            GemJoinAbstract(MCD_JOIN_RWA007_A).dec() == DSTokenAbstract(RWA007_GEM).decimals(),
-            "join-dec-not-match"
-        );
+        require(GemJoinAbstract(MCD_JOIN_RWA007_A).gem() == RWA007, "join-gem-not-match");
+        require(GemJoinAbstract(MCD_JOIN_RWA007_A).dec() == DSTokenAbstract(RWA007).decimals(), "join-dec-not-match");
 
         /**
          * @notice init the RwaLiquidationOracle2
@@ -197,14 +194,14 @@ contract SpellAction {
         GemJoinAbstract(MCD_JOIN_RWA007_A).rely(RWA007_A_URN);
 
         /// @notice set up the urn
-        RwaUrnLike(RWA007_A_URN).hope(RWA007_OPERATOR);
+        RwaUrnLike(RWA007_A_URN).hope(RWA007_A_OPERATOR);
 
         /// @notice set up output conduit
-        RwaOutputConduitLike(RWA007_A_OUTPUT_CONDUIT).hope(RWA007_OPERATOR);
+        RwaOutputConduitLike(RWA007_A_OUTPUT_CONDUIT).hope(RWA007_A_OPERATOR);
 
         /// @notice whitelist DIIS Group in the conduits
-        RwaOutputConduitLike(RWA007_A_OUTPUT_CONDUIT).mate(RWA007_MATE);
-        RwaInputConduitLike(RWA007_A_INPUT_CONDUIT).mate(RWA007_MATE);
+        RwaOutputConduitLike(RWA007_A_OUTPUT_CONDUIT).mate(RWA007_A_MATE);
+        RwaInputConduitLike(RWA007_A_INPUT_CONDUIT).mate(RWA007_A_MATE);
     }
 }
 
