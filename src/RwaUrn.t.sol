@@ -131,8 +131,8 @@ contract RwaOperator is TryCaller {
         return this.tryCall(address(outC), abi.encodeWithSignature("free(uint256)", wad));
     }
 
-    function recap(uint256 wad) public {
-        urn.recap(wad);
+    function file(bytes32 who, uint256 data) public {
+        urn.file(who, data);
     }
 }
 
@@ -169,8 +169,8 @@ contract RwaGov is TryCaller {
         urn = urn_;
     }
 
-    function recap(uint256 wad) public {
-        urn.recap(wad);
+    function file(bytes32 who, uint256 data) public {
+        urn.file(who, data);
     }
 }
 
@@ -624,15 +624,15 @@ contract RwaUrnTest is DSTest, DSMath {
         assertEq(inkAfterFree, 0.6 ether);
     }
 
-    function testFailUnAuthorizedRecapCall() public {
-        op.recap(600 ether);
+    function testFailUnAuthorizedGemCapIncrease() public {
+        op.file("gemCap", 600 ether);
     }
 
-    function testCanCallRecap() public {
+    function testCanIncreaseGemCap() public {
         uint256 gemsLimitBefore = uint256(hevm.load(address(urn), bytes32(uint256(2))));
         assertEq(gemsLimitBefore, URN_GEMS_LIMIT);
 
-        gov.recap(600 ether);
+        gov.file("gemCap", 600 ether);
 
         uint256 gemsLimitAfter = uint256(hevm.load(address(urn), bytes32(uint256(2))));
         assertEq(gemsLimitAfter, 600 ether);

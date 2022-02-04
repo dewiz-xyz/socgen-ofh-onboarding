@@ -53,7 +53,7 @@ interface RwaOutputConduitLike {
     function push() external;
 }
 
-interface RwaUrnLike {
+interface RwaUrn2Like {
     function can(address) external returns (uint256);
 
     function rely(address) external;
@@ -66,6 +66,8 @@ interface RwaUrnLike {
 
     function file(bytes32, address) external;
 
+    function file(bytes32, uint256) external;
+
     function lock(uint256) external;
 
     function free(uint256) external;
@@ -74,7 +76,7 @@ interface RwaUrnLike {
 
     function wipe(uint256) external;
 
-    function recap(uint256 wad) external;
+    function gemCap() external view returns (uint256);
 }
 
 interface RwaLiquidationLike {
@@ -302,7 +304,7 @@ contract CESFork_DssSpellTest is DSTest, DSMath {
     DSTokenAbstract rwagem = DSTokenAbstract(addr.addr("RWA007"));
     GemJoinAbstract rwajoin = GemJoinAbstract(addr.addr("MCD_JOIN_RWA007_A"));
     RwaLiquidationLike oracle = RwaLiquidationLike(addr.addr("MIP21_LIQUIDATION_ORACLE_2"));
-    RwaUrnLike rwaurn = RwaUrnLike(addr.addr("RWA007_A_URN"));
+    RwaUrn2Like rwaurn = RwaUrn2Like(addr.addr("RWA007_A_URN"));
     RwaInputConduitLike rwaconduitin = RwaInputConduitLike(addr.addr("RWA007_A_INPUT_CONDUIT"));
     RwaOutputConduitLike rwaconduitout = RwaOutputConduitLike(addr.addr("RWA007_A_OUTPUT_CONDUIT"));
 
@@ -1024,10 +1026,9 @@ contract CESFork_DssSpellTest is DSTest, DSMath {
         // setting address(this) as operator
         hevm.store(address(rwaurn), keccak256(abi.encode(address(this), uint256(3))), bytes32(uint256(1)));
 
-        rwaurn.recap(500 * WAD);
+        rwaurn.file("gemCap", 500 * WAD);
 
-        uint256 newGemCap = uint256(hevm.load(address(rwaurn), bytes32(uint256(2))));
-        assertEq(newGemCap, 500 * WAD);
+        assertEq(rwaurn.gemCap(), 500 * WAD);
     }
 
     function testFailSpellIsCast_RWA007_URN_FAIL_ON_NOT_OPERATOR_INCREASE_GEM_CAP() public {
@@ -1037,7 +1038,7 @@ contract CESFork_DssSpellTest is DSTest, DSMath {
             assertTrue(spell.done());
         }
 
-        rwaurn.recap(500 * WAD);
+        rwaurn.file("gemCap", 500 * WAD);
     }
 
     function testSpellIsCast_RWA007_END() public {
