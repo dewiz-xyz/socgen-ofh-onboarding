@@ -14,51 +14,15 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-// RwaUrn2: A capped vault for Real-World Assets (RWA).
-// @dev This vault implements `gemCap`, the maximum amount of gem the urn can hold.
-
 // SPDX-License-Identifier: GPL-3.0-or-later
+
 pragma solidity >=0.6.8 <0.7.0;
 
 import {VatAbstract, JugAbstract, DSTokenAbstract, GemJoinAbstract, DaiJoinAbstract, DaiAbstract} from "dss-interfaces/Interfaces.sol";
 
 /**
- * @title An extension/subset of `DSMath` containing only the methods required in this file.
- */
-library DSMathCustom {
-    uint256 internal constant WAD = 10**18;
-    uint256 internal constant RAY = 10**27;
-
-    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require((z = x + y) >= x, "DSMath/add-overflow");
-    }
-
-    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require((z = x - y) <= x, "DSMath/sub-overflow");
-    }
-
-    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require(y == 0 || (z = x * y) / y == x, "DSMath/mul-overflow");
-    }
-
-    /**
-     * @dev Divides x/y, but rounds it up.
-     */
-    function divup(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        z = add(x, sub(y, 1)) / y;
-    }
-
-    /**
-     * @dev Converts `wad` (10^18) into a `rad` (10^45) by multiplying it by RAY (10^27).
-     */
-    function rad(uint256 wad) internal pure returns (uint256 z) {
-        return mul(wad, RAY);
-    }
-}
-
-/**
- * @author Kaue Cano <kaue@clio.finance>
  * @author Lev Livnev <lev@liv.nev.org.uk>
+ * @author Kaue Cano <kaue@clio.finance>
  * @title RwaUrn2: A capped vault for Real-World Assets (RWA).
  * @dev This vault implements `gemCap`, the maximum amount of gem the urn can hold.
  */
@@ -355,5 +319,39 @@ contract RwaUrn2 {
 
         dai.transfer(outputConduit, wad);
         emit Quit(msg.sender, wad);
+    }
+}
+
+/**
+ * @title An extension/subset of `DSMath` containing only the methods required in this file.
+ */
+library DSMathCustom {
+    uint256 internal constant WAD = 10**18;
+    uint256 internal constant RAY = 10**27;
+
+    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        require((z = x + y) >= x, "DSMath/add-overflow");
+    }
+
+    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        require((z = x - y) <= x, "DSMath/sub-overflow");
+    }
+
+    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        require(y == 0 || (z = x * y) / y == x, "DSMath/mul-overflow");
+    }
+
+    /**
+     * @dev Divides x/y, but rounds it up.
+     */
+    function divup(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = add(x, sub(y, 1)) / y;
+    }
+
+    /**
+     * @dev Converts `wad` (10^18) into a `rad` (10^45) by multiplying it by RAY (10^27).
+     */
+    function rad(uint256 wad) internal pure returns (uint256 z) {
+        return mul(wad, RAY);
     }
 }
