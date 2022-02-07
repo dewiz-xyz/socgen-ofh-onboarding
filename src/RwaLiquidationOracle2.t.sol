@@ -158,7 +158,7 @@ contract RwaMate is TryCaller {
     }
 }
 
-contract RwaLiquidationOracleTest is DSTest, DSMath {
+contract RwaLiquidationOracle2Test is DSTest, DSMath {
     bytes20 internal constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
 
     Hevm internal hevm;

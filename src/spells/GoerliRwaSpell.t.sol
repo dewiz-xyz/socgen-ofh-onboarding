@@ -945,7 +945,7 @@ contract DssSpellTest is DSTest, DSMath {
         assertEq(ink, 0);
     }
 
-    function testFailSpellIsCast_RWA007_OPERATOR_LOCK_ABOVE_LIMIT() public {
+    function testFailSpellIsCast_RWA007_OPERATOR_LOCK_ABOVE_CAP() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
@@ -963,7 +963,7 @@ contract DssSpellTest is DSTest, DSMath {
             scheduleWaitAndCast();
             assertTrue(spell.done());
         }
-        // setting address(this) as operator
+        // setting address(this) as admin
         hevm.store(address(rwaurn), keccak256(abi.encode(address(this), uint256(3))), bytes32(uint256(1)));
 
         rwaurn.file("gemCap", 500 * WAD);
@@ -980,6 +980,25 @@ contract DssSpellTest is DSTest, DSMath {
         }
 
         rwaurn.file("gemCap", 500 * WAD);
+    }
+
+    function testFailSpellIsCast_RWA007_URN_FAIL_TO_LOCK_GEM_BEYOND_CAP_AFTER_DECREASE_GEM_CAP() public {
+        if (!spell.done()) {
+            vote(address(spell));
+            scheduleWaitAndCast();
+            assertTrue(spell.done());
+        }
+
+        // setting address(this) as admin
+        hevm.store(address(rwaurn), keccak256(abi.encode(address(this), uint256(3))), bytes32(uint256(1)));
+        // setting address(this) as operator
+        hevm.store(address(rwaurn), keccak256(abi.encode(address(this), uint256(4))), bytes32(uint256(1)));
+
+        rwaurn.lock(200 * WAD);
+        // Reducing the gem cap below the current locked amount...
+        rwaurn.file("gemCap", 180 * WAD);
+
+        rwaurn.lock(200 * WAD);
     }
 
     function testSpellIsCast_RWA007_END() public {

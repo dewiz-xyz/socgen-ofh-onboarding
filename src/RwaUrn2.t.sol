@@ -175,7 +175,7 @@ contract RwaGov is TryCaller {
     }
 }
 
-contract RwaUrnTest is DSTest, DSMath {
+contract RwaUrn2Test is DSTest, DSMath {
     bytes20 internal constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
 
     Hevm internal hevm;
@@ -207,7 +207,7 @@ contract RwaUrnTest is DSTest, DSMath {
     string internal constant DOC = "Please sign this";
     uint256 internal constant CEILING = 200 ether;
     uint256 internal constant EIGHT_PCT = 1000000002440418608258400030;
-    uint256 internal constant URN_GEMS_LIMIT = 400 ether;
+    uint256 internal constant URN_GEM_CAP = 400 ether;
 
     uint48 internal constant TAU = 2 weeks;
 
@@ -263,7 +263,7 @@ contract RwaUrnTest is DSTest, DSMath {
             address(gemJoin),
             address(daiJoin),
             address(outConduit),
-            URN_GEMS_LIMIT
+            URN_GEM_CAP
         );
         gemJoin.rely(address(urn));
         inConduit = new RwaInputConduit2(address(dai), address(urn));
@@ -579,16 +579,16 @@ contract RwaUrnTest is DSTest, DSMath {
     }
 
     function testFailOnGemLimitExceed() public {
-        op.lock(URN_GEMS_LIMIT + 1 ether);
+        op.lock(URN_GEM_CAP + 1 ether);
     }
 
     function testIncreaseGemValueOnLock() public {
         (uint256 ink, ) = vat.urns("RWA007-A", address(urn));
-        uint256 gemsLimit = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        uint256 gemCap = uint256(hevm.load(address(urn), bytes32(uint256(2))));
         assertEq(ink, 0);
-        assertEq(gemsLimit, URN_GEMS_LIMIT);
+        assertEq(gemCap, URN_GEM_CAP);
 
-        uint256 amount = URN_GEMS_LIMIT;
+        uint256 amount = URN_GEM_CAP;
         op.lock(amount);
 
         (uint256 inkAfter, ) = vat.urns("RWA007-A", address(urn));
@@ -630,12 +630,27 @@ contract RwaUrnTest is DSTest, DSMath {
     }
 
     function testCanIncreaseGemCap() public {
-        uint256 gemsLimitBefore = uint256(hevm.load(address(urn), bytes32(uint256(2))));
-        assertEq(gemsLimitBefore, URN_GEMS_LIMIT);
+        uint256 gemCapBefore = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        assertEq(gemCapBefore, URN_GEM_CAP);
 
-        gov.file("gemCap", 600 ether);
+        gov.file("gemCap", URN_GEM_CAP * 2);
 
-        uint256 gemsLimitAfter = uint256(hevm.load(address(urn), bytes32(uint256(2))));
-        assertEq(gemsLimitAfter, 600 ether);
+        uint256 gemCapAfter = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        assertEq(gemCapAfter, URN_GEM_CAP * 2);
+    }
+
+    function testCanDecreaseGemCap() public {
+        uint256 gemCapBefore = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        assertEq(gemCapBefore, URN_GEM_CAP);
+
+        gov.file("gemCap", URN_GEM_CAP / 2);
+
+        uint256 gemCapAfter = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        assertEq(gemCapAfter, URN_GEM_CAP / 2);
+    }
+
+    function testFailCannotLockMoreThanGemCapAfterDecrease() public {
+        gov.file("gemCap", URN_GEM_CAP / 2);
+        op.lock(URN_GEM_CAP);
     }
 }
