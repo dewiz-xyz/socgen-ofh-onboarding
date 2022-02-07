@@ -1031,7 +1031,7 @@ contract CESFork_DssSpellTest is DSTest, DSMath {
         assertEq(rwaurn.gemCap(), 500 * WAD);
     }
 
-    function testFailSpellIsCast_RWA007_URN_FAIL_ON_NOT_OPERATOR_INCREASE_GEM_CAP() public {
+    function testFailSpellIsCast_RWA007_URN_FAIL_ON_NOT_ADMIN_INCREASE_GEM_CAP() public {
         if (!spell.done()) {
             vote(address(spell));
             scheduleWaitAndCast();
