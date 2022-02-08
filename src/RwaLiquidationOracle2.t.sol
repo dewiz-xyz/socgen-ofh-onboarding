@@ -31,7 +31,7 @@ import {AuthGemJoin} from "dss-gem-joins/join-auth.sol";
 
 import {OFHTokenLike} from "./tokens/ITokenWrapper.sol";
 import {TokenWrapper} from "./tokens/TokenWrapper.sol";
-import {MockOFH} from "./tokens/mock/MockOFH.sol";
+import {MockOFH} from "./tokens/mocks/MockOFH.sol";
 import {RwaInputConduit2} from "./RwaInputConduit2.sol";
 import {RwaOutputConduit2} from "./RwaOutputConduit2.sol";
 import {RwaUrn2} from "./RwaUrn2.sol";
