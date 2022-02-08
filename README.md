@@ -74,6 +74,24 @@ source <(scripts/json-to-env.sh out/ces-goerli-addresses.json)
 make verify-ces-goerli
 ```
 
+### Replace spell addresses
+
+Spell actions cannot have state, so any parameter they take must be hard-coded into their source code.
+
+Every time a new deployment is made, you need to update the addresses used in the spell, which can be tedious.
+
+We created a quality of life script powered by dark `sed` sorcery to help with this task in `scripts/replace-spell-addresses.sh`:
+
+```bash
+scripts/replace-spell-addresses.sh <deployments_json_file> <spell_file> <spell_addresses_helper_file>
+```
+
+Example:
+
+```
+scripts/replace-spell-addresses.sh out/ces-goerli-addresses.json src/spells/CESFork_GoerliRwaSpell.sol src/spells/helpers/CESFork_GoerliAddresses.sol
+```
+
 ### More...
 
 You can also refer to the Makefile (`make <command>`) for full list of commands.
