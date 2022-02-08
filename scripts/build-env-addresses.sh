@@ -22,7 +22,7 @@ function validate_url() {
   exit 1
 }
 
-if [[ $_ != "${0}" ]]; then
+if [ "$0" != "$BASH_SOURCE" ]; then
   # Script was run as source
   SOURCED=1
 fi
