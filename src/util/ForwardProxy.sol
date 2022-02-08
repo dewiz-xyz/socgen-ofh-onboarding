@@ -29,7 +29,7 @@ import {Proxy} from "openzeppelin-contracts/proxy/Proxy.sol";
  * The success and return data of the delegated call will be returned back to the caller of the proxy.
  */
 contract ForwardProxy is Proxy {
-    address internal forwardTo;
+    address public forwardTo;
 
     /**
      * @param forwardTo_ The contract to which the call is going to be forwarded to.
