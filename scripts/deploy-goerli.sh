@@ -37,23 +37,23 @@ ILK_ENCODED=$(seth --to-bytes32 "$(seth --from-ascii "$ILK")")
 # build it
 make build
 
-[[ -z "$OPERATOR" ]] && OPERATOR=$(dapp create ForwardProxy "$ZERO_ADDRESS" --verify) # using generic forward proxy for goerli
-[[ -z "$MATE" ]] && MATE=$(dapp create ForwardProxy "$ZERO_ADDRESS" --verify)         # using generic forward proxy for goerli
+[[ -z "$OPERATOR" ]] && OPERATOR=$(dapp create ForwardProxy "$ZERO_ADDRESS") # using generic forward proxy for goerli
+[[ -z "$MATE" ]] && MATE=$(dapp create ForwardProxy "$ZERO_ADDRESS")         # using generic forward proxy for goerli
 
 [[ -z "$RWA_OFH_TOKEN" ]] && {
     [[ -z "$RWA_OFH_TOKEN_SUPPLY" ]] && RWA_OFH_TOKEN_SUPPLY=400
-    RWA_OFH_TOKEN=$(dapp create MockOFH "$RWA_OFH_TOKEN_SUPPLY" --verify)
+    RWA_OFH_TOKEN=$(dapp create MockOFH "$RWA_OFH_TOKEN_SUPPLY")
     # Transfers the total supply to the operator's account
     seth send "$RWA_OFH_TOKEN" 'transfer(address,uint256)' "$OPERATOR" "$RWA_OFH_TOKEN_SUPPLY"
 }
 
 
 # tokenize it
-[[ -z "$RWA_WRAPPER_TOKEN" ]] && RWA_WRAPPER_TOKEN=$(dapp create TokenWrapper "$RWA_OFH_TOKEN" --verify)
+[[ -z "$RWA_WRAPPER_TOKEN" ]] && RWA_WRAPPER_TOKEN=$(dapp create TokenWrapper "$RWA_OFH_TOKEN")
 
 # route it
 [[ -z "$RWA_OUTPUT_CONDUIT" ]] && {
-    RWA_OUTPUT_CONDUIT=$(dapp create RwaOutputConduit2 "$MCD_DAI" --verify)
+    RWA_OUTPUT_CONDUIT=$(dapp create RwaOutputConduit2 "$MCD_DAI")
 
     # trust addresses for goerli
     seth send "$RWA_OUTPUT_CONDUIT" 'hope(address)' "$OPERATOR"
@@ -64,11 +64,11 @@ make build
 }
 
 # join it
-RWA_JOIN=$(dapp create AuthGemJoin "$MCD_VAT" "$ILK_ENCODED" "$RWA_WRAPPER_TOKEN" --verify)
+RWA_JOIN=$(dapp create AuthGemJoin "$MCD_VAT" "$ILK_ENCODED" "$RWA_WRAPPER_TOKEN")
 seth send "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY"
 
 # urn it
-RWA_URN_2=$(dapp create RwaUrn2 "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT" $RWA_URN_2_GEM_CAP --verify)
+RWA_URN_2=$(dapp create RwaUrn2 "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT" $RWA_URN_2_GEM_CAP)
 seth send "$RWA_URN_2" 'rely(address)' "$MCD_PAUSE_PROXY"
 seth send "$RWA_URN_2" 'deny(address)' "$ETH_FROM"
 
@@ -79,7 +79,7 @@ seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
 
 # connect it
 [[ -z "$RWA_INPUT_CONDUIT_2" ]] && {
-    RWA_INPUT_CONDUIT_2=$(dapp create RwaInputConduit2 "$MCD_DAI" "$RWA_URN_2" --verify)
+    RWA_INPUT_CONDUIT_2=$(dapp create RwaInputConduit2 "$MCD_DAI" "$RWA_URN_2")
 
     # trust addresses for goerli
     seth send "$RWA_INPUT_CONDUIT_2" 'mate(address)' "$MATE"
@@ -90,7 +90,7 @@ seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
 
 # price it
 [[ -z "$MIP21_LIQUIDATION_ORACLE_2" ]] && {
-    MIP21_LIQUIDATION_ORACLE_2=$(dapp create RwaLiquidationOracle2 "$MCD_VAT" "$MCD_VOW" --verify)
+    MIP21_LIQUIDATION_ORACLE_2=$(dapp create RwaLiquidationOracle2 "$MCD_VAT" "$MCD_VOW")
 
     seth send "$MIP21_LIQUIDATION_ORACLE_2" 'rely(address)' "$MCD_PAUSE_PROXY"
     seth send "$MIP21_LIQUIDATION_ORACLE_2" 'deny(address)' "$ETH_FROM"
