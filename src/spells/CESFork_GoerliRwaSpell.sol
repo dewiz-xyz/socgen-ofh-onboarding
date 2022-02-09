@@ -91,14 +91,14 @@ contract SpellAction {
     //     https://github.com/clio-finance/ces-goerli/blob/master/contracts.json
     ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x7EafEEa64bF6F79A79853F4A660e0960c821BA50);
 
-    address constant MIP21_LIQUIDATION_ORACLE_2 = 0x3fd1cE67618635e4Dd72A49d03606B34c3909355;
-    address constant RWA007 = 0xd583Fb88aA8359B118f7907790e11498d3f81eb6;
-    address constant MCD_JOIN_RWA007_A = 0xCD8cfF54670E562661845ba872Fcb87D3Fb03fdA;
-    address constant RWA007_A_URN = 0xF15e7A0De2e6c557BdDB2B9162795A48a0D4AF81;
-    address constant RWA007_A_INPUT_CONDUIT = 0xe9d11be859f808215981d63BA3544d78cC1b0ae0;
-    address constant RWA007_A_OUTPUT_CONDUIT = 0x9E122bb66947f1E37bB66eC86926e4fCD384B616;
-    address constant RWA007_A_OPERATOR = 0x522E67cE46688ff3C56CD343419a16eEddEFC8A0;
-    address constant RWA007_A_MATE = 0x64ba926161866C116bb99eB50Fea8F8544259d0f;
+    address constant MIP21_LIQUIDATION_ORACLE_2 = 0x6F8896892AD583BfAE6f7E24d12FC821cC846AB0;
+    address constant RWA007 = 0x3B8D51859DD2A33E6a34798c80375dCd0D44b290;
+    address constant MCD_JOIN_RWA007_A = 0x2093ea40eCB44DC6813f49507537C4F48D1Be10f;
+    address constant RWA007_A_URN = 0x11a9befCe5D1985B510236b933e99AD2d9144bA1;
+    address constant RWA007_A_INPUT_CONDUIT = 0x63073972E41D3bb1B293f747B969aB45d3D2a777;
+    address constant RWA007_A_OUTPUT_CONDUIT = 0x77eE4C8C9E46091202Be264aD0140B50b9d118fe;
+    address constant RWA007_A_OPERATOR = 0x50b8C31E88eE19c480Cc60c780c77051D3aFE775;
+    address constant RWA007_A_MATE = 0x62431c4563C8C24fE0756D541c72D2A51B635b96;
 
     uint256 constant THREE_PCT_RATE = 1000000000937303470807876289; // TODO RWA team should provide this one
 
@@ -127,12 +127,12 @@ contract SpellAction {
         address MCD_JUG = ChainlogAbstract(CHANGELOG).getAddress("MCD_JUG");
         address MCD_SPOT = ChainlogAbstract(CHANGELOG).getAddress("MCD_SPOT");
 
-        /// @notice RWA007-SGFWOFH1-A collateral deploy
+        // RWA007-SGFWOFH1-A collateral deploy
 
-        /// @notice Set ilk bytes32 variable
+        // Set ilk bytes32 variable
         bytes32 ilk = "RWA007-A";
 
-        /// @notice add RWA007SGHWOFH1 contract to the changelog
+        // Add RWA007SGHWOFH1 contract to the changelog
         CHANGELOG.setAddress("RWA007", RWA007);
         CHANGELOG.setAddress("MCD_JOIN_RWA007_A", MCD_JOIN_RWA007_A);
         CHANGELOG.setAddress("MIP21_LIQUIDATION_ORACLE_2", MIP21_LIQUIDATION_ORACLE_2);
@@ -140,66 +140,64 @@ contract SpellAction {
         CHANGELOG.setAddress("RWA007_A_INPUT_CONDUIT", RWA007_A_INPUT_CONDUIT);
         CHANGELOG.setAddress("RWA007_A_OUTPUT_CONDUIT", RWA007_A_OUTPUT_CONDUIT);
 
-        /// @notice bump changelog version
+        // bump changelog version
         // TODO make sure to update this version on mainnet
         CHANGELOG.setVersion("1.0.0");
 
-        /// @notice Sanity checks
+        // Sanity checks
         require(GemJoinAbstract(MCD_JOIN_RWA007_A).vat() == MCD_VAT, "join-vat-not-match");
         require(GemJoinAbstract(MCD_JOIN_RWA007_A).ilk() == ilk, "join-ilk-not-match");
         require(GemJoinAbstract(MCD_JOIN_RWA007_A).gem() == RWA007, "join-gem-not-match");
         require(GemJoinAbstract(MCD_JOIN_RWA007_A).dec() == DSTokenAbstract(RWA007).decimals(), "join-dec-not-match");
 
-        /**
-         * @notice init the RwaLiquidationOracle2
-         * doc: "doc"
-         * tau: 5 minutes
+        /*
+         * init the RwaLiquidationOracle2
          */
         // TODO: this should be verified with RWA Team (5 min for testing is good)
         RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE_2).init(ilk, RWA007_A_INITIAL_PRICE, DOC, RWA007_A_TAU);
         (, address pip, , ) = RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE_2).ilks(ilk);
         CHANGELOG.setAddress("PIP_RWA007", pip);
 
-        /// @notice Set price feed for RWA007SGHWOFH1
+        // Set price feed for RWA007SGHWOFH1
         SpotAbstract(MCD_SPOT).file(ilk, "pip", pip);
 
-        /// @notice Init RWA007SGHWOFH1 in Vat
+        // Init RWA007SGHWOFH1 in Vat
         VatAbstract(MCD_VAT).init(ilk);
-        /// @notice Init RWA007SGHWOFH1 in Jug
+        // Init RWA007SGHWOFH1 in Jug
         JugAbstract(MCD_JUG).init(ilk);
 
-        /// @notice Allow RWA007SGHWOFH1 Join to modify Vat registry
+        // Allow RWA007SGHWOFH1 Join to modify Vat registry
         VatAbstract(MCD_VAT).rely(MCD_JOIN_RWA007_A);
 
-        /// @notice Allow RwaLiquidationOracle2 to modify Vat registry
+        // Allow RwaLiquidationOracle2 to modify Vat registry
         VatAbstract(MCD_VAT).rely(MIP21_LIQUIDATION_ORACLE_2);
 
-        /// @notice 1000 debt ceiling
+        // 1000 debt ceiling
         VatAbstract(MCD_VAT).file(ilk, "line", RWA007_A_INITIAL_DC);
         VatAbstract(MCD_VAT).file("Line", VatAbstract(MCD_VAT).Line() + RWA007_A_INITIAL_DC);
 
-        /// @notice No dust
+        // No dust
         // VatAbstract(MCD_VAT).file(ilk, "dust", 0)
 
-        /// @notice 3% stability fee // TODO get from RWA
+        // 3% stability fee // TODO get from RWA
         JugAbstract(MCD_JUG).file(ilk, "duty", THREE_PCT_RATE);
 
-        /// @notice collateralization ratio 100%
+        // collateralization ratio 100%
         SpotAbstract(MCD_SPOT).file(ilk, "mat", RAY); // TODO Should get from RWA team
 
-        /// @notice poke the spotter to pull in a price
+        // poke the spotter to pull in a price
         SpotAbstract(MCD_SPOT).poke(ilk);
 
-        /// @notice give the urn permissions on the join adapter
+        // give the urn permissions on the join adapter
         GemJoinAbstract(MCD_JOIN_RWA007_A).rely(RWA007_A_URN);
 
-        /// @notice set up the urn
+        // set up the urn
         RwaUrnLike(RWA007_A_URN).hope(RWA007_A_OPERATOR);
 
-        /// @notice set up output conduit
+        // set up output conduit
         RwaOutputConduitLike(RWA007_A_OUTPUT_CONDUIT).hope(RWA007_A_OPERATOR);
 
-        /// @notice whitelist DIIS Group in the conduits
+        // whitelist DIIS Group in the conduits
         RwaOutputConduitLike(RWA007_A_OUTPUT_CONDUIT).mate(RWA007_A_MATE);
         RwaInputConduitLike(RWA007_A_INPUT_CONDUIT).mate(RWA007_A_MATE);
     }
