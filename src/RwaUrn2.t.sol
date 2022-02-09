@@ -306,19 +306,12 @@ contract RwaUrn2Test is DSTest, DSMath {
         assertEq(dai.balanceOf(address(rec)), amount);
     }
 
-    function testUnpickAndPickNewReceiver() public {
+    function testPickNewReceiver() public {
         uint256 amount = 200 ether;
-
         op.lock(amount);
         op.draw(amount);
 
         op.pick(address(rec));
-
-        assertTrue(mate.canPushOut());
-
-        op.pick(address(0));
-
-        assertTrue(!mate.canPushOut());
 
         TokenUser newRec = new TokenUser(dai);
         outConduit.kiss(address(newRec));
@@ -327,15 +320,6 @@ contract RwaUrn2Test is DSTest, DSMath {
 
         mate.pushOut();
         assertEq(dai.balanceOf(address(newRec)), amount);
-    }
-
-    function testFailPushBeforePick() public {
-        uint256 amount = 200 ether;
-
-        op.lock(amount);
-        op.draw(amount);
-
-        mate.pushOut();
     }
 
     function testFailPickUnkissedReceiver() public {
