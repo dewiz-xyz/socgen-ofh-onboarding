@@ -192,7 +192,7 @@ contract RwaOutputConduit2 {
      */
     function pick(address who) public {
         require(can[msg.sender] == 1, "RwaOutputConduit2/not-operator");
-        require(bud[who] == 1 || who == address(0), "RwaOutputConduit2/not-bud");
+        require(bud[who] == 1, "RwaOutputConduit2/not-bud");
         to = who;
         emit Pick(who);
     }
@@ -203,14 +203,10 @@ contract RwaOutputConduit2 {
      */
     function push() external {
         require(may[msg.sender] == 1, "RwaOutputConduit2/not-mate");
-        require(to != address(0), "RwaOutputConduit2/to-not-picked");
         uint256 balance = dai.balanceOf(address(this));
-        address recipient = to;
-        // sets `to` to address(0) so the flow is restarted
-        to = address(0);
 
-        dai.transfer(recipient, balance);
-        emit Push(recipient, balance);
+        dai.transfer(to, balance);
+        emit Push(to, balance);
     }
 }
 

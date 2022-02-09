@@ -137,9 +137,6 @@ contract RwaUrn2 {
         address outputConduit_,
         uint256 gemCap_
     ) public {
-        require(outputConduit_ != address(0), "RwaUrn2/invalid-conduit");
-        require(gemCap_ > 0, "RwaUrn2/invalid-gemcap");
-
         vat = VatAbstract(vat_);
         jug = JugAbstract(jug_);
         gemJoin = GemJoinAbstract(gemJoin_);
@@ -210,7 +207,6 @@ contract RwaUrn2 {
      */
     function file(bytes32 what, address data) external auth {
         if (what == "outputConduit") {
-            require(data != address(0), "RwaUrn2/invalid-conduit");
             outputConduit = data;
         } else if (what == "jug") {
             jug = JugAbstract(data);
