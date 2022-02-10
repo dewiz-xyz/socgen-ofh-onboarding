@@ -28,9 +28,9 @@ import {Spotter} from "dss/spot.sol";
 import {DaiJoin} from "dss/join.sol";
 import {AuthGemJoin} from "dss-gem-joins/join-auth.sol";
 
-import {MockOFH} from "./mock/MockOFH.sol";
-import {OFHTokenLike} from "./ITokenWrapper.sol";
-import {TokenWrapper} from "./TokenWrapper.sol";
+import {OFHTokenLike} from "./tokens/ITokenWrapper.sol";
+import {TokenWrapper} from "./tokens/TokenWrapper.sol";
+import {MockOFH} from "./tokens/mocks/MockOFH.sol";
 import {RwaInputConduit2} from "./RwaInputConduit2.sol";
 import {RwaOutputConduit2} from "./RwaOutputConduit2.sol";
 import {RwaLiquidationOracle2} from "./RwaLiquidationOracle2.sol";

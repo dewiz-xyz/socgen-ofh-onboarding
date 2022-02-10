@@ -18,10 +18,10 @@ pragma solidity ^0.6.12;
 
 import {DSTest} from "ds-test/test.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
+import {ForwardProxy} from "../utils/ForwardProxy.sol";
 import {OFHTokenLike} from "./ITokenWrapper.sol";
 import {TokenWrapper} from "./TokenWrapper.sol";
-import {MockOFH} from "./mock/MockOFH.sol";
-import {ForwardProxy} from "./util/ForwardProxy.sol";
+import {MockOFH} from "./mocks/MockOFH.sol";
 
 interface Hevm {
     function warp(uint256) external;
