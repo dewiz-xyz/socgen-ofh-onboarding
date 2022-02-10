@@ -7,8 +7,8 @@ if [[ ${DEBUG} ]]; then
 fi
 
 die() {
-  echo "$1" >&2
-  exit 1
+	echo "$1" >&2
+	exit 1
 }
 
 # All contracts are output to `out/addresses.json` by default
@@ -43,7 +43,7 @@ fi
 [[ -z "$ETH_FROM" ]] && die "ETH_FROM not found, please set it and re-run the last command."
 
 # Make sure address is checksummed
-[ "$ETH_FROM" != "$(seth --to-checksum-address "$ETH_FROM")" ] && \
+[ "$ETH_FROM" != "$(seth --to-checksum-address "$ETH_FROM")" ] &&
 	die "ETH_FROM not checksummed, please format it with 'seth --to-checksum-address <address>'"
 
 # Setup addresses file
@@ -52,7 +52,6 @@ cat >"$ADDRESSES_FILE" <<EOF
     "DEPLOYER": "$ETH_FROM"
 }
 EOF
-
 
 deploy() {
 	local FILE_NAME="$1"
@@ -99,8 +98,8 @@ saveContract() {
 	printf %s "$result" >"$ADDRESSES_FILE"
 }
 
-int(){
-	expr ${1:-} : '[^0-9]*\([0-9]*\)' 2>/dev/null||:;
+int() {
+	expr ${1:-} : '[^0-9]*\([0-9]*\)' 2>/dev/null || :
 }
 
 estimate_gas() {

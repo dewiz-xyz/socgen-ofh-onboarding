@@ -23,15 +23,15 @@ size:; ./scripts/contract-size.sh ${file} ${contract} ${args}
 
 # mainnet
 deploy-mainnet: check-api-key; @ETH_RPC_URL=$(call alchemy-url,mainnet) ./scripts/deploy-mainnet.sh
-
 # goerli
 deploy-goerli: check-api-key; @ETH_RPC_URL=$(call alchemy-url,goerli) ./scripts/deploy-goerli.sh
-
 # goerli CES fork
 deploy-ces-goerli: check-api-key; @ETH_RPC_URL=$(call alchemy-url,goerli) ./scripts/deploy-ces-goerli.sh
 
 # verify on Etherscan
-verify:; ETH_RPC_URL=$(call alchemy-url,$(network_name)) dapp verify-contract $(contract) $(contract_address)
+verify-mainnet: check-api-key; @ETH_RPC_URL=$(call alchemy-url,mainnet) ./scripts/verify-contracts.sh mainnet
+verify-goerli: check-api-key; @ETH_RPC_URL=$(call alchemy-url,goerli) ./scripts/verify-contracts.sh goerli
+verify-ces-goerli: check-api-key; @ETH_RPC_URL=$(call alchemy-url,goerli) ./scripts/verify-contracts.sh ces-goerli
 
 check-api-key:
 ifndef ALCHEMY_API_KEY

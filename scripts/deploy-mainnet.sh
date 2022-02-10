@@ -75,10 +75,17 @@ seth send "${RWA_JOIN}" 'deny(address)' "${ETH_FROM}"
 [[ -z "$RWA_INPUT_CONDUIT_2" ]] && RWA_INPUT_CONDUIT_2=$(dapp create RwaConduits:RwaInputConduit2 "${MCD_DAI}" "${RWA_URN_2}")
 
 # print it
-echo "OPERATOR: ${OPERATOR}"
-echo "ILK: ${ILK}"
-echo "${SYMBOL}: ${RWA_TOKEN}"
-echo "MCD_JOIN_${SYMBOL}_${LETTER}: ${RWA_JOIN}"
-echo "${SYMBOL}_${LETTER}_URN: ${RWA_URN_2}"
-echo "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT_2}"
-echo "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT: ${RWA_OUTPUT_CONDUIT}"
+cat << JSON
+{
+    "ILK": "${ILK}",
+    "MIP21_LIQUIDATION_ORACLE_2": "${MIP21_LIQUIDATION_ORACLE_2}",
+    "RWA_OFH_TOKEN": "${RWA_OFH_TOKEN}",
+    "${SYMBOL}": "${RWA_WRAPPER_TOKEN}",
+    "MCD_JOIN_${SYMBOL}_${LETTER}": "${RWA_JOIN}",
+    "${SYMBOL}_${LETTER}_URN": "${RWA_URN_2}",
+    "${SYMBOL}_${LETTER}_INPUT_CONDUIT": "${RWA_INPUT_CONDUIT_2}",
+    "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT": "${RWA_OUTPUT_CONDUIT_2}",
+    "${SYMBOL}_${LETTER}_OPERATOR": "${OPERATOR}",
+    "${SYMBOL}_${LETTER}_MATE": "${MATE}"
+}
+JSON
