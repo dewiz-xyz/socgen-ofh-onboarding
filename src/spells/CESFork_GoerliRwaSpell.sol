@@ -58,10 +58,6 @@ interface RwaOutputConduitLike {
 
     function bud(address) external returns (uint256);
 
-    function kiss(address) external;
-
-    function diss(address) external;
-
     function pick(address) external;
 
     function push() external;
@@ -109,9 +105,9 @@ contract SpellAction {
     uint256 public constant RAY = 10**27;
     uint256 public constant RAD = 10**45;
 
-    uint256 constant RWA007_A_INITIAL_DC = 10000000 * RAD; // TODO RWA team should provide
-    uint256 constant RWA007_A_INITIAL_PRICE = 13000 * WAD; // TODO RWA team should provide
-    uint48 constant RWA007_A_TAU = 300; // TODO RWA team should provide
+    uint256 constant RWA007_A_INITIAL_DC = 80000000 * RAD; // TODO RWA team should provide
+    uint256 constant RWA007_A_INITIAL_PRICE = 115000 * WAD; // TODO RWA team should provide
+    uint48 constant RWA007_A_TAU = 1 weeks; // TODO RWA team should provide
 
     /**
      * @notice MIP13c3-SP4 Declaration of Intent & Commercial Points -
@@ -203,7 +199,7 @@ contract SpellAction {
     }
 }
 
-contract RwaSpell {
+contract CESFork_RwaSpell {
     ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0x7EafEEa64bF6F79A79853F4A660e0960c821BA50);
 
     DSPauseAbstract public pause = DSPauseAbstract(CHANGELOG.getAddress("MCD_PAUSE"));

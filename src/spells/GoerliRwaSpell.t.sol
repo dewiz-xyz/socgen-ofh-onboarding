@@ -44,10 +44,6 @@ interface RwaOutputConduitLike {
 
     function bud(address) external returns (uint256);
 
-    function kiss(address) external;
-
-    function diss(address) external;
-
     function pick(address) external;
 
     function push() external;
@@ -898,7 +894,6 @@ contract DssSpellTest is DSTest, DSMath {
 
         assertEq(dai.balanceOf(address(rwaconduitout)), 1 * WAD);
 
-        rwaconduitout.kiss(address(this));
         rwaconduitout.pick(address(this));
 
         rwaconduitout.push();

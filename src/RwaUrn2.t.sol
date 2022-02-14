@@ -283,7 +283,6 @@ contract RwaUrn2Test is DSTest, DSMath {
         inConduit.mate(address(mate));
         outConduit.mate(address(mate));
         outConduit.hope(address(op));
-        outConduit.kiss(address(rec));
 
         op.approve(wrapper, address(urn), type(uint256).max);
     }
@@ -321,7 +320,6 @@ contract RwaUrn2Test is DSTest, DSMath {
         assertTrue(!mate.canPushOut());
 
         TokenUser newRec = new TokenUser(dai);
-        outConduit.kiss(address(newRec));
 
         op.pick(address(newRec));
 
@@ -336,12 +334,6 @@ contract RwaUrn2Test is DSTest, DSMath {
         op.draw(amount);
 
         mate.pushOut();
-    }
-
-    function testFailPickUnkissedReceiver() public {
-        TokenUser newRec = new TokenUser(dai);
-
-        op.pick(address(newRec));
     }
 
     function testLockAndDraw() public {

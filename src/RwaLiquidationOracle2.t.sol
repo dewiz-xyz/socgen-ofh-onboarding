@@ -262,7 +262,6 @@ contract RwaLiquidationOracle2Test is DSTest, DSMath {
         inConduit.mate(address(mate));
         outConduit.mate(address(mate));
         outConduit.hope(address(op));
-        outConduit.kiss(address(rec));
 
         op.approve(wrapper, address(urn), type(uint256).max);
     }
