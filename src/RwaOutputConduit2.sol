@@ -39,8 +39,6 @@ contract RwaOutputConduit2 {
     mapping(address => uint256) public may;
     /// @notice Addresses with operator access on this contract. `can[usr]`
     mapping(address => uint256) public can;
-    /// @notice Addresses with kiss permissions on this contract. `bud[who]`
-    mapping(address => uint256) public bud;
 
     /**
      * @notice `usr` was granted admin access.
@@ -72,16 +70,6 @@ contract RwaOutputConduit2 {
      * @param usr The user address.
      */
     event Nope(address indexed usr);
-    /**
-     * @notice `usr` was granted permission to be `pick`ed as the recipient .
-     * @param who The user address.
-     */
-    event Kiss(address indexed who);
-    /**
-     * @notice `usr` permission to be `pick`ed as the recipient was revoked.
-     * @param who The user address.
-     */
-    event Diss(address indexed who);
     /**
      * @notice `who` address was picked as the recipient.
      * @param who The user address.
@@ -164,35 +152,11 @@ contract RwaOutputConduit2 {
     }
 
     /**
-     * @notice Grants `who` permission to be `pick`ed as the recipient.
-     * @param who The user address.
-     */
-    function kiss(address who) public auth {
-        bud[who] = 1;
-        emit Kiss(who);
-    }
-
-    /**
-     * @notice Revokes `who` permission to be `pick`ed as the recipient.
-     * @dev Resets `to` to `address(0)` if `who` is current `to` target.
-     * @param who The user address.
-     */
-    function diss(address who) public auth {
-        if (to == who) {
-            to = address(0);
-        }
-        bud[who] = 0;
-        emit Diss(who);
-    }
-
-    /**
      * @notice Sets `who` address as the recipient.
-     * @dev `who` address must either be `address(0)` or have been `kiss`ed before.
      * @param who Recipient Dai address.
      */
     function pick(address who) public {
         require(can[msg.sender] == 1, "RwaOutputConduit2/not-operator");
-        require(bud[who] == 1 || who == address(0), "RwaOutputConduit2/not-bud");
         to = who;
         emit Pick(who);
     }

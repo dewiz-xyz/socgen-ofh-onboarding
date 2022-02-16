@@ -58,10 +58,6 @@ interface RwaOutputConduitLike {
 
     function bud(address) external returns (uint256);
 
-    function kiss(address) external;
-
-    function diss(address) external;
-
     function pick(address) external;
 
     function push() external;

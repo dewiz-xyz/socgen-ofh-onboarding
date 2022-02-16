@@ -11,7 +11,7 @@ import "dss-interfaces/Interfaces.sol";
 import "./helpers/Rates.sol";
 import "./helpers/CESFork_GoerliAddresses.sol";
 
-import {RwaSpell, SpellAction} from "./CESFork_GoerliRwaSpell.sol";
+import {CESFork_RwaSpell, SpellAction} from "./CESFork_GoerliRwaSpell.sol";
 
 interface Hevm {
     function warp(uint256) external;
@@ -43,10 +43,6 @@ interface RwaOutputConduitLike {
     function nope(address) external;
 
     function bud(address) external returns (uint256);
-
-    function kiss(address) external;
-
-    function diss(address) external;
 
     function pick(address) external;
 
@@ -222,7 +218,7 @@ contract BumpSpellAction {
     uint256 constant WAD = 10**18;
 
     function execute() public {
-        RwaLiquidationLike(CHANGELOG.getAddress("MIP21_LIQUIDATION_ORACLE_2")).bump(ilk, 15000 * WAD);
+        RwaLiquidationLike(CHANGELOG.getAddress("MIP21_LIQUIDATION_ORACLE_2")).bump(ilk, 150000 * WAD);
     }
 }
 
@@ -310,7 +306,7 @@ contract CESFork_DssSpellTest is DSTest, DSMath {
 
     address makerDeployer06 = 0xda0fab060e6cc7b1C0AA105d29Bd50D71f036711;
 
-    RwaSpell spell;
+    CESFork_RwaSpell spell;
     BumpSpell bumpSpell;
     TellSpell tellSpell;
     CureSpell cureSpell;
@@ -407,7 +403,7 @@ contract CESFork_DssSpellTest is DSTest, DSMath {
         hevm = Hevm(address(CHEAT_CODE));
         rates = new Rates();
 
-        spell = GOERLI_SPELL != address(0) ? RwaSpell(GOERLI_SPELL) : new RwaSpell();
+        spell = GOERLI_SPELL != address(0) ? CESFork_RwaSpell(GOERLI_SPELL) : new CESFork_RwaSpell();
 
         //
         // Test for all system configuration changes
@@ -735,7 +731,7 @@ contract CESFork_DssSpellTest is DSTest, DSMath {
     // }
 
     function testSpellIsCast() public {
-        string memory description = new RwaSpell().description();
+        string memory description = new CESFork_RwaSpell().description();
         assertTrue(bytes(description).length > 0);
         // DS-Test can't handle strings directly, so cast to a bytes32.
         assertEq(stringToBytes32(spell.description()), stringToBytes32(description));
@@ -790,9 +786,9 @@ contract CESFork_DssSpellTest is DSTest, DSMath {
         hevm.warp(castTime);
         (, address pip, , ) = oracle.ilks("RWA007-A");
 
-        assertEq(DSValueAbstract(pip).read(), bytes32(13000 * WAD));
+        assertEq(DSValueAbstract(pip).read(), bytes32(115000 * WAD));
         bumpSpell.cast();
-        assertEq(DSValueAbstract(pip).read(), bytes32(15000 * WAD));
+        assertEq(DSValueAbstract(pip).read(), bytes32(150000 * WAD));
     }
 
     function testSpellIsCast_RWA007_INTEGRATION_TELL() public {
@@ -816,7 +812,7 @@ contract CESFork_DssSpellTest is DSTest, DSMath {
         (, , , uint48 tocPost) = oracle.ilks("RWA007-A");
         assertTrue(tocPost > 0);
         assertTrue(oracle.good("RWA007-A"));
-        hevm.warp(block.timestamp + 600);
+        hevm.warp(block.timestamp + 2 weeks);
         assertTrue(!oracle.good("RWA007-A"));
     }
 
@@ -836,7 +832,7 @@ contract CESFork_DssSpellTest is DSTest, DSMath {
         hevm.warp(castTime);
         tellSpell.cast();
         assertTrue(oracle.good(ilk));
-        hevm.warp(block.timestamp + 600);
+        hevm.warp(block.timestamp + 2 weeks);
         assertTrue(!oracle.good(ilk));
 
         cureSpell = new CureSpell();
@@ -884,7 +880,7 @@ contract CESFork_DssSpellTest is DSTest, DSMath {
         hevm.warp(castTime);
         tellSpell.cast();
         assertTrue(oracle.good("RWA007-A"));
-        hevm.warp(block.timestamp + 600);
+        hevm.warp(block.timestamp + 2 weeks);
         assertTrue(!oracle.good("RWA007-A"));
 
         cullSpell = new CullSpell();
@@ -947,7 +943,6 @@ contract CESFork_DssSpellTest is DSTest, DSMath {
 
         assertEq(dai.balanceOf(address(rwaconduitout)), 1 * WAD);
 
-        rwaconduitout.kiss(address(this));
         rwaconduitout.pick(address(this));
 
         rwaconduitout.push();
