@@ -44,7 +44,7 @@ interface RwaInputConduitLike {
 contract RwaUrnUtils {
     /**
      * @notice Makes a full repayment of the outstanding debt in a RwaUrn.
-     * @dev After this function is called, no collateral sholud remain locked into the urn.
+     * @dev After this function is called, no collateral should remain locked into the urn.
      * If this condition is not met for any reason, the transaction will revert.
      * @param urn The RwaUrn address.
      * @param inputConduit The address of the input conduit wired to the RwaUrn.
