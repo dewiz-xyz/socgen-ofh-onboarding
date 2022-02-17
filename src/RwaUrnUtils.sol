@@ -17,20 +17,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.6.12;
 
-import {VatAbstract, DaiJoinAbstract, GemJoinAbstract, DaiAbstract} from "dss-interfaces/Interfaces.sol";
-
-interface JugLike {
-    function ilks(bytes32) external view returns (uint256, uint256);
-
-    function base() external view returns (uint256);
-
-    function drip(bytes32) external returns (uint256);
-}
+import {VatAbstract, JugAbstract, DaiJoinAbstract, GemJoinAbstract, DaiAbstract} from "dss-interfaces/Interfaces.sol";
 
 interface RwaUrnLike {
     function vat() external view returns (VatAbstract);
 
-    function jug() external view returns (JugLike);
+    function jug() external view returns (JugAbstract);
 
     function daiJoin() external view returns (DaiJoinAbstract);
 
@@ -108,7 +100,7 @@ contract RwaUrnUtils {
         // Law of Demeter anybody? @see { https://en.wikipedia.org/wiki/Law_of_Demeter }
         bytes32 ilk = RwaUrnLike(urn).gemJoin().ilk();
         VatAbstract vat = RwaUrnLike(urn).vat();
-        JugLike jug = RwaUrnLike(urn).jug();
+        JugAbstract jug = RwaUrnLike(urn).jug();
 
         uint256 rate;
         {
