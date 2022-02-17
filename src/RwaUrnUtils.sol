@@ -71,7 +71,7 @@ contract RwaUrnUtils {
         uint256 wad = M.rmulup(currentArt, rate);
 
         // There might be outstanding Dai balance in the urn already, so we need to take only the missing amount.
-        // We don't care about eventual precision loss on the urn dai balance on the vat because `wad` rounds up.
+        // We don't care about eventual precision loss on the urn dai balance on the vat because `wad`was rounded up.
         uint256 reqWad = M.sub(wad, M.wad(vat.dai(urn)));
         DaiAbstract(
             // Law of Demeter anybody? @see { https://en.wikipedia.org/wiki/Law_of_Demeter }
@@ -102,14 +102,11 @@ contract RwaUrnUtils {
         VatAbstract vat = RwaUrnLike(urn).vat();
         JugAbstract jug = RwaUrnLike(urn).jug();
 
-        uint256 rate;
-        {
-            (uint256 duty, uint256 rho) = jug.ilks(ilk);
-            (, uint256 curr, , , ) = vat.ilks(ilk);
-            // This was adapted from how the Jug calculates the rate on drip().
-            // @see {https://github.com/makerdao/dss/blob/master/src/jug.sol#L125}
-            rate = M.rmul(M.rpow(M.add(jug.base(), duty), when - rho), curr);
-        }
+        (uint256 duty, uint256 rho) = jug.ilks(ilk);
+        (, uint256 curr, , , ) = vat.ilks(ilk);
+        // This was adapted from how the Jug calculates the rate on drip().
+        // @see {https://github.com/makerdao/dss/blob/master/src/jug.sol#L125}
+        uint256 rate = M.rmul(M.rpow(M.add(jug.base(), duty), when - rho), curr);
 
         (, uint256 art) = vat.urns(ilk, urn);
 
