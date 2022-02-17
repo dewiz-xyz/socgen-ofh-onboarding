@@ -72,35 +72,34 @@ contract RwaUrnUtils {
         RwaUrnLike(urn).jug().drip(ilk);
 
         VatAbstract vat = RwaUrnLike(urn).vat();
-        uint256 wad;
-        {
-            (, uint256 rate, , , ) = vat.ilks(ilk);
-            (, uint256 art) = vat.urns(ilk, urn);
-            // There might be outstanding Dai balance in the urn already...
-            uint256 dai = vat.dai(urn);
-            // ... so we need to take only the missing amount.
-            // We don't care about eventual precision loss because we're rounding up.
-            wad = M.sub(M.rmulup(art, rate), M.wad(dai));
-        }
 
+        (, uint256 rate, , , ) = vat.ilks(ilk);
+        (, uint256 currentArt) = vat.urns(ilk, urn);
+        // Rounds up if there is some rad dust.
+        uint256 wad = M.rmulup(currentArt, rate);
+
+        // There might be outstanding Dai balance in the urn already, so we need to take only the missing amount.
+        // We don't care about eventual precision loss on the urn dai balance on the vat because `wad` rounds up.
+        uint256 reqWad = M.sub(wad, M.wad(vat.dai(urn)));
         DaiAbstract(
             // Law of Demeter anybody? @see { https://en.wikipedia.org/wiki/Law_of_Demeter }
             RwaUrnLike(urn).daiJoin().dai()
-        ).transferFrom(usr, inputConduit, wad);
+        ).transferFrom(usr, inputConduit, reqWad);
+
         RwaInputConduitLike(inputConduit).push();
         RwaUrnLike(urn).wipe(wad);
 
-        // Get the remaining collateral still locked in the urn
-        (uint256 ink, ) = vat.urns(ilk, urn);
+        // Get the remaining debt in the urn
+        (, uint256 art) = vat.urns(ilk, urn);
         // If the value is >0, it must revert
-        require(ink == 0, "RwaUrnUtils/wipe-all-failed");
+        require(art == 0, "RwaUrnUtils/wipe-all-failed");
     }
 
     /**
      * @notice Estimates the amount of Dai required to fully repay a loan at `when` given time.
-     * @dev `when` must not be in the past.
+     * @dev It assumes there will be no changes in the base fee or the ilk stability fee between now and `when`.
      * @param urn The RwaUrn vault targeted by the repayment.
-     * @param when The unix timestamp by which the repayment will be made.
+     * @param when The unix timestamp by which the repayment will be made. It must NOT be in the past.
      * @return wad The amount of Dai required to make a full repayment.
      */
     function estimateWipeAllWad(address urn, uint256 when) public view returns (uint256 wad) {
