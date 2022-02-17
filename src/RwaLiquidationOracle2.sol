@@ -244,7 +244,7 @@ contract RwaLiquidationOracle2 {
      */
     function cull(bytes32 ilk, address urn) external auth {
         require(ilks[ilk].pip != address(0), "RwaOracle/unknown-ilk");
-        require(block.timestamp >= DSMathCustom.add(ilks[ilk].toc, ilks[ilk].tau), "RwaOracle/early-cull");
+        require(block.timestamp >= M.add(ilks[ilk].toc, ilks[ilk].tau), "RwaOracle/early-cull");
 
         DSValue(ilks[ilk].pip).poke(bytes32(0));
 
@@ -262,14 +262,14 @@ contract RwaLiquidationOracle2 {
     function good(bytes32 ilk) external view returns (bool) {
         require(ilks[ilk].pip != address(0), "RwaOracle/unknown-ilk");
 
-        return (ilks[ilk].toc == 0 || block.timestamp < DSMathCustom.add(ilks[ilk].toc, ilks[ilk].tau));
+        return (ilks[ilk].toc == 0 || block.timestamp < M.add(ilks[ilk].toc, ilks[ilk].tau));
     }
 }
 
 /**
  * @title An extension/subset of `DSMath` containing only the methods required in this file.
  */
-library DSMathCustom {
+library M {
     function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x + y) >= x, "DSMath/add-overflow");
     }

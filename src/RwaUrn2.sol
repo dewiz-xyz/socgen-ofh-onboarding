@@ -249,7 +249,7 @@ contract RwaUrn2 {
         require(wad <= 2**255 - 1, "RwaUrn2/overflow");
 
         (uint256 ink, ) = vat.urns(gemJoin.ilk(), address(this));
-        require(DSMathCustom.add(ink, wad) <= gemCap, "RwaUrn2/gemcap-exceeded");
+        require(M.add(ink, wad) <= gemCap, "RwaUrn2/gemcap-exceeded");
 
         DSTokenAbstract(gemJoin.gem()).transferFrom(msg.sender, address(this), wad);
         // join with this contract's address
@@ -281,7 +281,7 @@ contract RwaUrn2 {
         jug.drip(ilk);
         (, uint256 rate, , , ) = vat.ilks(ilk);
 
-        uint256 dart = DSMathCustom.divup(DSMathCustom.rad(wad), rate);
+        uint256 dart = M.divup(M.rad(wad), rate);
         require(dart <= 2**255 - 1, "RwaUrn2/overflow");
 
         vat.frob(ilk, address(this), address(this), address(this), 0, int256(dart));
@@ -300,7 +300,7 @@ contract RwaUrn2 {
         jug.drip(ilk);
         (, uint256 rate, , , ) = vat.ilks(ilk);
 
-        uint256 dart = DSMathCustom.rad(wad) / rate;
+        uint256 dart = M.rad(wad) / rate;
         require(dart <= 2**255, "RwaUrn2/overflow");
 
         vat.frob(ilk, address(this), address(this), address(this), 0, -int256(dart));
@@ -324,8 +324,9 @@ contract RwaUrn2 {
 
 /**
  * @title An extension/subset of `DSMath` containing only the methods required in this file.
+ * @dev The name is kept short to reduce the noise on more complex Math expressions using it.
  */
-library DSMathCustom {
+library M {
     uint256 internal constant WAD = 10**18;
     uint256 internal constant RAY = 10**27;
 

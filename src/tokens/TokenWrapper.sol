@@ -136,11 +136,8 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
      */
     function doWrap(address gal, uint256 value) private {
         // Normalizes the amount to have 18 decimals. Assumes that `token` has 0 decimals.
-        uint256 wad = DSMathCustom.wad(value);
-        require(
-            totalSupply().add(wad) <= DSMathCustom.wad(token.getBalance(address(this))),
-            "TokenWrapper/insufficient-balance"
-        );
+        uint256 wad = M.wad(value);
+        require(totalSupply().add(wad) <= M.wad(token.getBalance(address(this))), "TokenWrapper/insufficient-balance");
         _mint(gal, wad);
     }
 
@@ -152,7 +149,7 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
      */
     function unwrap(address gal, uint256 value) public override {
         // Normalizes the amount to have 18 decimals. Assumes that `token` has 0 decimals.
-        uint256 wad = DSMathCustom.wad(value);
+        uint256 wad = M.wad(value);
         _burn(msg.sender, wad);
         require(token.transfer(gal, value), "TokenWrapper/transfer-failed");
     }
@@ -168,9 +165,9 @@ contract TokenWrapper is ITokenWrapper, ERC20 {
 
 /**
  * @title An extension/subset of `DSMath` containing only the methods required in this file.
- * @dev TokenWrapper contract directly uses 'wad' method for unit conversion.
+ * @dev The name is kept short to reduce the noise on more complex Math expressions using it.
  */
-library DSMathCustom {
+library M {
     uint256 internal constant WAD = 10**18;
 
     /**
