@@ -285,20 +285,3 @@ contract RwaUrnUtilsTest is DSTest, M {
         vat.suck(VOW, who, rad(wad));
     }
 }
-
-contract TryCaller {
-    function doCall(address addr, bytes memory data) external returns (bool) {
-        assembly {
-            let ok := call(gas(), addr, 0, add(data, 0x20), mload(data), 0, 0)
-            let free := mload(0x40)
-            mstore(free, ok)
-            mstore(0x40, add(free, 32))
-            revert(free, 32)
-        }
-    }
-
-    function tryCall(address addr, bytes calldata data) external returns (bool ok) {
-        (, bytes memory returned) = address(this).call(abi.encodeWithSignature("doCall(address,bytes)", addr, data));
-        ok = abi.decode(returned, (bool));
-    }
-}
