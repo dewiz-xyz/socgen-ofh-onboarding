@@ -1,11 +1,11 @@
 #!/bin/bash
 
-$mcd_fork="$1"
+MCD_FORK="$1"
 
 [[ "$ETH_RPC_URL" && "$(seth chain)" == "goerli" ]] || die "Please set a goerli ETH_RPC_URL"
 
 # shellcheck disable=SC1091
-source "${BASH_SOURCE%/*}/build-env-addresses.sh" $mcd_fork >/dev/null 2>&1
+source "${BASH_SOURCE%/*}/build-env-addresses.sh" $MCD_FORK >/dev/null 2>&1
 
 
 declare -A spell_contracts
@@ -23,8 +23,8 @@ MKR_VOTE_THRESHOLD=$(seth --to-wei "1500000 ether")
 seth send "$MCD_ADM" "lock(uint256)" $MKR_VOTE_THRESHOLD
 
 #1. Deploy the Spell
-SPELL_ADDRESS=$(dapp create "${spell_contracts[$mcd_fork]}")
-dapp verify-contract "${spell_contracts[$mcd_fork]}" "$SPELL_ADDRESS"
+SPELL_ADDRESS=$(dapp create "${spell_contracts[$MCD_FORK]}")
+dapp verify-contract "${spell_contracts[$MCD_FORK]}" "$SPELL_ADDRESS"
 
 #4. call `chief.vote()` and pass in the spell address
 seth send "$MCD_ADM" "vote(address[])" "[${SPELL_ADDRESS}]"
