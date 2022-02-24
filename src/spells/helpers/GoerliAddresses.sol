@@ -284,12 +284,12 @@ contract Addresses {
         addr["MCD_CLIP_CALC_GUNIV3DAIUSDC1_A"] = 0x4652E3a6b4850a0fE50E60B0ac72aBd74199D973;
 
         addr["MIP21_LIQUIDATION_ORACLE_2"] = address(0);
-        addr["RWA007"] = address(0);
-        addr["MCD_JOIN_RWA007_A"] = address(0);
-        addr["RWA007_A_URN"] = address(0);
-        addr["RWA007_A_INPUT_CONDUIT"] = address(0);
-        addr["RWA007_A_OUTPUT_CONDUIT"] = address(0);
-        addr["RWA007_A_OPERATOR"] = address(0);
-        addr["RWA007_A_MATE"] = address(0);
+        addr["RWA007AT1"] = address(0);
+        addr["MCD_JOIN_RWA007AT1_A"] = address(0);
+        addr["RWA007AT1_A_URN"] = address(0);
+        addr["RWA007AT1_A_INPUT_CONDUIT"] = address(0);
+        addr["RWA007AT1_A_OUTPUT_CONDUIT"] = address(0);
+        addr["RWA007AT1_A_OPERATOR"] = address(0);
+        addr["RWA007AT1_A_MATE"] = address(0);
     }
 }

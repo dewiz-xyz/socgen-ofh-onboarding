@@ -132,25 +132,25 @@ contract RwaUrnUtilsTest is DSTest, M {
         dai.setAuthority(new NullAuthority());
         dai.setOwner(address(daiJoin));
 
-        vat.init("RWA007-A");
+        vat.init("RWA007AT1-A");
         vat.file("Line", 100 * rad(CEILING));
-        vat.file("RWA007-A", "line", rad(CEILING));
+        vat.file("RWA007AT1-A", "line", rad(CEILING));
 
-        jug.init("RWA007-A");
-        jug.file("RWA007-A", "duty", EIGHT_PCT);
+        jug.init("RWA007AT1-A");
+        jug.file("RWA007AT1-A", "duty", EIGHT_PCT);
 
         oracle = new RwaLiquidationOracle2(address(vat), VOW);
-        oracle.init("RWA007-A", wmul(CEILING, 1.1 ether), DOC, TAU);
+        oracle.init("RWA007AT1-A", wmul(CEILING, 1.1 ether), DOC, TAU);
         vat.rely(address(oracle));
-        (, address pip, , ) = oracle.ilks("RWA007-A");
+        (, address pip, , ) = oracle.ilks("RWA007AT1-A");
 
         spotter = new Spotter(address(vat));
         vat.rely(address(spotter));
-        spotter.file("RWA007-A", "mat", RAY);
-        spotter.file("RWA007-A", "pip", pip);
-        spotter.poke("RWA007-A");
+        spotter.file("RWA007AT1-A", "mat", RAY);
+        spotter.file("RWA007AT1-A", "pip", pip);
+        spotter.poke("RWA007AT1-A");
 
-        gemJoin = new AuthGemJoin(address(vat), "RWA007-A", address(wrapper));
+        gemJoin = new AuthGemJoin(address(vat), "RWA007AT1-A", address(wrapper));
         vat.rely(address(gemJoin));
 
         outConduit = new RwaOutputConduit2(address(dai));
@@ -221,7 +221,7 @@ contract RwaUrnUtilsTest is DSTest, M {
         uint256 recBalanceAfter = dai.balanceOf(rec);
 
         // Get the remaining debt in the urn
-        (, uint256 art) = vat.urns("RWA007-A", address(urn));
+        (, uint256 art) = vat.urns("RWA007AT1-A", address(urn));
         // If the value is >0, it must revert
         assertEq(art, 0);
         assertEq(recBalanceBefore - recBalanceAfter, expectedAmount);
