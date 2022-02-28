@@ -34,7 +34,7 @@ import {MockOFH} from "./tokens/mocks/MockOFH.sol";
 import {ForwardProxy} from "./utils/ForwardProxy.sol";
 import {RwaInputConduit2} from "./RwaInputConduit2.sol";
 import {RwaOutputConduit2} from "./RwaOutputConduit2.sol";
-import {RwaLiquidationOracle2} from "./RwaLiquidationOracle2.sol";
+import {RwaLiquidationOracle} from "./RwaLiquidationOracle.sol";
 import {RwaUrn2} from "./RwaUrn2.sol";
 import {RwaUrnUtils} from "./RwaUrnUtils.sol";
 
@@ -91,7 +91,7 @@ contract RwaUrnUtilsTest is DSTest, M {
     DaiJoin internal daiJoin;
     AuthGemJoin internal gemJoin;
 
-    RwaLiquidationOracle2 internal oracle;
+    RwaLiquidationOracle internal oracle;
     RwaUrn2 internal urn;
 
     RwaOutputConduit2 internal outConduit;
@@ -139,7 +139,7 @@ contract RwaUrnUtilsTest is DSTest, M {
         jug.init("RWA007AT1-A");
         jug.file("RWA007AT1-A", "duty", EIGHT_PCT);
 
-        oracle = new RwaLiquidationOracle2(address(vat), VOW);
+        oracle = new RwaLiquidationOracle(address(vat), VOW);
         oracle.init("RWA007AT1-A", wmul(CEILING, 1.1 ether), DOC, TAU);
         vat.rely(address(oracle));
         (, address pip, , ) = oracle.ilks("RWA007AT1-A");
