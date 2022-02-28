@@ -18,8 +18,8 @@ export ETH_GAS=6000000
 
 # TODO: confirm if name/symbol is going to follow the RWA convention
 # TODO: confirm with DAO at the time of mainnet deployment if OFH will indeed be 007
-[[ -z "$NAME" ]] && NAME="RWA-007";
-[[ -z "$SYMBOL" ]] && SYMBOL="RWA007";
+[[ -z "$NAME" ]] && NAME="RWA-008";
+[[ -z "$SYMBOL" ]] && SYMBOL="RWA008";
 #
 # WARNING (2021-09-08): The system cannot currently accomodate any LETTER beyond
 # "A".  To add more letters, we will need to update the PIP naming convention
