@@ -1,4 +1,3 @@
-// Copyright (C) 2020, 2021 Lev Livnev <lev@liv.nev.org.uk>
 // Copyright (C) 2022 Dai Foundation
 //
 // This program is free software: you can redistribute it and/or modify
@@ -210,9 +209,6 @@ contract RwaUrnUtilsTest is DSTest, M {
         // Mints some additional Dai into the receiver's balance to cope with accrued fees
         mintDai(rec, 10 ether);
 
-        // Makes sure daiJoin has enought Dai available
-        mintDai(address(daiJoin), 100 ether);
-
         uint256 expectedAmount = urnUtils.estimateWipeAllWad(address(urn), block.timestamp);
         uint256 recBalanceBefore = dai.balanceOf(rec);
 
@@ -241,13 +237,11 @@ contract RwaUrnUtilsTest is DSTest, M {
         // Fast-forward 30 day
         hevm.warp(block.timestamp + 30 days);
 
-        // Mints some additional Dai into the receiver's balance to cope with accrued fees
+        // Mint some additional Dai into the receiver's balance to cope with accrued fees.
         mintDai(rec, 10 ether);
-        // Mints some additional Dai into the urn
-        mintDai(address(urn), 50 ether);
 
-        // Makes sure daiJoin has enought Dai available
-        mintDai(address(daiJoin), 100 ether);
+        // Mint some Dai and put it into the urn.
+        mintDai(address(urn), 50 ether);
 
         uint256 recBalanceBefore = dai.balanceOf(rec);
         uint256 urnBalanceBefore = dai.balanceOf(address(urn));
@@ -274,14 +268,19 @@ contract RwaUrnUtilsTest is DSTest, M {
         // Fast-forward 30 day
         hevm.warp(block.timestamp + 30 days);
 
-        // Makes sure daiJoin has enought Dai available
-        mintDai(address(daiJoin), rad(10 ether));
-
         urnUtils.pushAndWipeAll(address(urn), address(inConduit), rec);
     }
 
     function mintDai(address who, uint256 wad) internal {
-        dai.mint(who, wad);
-        vat.suck(VOW, who, rad(wad));
+        // Mint unbacked Dai.
+        vat.suck(VOW, address(this), rad(wad));
+        // Allow `daiJoin` to manipulate this contract's dai.
+        hevm.store(
+            address(vat),
+            keccak256(abi.encode(address(daiJoin), keccak256(abi.encode(address(this), 1)))),
+            bytes32(uint256(1))
+        );
+        // Converts the minted Dai into ERC-20 Dai and sends it to `who`.
+        daiJoin.exit(who, wad);
     }
 }

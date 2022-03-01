@@ -1,4 +1,3 @@
-// Copyright (C) 2020, 2021 Lev Livnev <lev@liv.nev.org.uk>
 // Copyright (C) 2022 Dai Foundation
 //
 // This program is free software: you can redistribute it and/or modify
@@ -64,19 +63,18 @@ contract RwaUrnUtils {
         RwaUrnLike(urn).jug().drip(ilk);
 
         VatAbstract vat = RwaUrnLike(urn).vat();
-
         (, uint256 rate, , , ) = vat.ilks(ilk);
         (, uint256 currentArt) = vat.urns(ilk, urn);
         // Rounds up if there is some rad dust.
         uint256 wad = M.rmulup(currentArt, rate);
 
-        // There might be outstanding Dai balance in the urn already, so we need to take only the missing amount.
-        // We don't care about eventual precision loss on the urn dai balance on the vat because `wad`was rounded up.
-        uint256 reqWad = M.sub(wad, M.wad(vat.dai(urn)));
-        DaiAbstract(
+        DaiAbstract dai = DaiAbstract(
             // Law of Demeter anybody? @see { https://en.wikipedia.org/wiki/Law_of_Demeter }
             RwaUrnLike(urn).daiJoin().dai()
-        ).transferFrom(usr, inputConduit, reqWad);
+        );
+        // There might be outstanding Dai balance in the urn already, so we need to take only the missing amount.
+        uint256 urnBalance = dai.balanceOf(urn);
+        dai.transferFrom(usr, inputConduit, M.sub(wad, urnBalance));
 
         RwaInputConduitLike(inputConduit).push();
         RwaUrnLike(urn).wipe(wad);
