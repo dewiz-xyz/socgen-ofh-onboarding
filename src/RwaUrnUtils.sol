@@ -49,7 +49,7 @@ contract RwaUrnUtils {
      * @param inputConduit The address of the input conduit wired to the RwaUrn.
      * @param usr The address of the wallet which will fund the repayment.
      */
-    function pushAndWipeAll(
+    function wipeAll(
         address urn,
         address inputConduit,
         address usr

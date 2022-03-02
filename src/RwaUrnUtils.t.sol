@@ -212,7 +212,7 @@ contract RwaUrnUtilsTest is DSTest, M {
         uint256 expectedAmount = urnUtils.estimateWipeAllWad(address(urn), block.timestamp);
         uint256 recBalanceBefore = dai.balanceOf(rec);
 
-        urnUtils.pushAndWipeAll(address(urn), address(inConduit), rec);
+        urnUtils.wipeAll(address(urn), address(inConduit), rec);
 
         uint256 recBalanceAfter = dai.balanceOf(rec);
 
@@ -247,7 +247,7 @@ contract RwaUrnUtilsTest is DSTest, M {
         uint256 urnBalanceBefore = dai.balanceOf(address(urn));
         uint256 expectedAmount = urnUtils.estimateWipeAllWad(address(urn), block.timestamp);
 
-        urnUtils.pushAndWipeAll(address(urn), address(inConduit), rec);
+        urnUtils.wipeAll(address(urn), address(inConduit), rec);
 
         uint256 recBalanceAfter = dai.balanceOf(rec);
 
@@ -268,7 +268,7 @@ contract RwaUrnUtilsTest is DSTest, M {
         // Fast-forward 30 day
         hevm.warp(block.timestamp + 30 days);
 
-        urnUtils.pushAndWipeAll(address(urn), address(inConduit), rec);
+        urnUtils.wipeAll(address(urn), address(inConduit), rec);
     }
 
     function mintDai(address who, uint256 wad) internal {
