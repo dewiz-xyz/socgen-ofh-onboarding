@@ -14,7 +14,7 @@ Repository for onboarding SocGen's [OFH](https://forum.makerdao.com/t/security-t
 make update
 ```
 
-### Create local .env file & edit placeholder values
+### Create a local `.env` file and change the placeholder values
 
 ```bash
 cp .env.exaples .env
