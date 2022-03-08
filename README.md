@@ -14,7 +14,7 @@ Repository for onboarding SocGen's [OFH](https://forum.makerdao.com/t/security-t
 make update
 ```
 
-### Create local .env file & edit placeholder values
+### Create a local `.env` file and change the placeholder values
 
 ```bash
 cp .env.exaples .env
@@ -46,8 +46,8 @@ This script outputs a JSON file like this one:
 ```json
 {
   "RWA_OFH_TOKEN": "<address>",
+  "MIP21_LIQUIDATION_ORACLE": "<address>",
   "ILK": "RWA007-A",
-  "MIP21_LIQUIDATION_ORACLE_2": "<address>",
   "RWA007": "<address>",
   "MCD_JOIN_RWA007_A": "<address>",
   "RWA007_A_URN": "<address>",

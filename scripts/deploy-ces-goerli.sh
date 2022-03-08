@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -eo pipefail
 
 source "${BASH_SOURCE%/*}/common.sh"
@@ -14,8 +13,8 @@ export ETH_GAS=6000000
 
 # TODO: confirm if name/symbol is going to follow the RWA convention
 # TODO: confirm with DAO at the time of mainnet deployment if OFH will indeed be 007
-[[ -z "$NAME" ]] && NAME="RWA-007"
-[[ -z "$SYMBOL" ]] && SYMBOL="RWA007"
+[[ -z "$NAME" ]] && NAME="RWA-008-AT1"
+[[ -z "$SYMBOL" ]] && SYMBOL="RWA008AT1"
 #
 # WARNING (2021-09-08): The system cannot currently accomodate any LETTER beyond
 # "A".  To add more letters, we will need to update the PIP naming convention
@@ -29,7 +28,7 @@ export ETH_GAS=6000000
 #
 [[ -z "$LETTER" ]] && LETTER="A"
 
-# [[ -z "$MIP21_LIQUIDATION_ORACLE_2" ]] && MIP21_LIQUIDATION_ORACLE_2="0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF"
+# [[ -z "$MIP21_LIQUIDATION_ORACLE" ]] && MIP21_LIQUIDATION_ORACLE="0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF"
 # TODO: confirm liquidations handling - no liquidations for the time being
 
 ZERO_ADDRESS="0x0000000000000000000000000000000000000000"
@@ -68,11 +67,10 @@ echo "${SYMBOL}: ${RWA_WRAPPER_TOKEN}" >&2
     echo "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT: ${RWA_OUTPUT_CONDUIT_2}" >&2
 
     # trust addresses for goerli
-    seth send "$RWA_OUTPUT_CONDUIT_2" 'hope(address)' "$OPERATOR"
-    seth send "$RWA_OUTPUT_CONDUIT_2" 'mate(address)' "$MATE"
-
-    seth send "$RWA_OUTPUT_CONDUIT_2" 'rely(address)' "$MCD_PAUSE_PROXY"
-    seth send "$RWA_OUTPUT_CONDUIT_2" 'deny(address)' "$ETH_FROM"
+    seth send "$RWA_OUTPUT_CONDUIT_2" 'hope(address)' "$OPERATOR" &&
+        seth send "$RWA_OUTPUT_CONDUIT_2" 'mate(address)' "$MATE" &&
+        seth send "$RWA_OUTPUT_CONDUIT_2" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+        seth send "$RWA_OUTPUT_CONDUIT_2" 'deny(address)' "$ETH_FROM"
 
 } || {
     echo "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT: ${RWA_OUTPUT_CONDUIT_2}" >&2
@@ -86,13 +84,13 @@ seth send "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY"
 # urn it
 RWA_URN_2=$(dapp create RwaUrn2 "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT_2" $RWA_URN_2_GEM_CAP)
 echo "${SYMBOL}_${LETTER}_URN: ${RWA_URN}" >&2
-seth send "$RWA_URN_2" 'rely(address)' "$MCD_PAUSE_PROXY"
-seth send "$RWA_URN_2" 'deny(address)' "$ETH_FROM"
 
-# rely it
-seth send "$RWA_JOIN" 'rely(address)' "$RWA_URN_2"
-# deny it
-seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
+seth send "$RWA_URN_2" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+    seth send "$RWA_URN_2" 'deny(address)' "$ETH_FROM" &&
+    # rely it
+    seth send "$RWA_JOIN" 'rely(address)' "$RWA_URN_2" &&
+    # deny it
+    seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
 
 # connect it
 [[ -z "$RWA_INPUT_CONDUIT_2" ]] && {
@@ -100,29 +98,28 @@ seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
     echo "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT_2}" >&2
 
     # trust addresses for goerli
-    seth send "$RWA_INPUT_CONDUIT_2" 'mate(address)' "$MATE"
-
-    seth send "$RWA_INPUT_CONDUIT_2" 'rely(address)' "$MCD_PAUSE_PROXY"
-    seth send "$RWA_INPUT_CONDUIT_2" 'deny(address)' "$ETH_FROM"
+    seth send "$RWA_INPUT_CONDUIT_2" 'mate(address)' "$MATE" &&
+        seth send "$RWA_INPUT_CONDUIT_2" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+        seth send "$RWA_INPUT_CONDUIT_2" 'deny(address)' "$ETH_FROM"
 } || {
     echo "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT_2}" >&2
 }
 
 # price it
-[[ -z "$MIP21_LIQUIDATION_ORACLE_2" ]] && {
-    MIP21_LIQUIDATION_ORACLE_2=$(dapp create RwaLiquidationOracle2 "$MCD_VAT" "$MCD_VOW")
-    echo "MIP21_LIQUIDATION_ORACLE_2: ${MIP21_LIQUIDATION_ORACLE_2}" >&2
+[[ -z "$MIP21_LIQUIDATION_ORACLE" ]] && {
+    MIP21_LIQUIDATION_ORACLE=$(dapp create RwaLiquidationOracle "$MCD_VAT" "$MCD_VOW")
+    echo "MIP21_LIQUIDATION_ORACLE: ${MIP21_LIQUIDATION_ORACLE}" >&2
 
-    seth send "$MIP21_LIQUIDATION_ORACLE_2" 'rely(address)' "$MCD_PAUSE_PROXY"
-    seth send "$MIP21_LIQUIDATION_ORACLE_2" 'deny(address)' "$ETH_FROM"
+    seth send "$MIP21_LIQUIDATION_ORACLE" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+        seth send "$MIP21_LIQUIDATION_ORACLE" 'deny(address)' "$ETH_FROM"
 } || {
-    echo "MIP21_LIQUIDATION_ORACLE_2: ${MIP21_LIQUIDATION_ORACLE_2}" >&2
+    echo "MIP21_LIQUIDATION_ORACLE: ${MIP21_LIQUIDATION_ORACLE}" >&2
 }
 
-cat << JSON
+cat <<JSON
 {
     "ILK": "${ILK}",
-    "MIP21_LIQUIDATION_ORACLE_2": "${MIP21_LIQUIDATION_ORACLE_2}",
+    "MIP21_LIQUIDATION_ORACLE": "${MIP21_LIQUIDATION_ORACLE}",
     "RWA_OFH_TOKEN": "${RWA_OFH_TOKEN}",
     "${SYMBOL}": "${RWA_WRAPPER_TOKEN}",
     "MCD_JOIN_${SYMBOL}_${LETTER}": "${RWA_JOIN}",

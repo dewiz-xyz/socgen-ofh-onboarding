@@ -52,7 +52,6 @@ if [ "$0" = "$BASH_SOURCE" ]; then
     source "${BASH_SOURCE%/*}/build-env-addresses.sh" "$1" >/dev/null 2>&1
 
     chain=$([[ "$1" =~ "goerli" ]] && echo 'goerli' || echo 'mainnet')
-    # echo ">>>>> ${chain}" >&2
     [ -z "$ETH_RPC_URL" ] && ETH_RPC_URL="$(alchemy-url $chain)"
 
     exit_code=0
@@ -60,14 +59,14 @@ if [ "$0" = "$BASH_SOURCE" ]; then
 
     set -u
 
-    verify-contract "src/utils/ForwardProxy.sol:ForwardProxy" "$RWA007_A_OPERATOR" "$ZERO_ADDRESS" || exit_code=1
-    verify-contract "src/utils/ForwardProxy.sol:ForwardProxy" "$RWA007_A_MATE" "$ZERO_ADDRESS" || exit_code=1
-    verify-contract "src/tokens/mocks/MockOFH.sol:MockOFH" "$RWA_OFH_TOKEN" "$RWA_OFH_TOKEN_SUPPLY" || exit_code=1
-    verify-contract "src/tokens/TokenWrapper.sol:TokenWrapper" "$RWA007" "$RWA_OFH_TOKEN" || exit_code=1
-    verify-contract "src/RwaOutputConduit2.sol:RwaOutputConduit2" "$RWA007_A_OUTPUT_CONDUIT" "$MCD_DAI" || exit_code=1
-    verify-contract "src/RwaInputConduit2.sol:RwaInputConduit2" "$RWA007_A_INPUT_CONDUIT" "$MCD_DAI" "$RWA007_A_URN" || exit_code=1
-    verify-contract "src/RwaUrn2.sol:RwaUrn2" "$RWA007_A_URN" "$MCD_VAT" "$MCD_JUG" "$MCD_JOIN_RWA007_A" "$MCD_JOIN_DAI" "$RWA007_A_OUTPUT_CONDUIT" "$RWA_URN_2_GEM_CAP" || exit_code=1
-    verify-contract "src/RwaLiquidationOracle2.sol:RwaLiquidationOracle2" "$MIP21_LIQUIDATION_ORACLE_2" "$MCD_VAT" "$MCD_VOW" || exit_code=1
+    verify-contract "src/utils/ForwardProxy.sol:ForwardProxy" "$RWA008AT1_A_OPERATOR" "$ZERO_ADDRESS" || exit_code=1
+    verify-contract "src/utils/ForwardProxy.sol:ForwardProxy" "$RWA008AT1_A_MATE" "$ZERO_ADDRESS" || exit_code=1
+    # verify-contract "src/tokens/mocks/MockOFH.sol:MockOFH" "$RWA_OFH_TOKEN" "$RWA_OFH_TOKEN_SUPPLY" || exit_code=1
+    verify-contract "src/tokens/TokenWrapper.sol:TokenWrapper" "$RWA008AT1" "$RWA_OFH_TOKEN" || exit_code=1
+    verify-contract "src/RwaOutputConduit2.sol:RwaOutputConduit2" "$RWA008AT1_A_OUTPUT_CONDUIT" "$MCD_DAI" || exit_code=1
+    verify-contract "src/RwaInputConduit2.sol:RwaInputConduit2" "$RWA008AT1_A_INPUT_CONDUIT" "$MCD_DAI" "$RWA008AT1_A_URN" || exit_code=1
+    verify-contract "src/RwaUrn2.sol:RwaUrn2" "$RWA008AT1_A_URN" "$MCD_VAT" "$MCD_JUG" "$MCD_JOIN_RWA008AT1_A" "$MCD_JOIN_DAI" "$RWA008AT1_A_OUTPUT_CONDUIT" "$RWA_URN_2_GEM_CAP" || exit_code=1
+    verify-contract "src/RwaLiquidationOracle.sol:RwaLiquidationOracle" "$MIP21_LIQUIDATION_ORACLE" "$MCD_VAT" "$MCD_VOW" || exit_code=1
 
     set +u
 

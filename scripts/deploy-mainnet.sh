@@ -8,7 +8,7 @@ source "${BASH_SOURCE%/*}/common.sh"
 
 [[ "$ETH_RPC_URL" && "$(seth chain)" == "ethlive" ]] || die "Please set a mainnet ETH_RPC_URL"
 [[ "$RWA_URN_2_GEM_CAP" ]] || die "Please set RWA_URN_2_GEM_CAP"
-
+[[ "$MIP21_LIQUIDATION_ORACLE" ]] || die "Please set MIP21_LIQUIDATION_ORACLE"
 
 # shellcheck disable=SC1091
 source "${BASH_SOURCE%/*}/build-env-addresses.sh" mainnet >/dev/null 2>&1
@@ -18,8 +18,8 @@ export ETH_GAS=6000000
 
 # TODO: confirm if name/symbol is going to follow the RWA convention
 # TODO: confirm with DAO at the time of mainnet deployment if OFH will indeed be 007
-[[ -z "$NAME" ]] && NAME="RWA-007";
-[[ -z "$SYMBOL" ]] && SYMBOL="RWA007";
+[[ -z "$NAME" ]] && NAME="RWA-008";
+[[ -z "$SYMBOL" ]] && SYMBOL="RWA008";
 #
 # WARNING (2021-09-08): The system cannot currently accomodate any LETTER beyond
 # "A".  To add more letters, we will need to update the PIP naming convention
@@ -78,7 +78,7 @@ seth send "${RWA_JOIN}" 'deny(address)' "${ETH_FROM}"
 cat << JSON
 {
     "ILK": "${ILK}",
-    "MIP21_LIQUIDATION_ORACLE_2": "${MIP21_LIQUIDATION_ORACLE_2}",
+    "MIP21_LIQUIDATION_ORACLE": "${MIP21_LIQUIDATION_ORACLE}",
     "RWA_OFH_TOKEN": "${RWA_OFH_TOKEN}",
     "${SYMBOL}": "${RWA_WRAPPER_TOKEN}",
     "MCD_JOIN_${SYMBOL}_${LETTER}": "${RWA_JOIN}",
