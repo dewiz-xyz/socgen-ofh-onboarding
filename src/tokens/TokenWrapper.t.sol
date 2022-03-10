@@ -17,8 +17,8 @@
 pragma solidity ^0.6.12;
 
 import {DSTest} from "ds-test/test.sol";
+import {ForwardProxy} from "forward-proxy/ForwardProxy.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
-import {ForwardProxy} from "../utils/ForwardProxy.sol";
 import {OFHTokenLike} from "./ITokenWrapper.sol";
 import {TokenWrapper} from "./TokenWrapper.sol";
 import {MockOFH} from "./mocks/MockOFH.sol";
@@ -42,8 +42,8 @@ contract TokenWrapperTest is DSTest {
 
     MockOFH internal token;
     TokenWrapper internal wrapper;
-    address internal holder1;
-    address internal holder2;
+    ForwardProxy internal holder1;
+    ForwardProxy internal holder2;
 
     // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
     bytes20 internal constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
@@ -53,8 +53,10 @@ contract TokenWrapperTest is DSTest {
 
         token = new MockOFH(400);
         wrapper = new TokenWrapper(address(token));
-        holder1 = address(new ForwardProxy(address(wrapper)));
-        holder2 = address(new ForwardProxy(address(wrapper)));
+        holder1 = new ForwardProxy();
+        holder1._(address(wrapper));
+        holder2 = new ForwardProxy();
+        holder2._(address(wrapper));
 
         wrapper.hope(address(this));
     }
@@ -85,9 +87,9 @@ contract TokenWrapperTest is DSTest {
         wrapper.hope(address(this));
 
         token.transfer(address(wrapper), transferred);
-        wrapper.wrap(holder1, wrapped);
+        wrapper.wrap(address(holder1), wrapped);
 
-        assertEq(wrapper.balanceOf(holder1), wrapped * WAD);
+        assertEq(wrapper.balanceOf(address(holder1)), wrapped * WAD);
     }
 
     function testWrapOwnAddress(
@@ -102,14 +104,16 @@ contract TokenWrapperTest is DSTest {
 
         token = new MockOFH(total);
         wrapper = new TokenWrapper(address(token));
-        holder1 = address(new ForwardProxy(address(wrapper)));
-        holder2 = address(new ForwardProxy(address(wrapper)));
-        wrapper.hope(holder1);
+        holder1 = new ForwardProxy();
+        holder1._(address(wrapper));
+        holder2 = new ForwardProxy();
+        holder2._(address(wrapper));
+        wrapper.hope(address(holder1));
 
         token.transfer(address(wrapper), transferred);
-        TokenWrapper(holder1).wrap(wrapped);
+        TokenWrapper(address(holder1)).wrap(wrapped);
 
-        assertEq(wrapper.balanceOf(holder1), wrapped * WAD);
+        assertEq(wrapper.balanceOf(address(holder1)), wrapped * WAD);
     }
 
     function testFailWrapInsufficientBalance(
@@ -127,29 +131,29 @@ contract TokenWrapperTest is DSTest {
         wrapper.hope(address(this));
 
         token.transfer(address(wrapper), transferred);
-        wrapper.wrap(holder1, wrapped);
+        wrapper.wrap(address(holder1), wrapped);
     }
 
     function testAnyoneCanUnwrap() public {
         token.transfer(address(wrapper), 100);
-        wrapper.wrap(holder1, 100);
+        wrapper.wrap(address(holder1), 100);
 
-        TokenWrapper(holder1).unwrap(holder1, 100);
-        assertEq(wrapper.balanceOf(holder1), 0);
+        TokenWrapper(address(holder1)).unwrap(address(holder1), 100);
+        assertEq(wrapper.balanceOf(address(holder1)), 0);
     }
 
     function testAnyoneCanUnwrapToOwnAddress() public {
         token.transfer(address(wrapper), 100);
-        wrapper.wrap(holder1, 100);
+        wrapper.wrap(address(holder1), 100);
 
-        TokenWrapper(holder1).unwrap(100);
-        assertEq(wrapper.balanceOf(holder1), 0);
+        TokenWrapper(address(holder1)).unwrap(100);
+        assertEq(wrapper.balanceOf(address(holder1)), 0);
     }
 
     function testFailUnwrapMoreThanBalance() public {
         token.transfer(address(wrapper), 100);
-        wrapper.wrap(holder1, 100);
+        wrapper.wrap(address(holder1), 100);
 
-        TokenWrapper(holder1).unwrap(holder1, 101);
+        TokenWrapper(address(holder1)).unwrap(address(holder1), 101);
     }
 }

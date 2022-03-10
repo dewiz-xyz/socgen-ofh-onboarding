@@ -19,6 +19,7 @@ pragma solidity >=0.6.8 <0.7.0;
 import {DSTest} from "ds-test/test.sol";
 import {DSToken, DSAuthority} from "ds-token/token.sol";
 import {DSMath} from "ds-math/math.sol";
+import {ForwardProxy} from "forward-proxy/ForwardProxy.sol";
 
 import {Vat} from "dss/vat.sol";
 import {Jug} from "dss/jug.sol";
@@ -30,7 +31,6 @@ import {AuthGemJoin} from "dss-gem-joins/join-auth.sol";
 import {OFHTokenLike} from "./tokens/ITokenWrapper.sol";
 import {TokenWrapper} from "./tokens/TokenWrapper.sol";
 import {MockOFH} from "./tokens/mocks/MockOFH.sol";
-import {ForwardProxy} from "./utils/ForwardProxy.sol";
 import {RwaInputConduit2} from "./RwaInputConduit2.sol";
 import {RwaOutputConduit2} from "./RwaOutputConduit2.sol";
 import {RwaLiquidationOracle} from "./RwaLiquidationOracle.sol";
@@ -96,10 +96,10 @@ contract RwaUrnUtilsTest is DSTest, M {
     RwaOutputConduit2 internal outConduit;
     RwaInputConduit2 internal inConduit;
 
-    address payable internal op;
-    address payable internal mate;
-    address payable internal rec;
-    address payable internal gov;
+    ForwardProxy internal op;
+    ForwardProxy internal mate;
+    ForwardProxy internal rec;
+    ForwardProxy internal gov;
 
     RwaUrnUtils internal urnUtils;
 
@@ -165,59 +165,54 @@ contract RwaUrnUtilsTest is DSTest, M {
         gemJoin.rely(address(urn));
         inConduit = new RwaInputConduit2(address(dai), address(urn));
 
-        op = payable(new ForwardProxy(address(0)));
-        mate = payable(new ForwardProxy(address(0)));
-        rec = payable(new ForwardProxy(address(0)));
-        gov = payable(new ForwardProxy(address(0)));
+        op = new ForwardProxy();
+        mate = new ForwardProxy();
+        rec = new ForwardProxy();
+        gov = new ForwardProxy();
 
         urnUtils = new RwaUrnUtils();
 
         // Wraps all tokens into `op` balance
         token.transfer(address(wrapper), 500);
-        wrapper.wrap(op, 500);
+        wrapper.wrap(address(op), 500);
 
-        urn.hope(op);
+        urn.hope(address(op));
         urn.hope(address(urnUtils));
-        urn.rely(gov);
+        urn.rely(address(gov));
 
-        outConduit.hope(op);
-        outConduit.mate(mate);
+        outConduit.hope(address(op));
+        outConduit.mate(address(mate));
 
-        inConduit.mate(mate);
+        inConduit.mate(address(mate));
         inConduit.mate(address(urnUtils));
 
-        ForwardProxy(op).updateForwardTo(address(wrapper));
-        TokenWrapper(op).approve(address(urn), type(uint256).max);
+        TokenWrapper(op._(address(wrapper))).approve(address(urn), type(uint256).max);
 
-        ForwardProxy(rec).updateForwardTo(address(dai));
-        TokenWrapper(rec).approve(address(urnUtils), type(uint256).max);
+        TokenWrapper(rec._(address(dai))).approve(address(urnUtils), type(uint256).max);
     }
 
     function testFullRepaymentFuzz(uint32 secs) public {
         // Between 1 and 2^32-1 seconds
         secs = (secs % (type(uint32).max - 1)) + 1;
 
-        ForwardProxy(op).updateForwardTo(address(urn));
-        RwaUrn2(op).lock(1 ether);
-        RwaUrn2(op).draw(400 ether);
+        RwaUrn2(op._(address(urn))).lock(1 ether);
+        RwaUrn2(op._(address(urn))).draw(400 ether);
 
-        ForwardProxy(op).updateForwardTo(address(outConduit));
-        RwaOutputConduit2(op).pick(rec);
+        RwaOutputConduit2(op._(address(outConduit))).pick(address(rec));
 
-        ForwardProxy(mate).updateForwardTo(address(outConduit));
-        RwaOutputConduit2(mate).push();
+        RwaOutputConduit2(mate._(address(outConduit))).push();
 
         // Fast-forward 30 day
         hevm.warp(block.timestamp + secs);
         // Mints some additional Dai into the receiver's balance to cope with accrued fees
-        mintDai(rec, 10000000000 ether);
+        mintDai(address(rec), 10000000000 ether);
 
         uint256 expectedAmount = urnUtils.estimateWipeAllWad(address(urn), block.timestamp);
-        uint256 recBalanceBefore = dai.balanceOf(rec);
+        uint256 recBalanceBefore = dai.balanceOf(address(rec));
 
-        urnUtils.wipeAll(address(urn), address(inConduit), rec);
+        urnUtils.wipeAll(address(urn), address(inConduit), address(rec));
 
-        uint256 recBalanceAfter = dai.balanceOf(rec);
+        uint256 recBalanceAfter = dai.balanceOf(address(rec));
 
         // Get the remaining debt in the urn
         (, uint256 art) = vat.urns("RWA008AT1-A", address(urn));
@@ -230,73 +225,64 @@ contract RwaUrnUtilsTest is DSTest, M {
         // Between 1 and 2^32-1 seconds
         secs = (secs % (type(uint32).max - 1)) + 1;
 
-        ForwardProxy(op).updateForwardTo(address(urn));
-        RwaUrn2(op).lock(1 ether);
-        RwaUrn2(op).draw(400 ether);
+        RwaUrn2(op._(address(urn))).lock(1 ether);
+        RwaUrn2(op._(address(urn))).draw(400 ether);
 
-        ForwardProxy(op).updateForwardTo(address(outConduit));
-        RwaOutputConduit2(op).pick(rec);
+        RwaOutputConduit2(op._(address(outConduit))).pick(address(rec));
 
-        ForwardProxy(mate).updateForwardTo(address(outConduit));
-        RwaOutputConduit2(mate).push();
+        RwaOutputConduit2(mate._(address(outConduit))).push();
 
         // Fast-forward 30 day
         hevm.warp(block.timestamp + secs);
 
         // Mint some additional Dai into the receiver's balance to cope with accrued fees.
-        mintDai(rec, 10000000000 ether);
+        mintDai(address(rec), 10000000000 ether);
 
         // Mint some Dai and put it into the urn.
         mintDai(address(urn), 50 ether);
 
-        uint256 recBalanceBefore = dai.balanceOf(rec);
+        uint256 recBalanceBefore = dai.balanceOf(address(rec));
         uint256 urnBalanceBefore = dai.balanceOf(address(urn));
         uint256 expectedAmount = urnUtils.estimateWipeAllWad(address(urn), block.timestamp);
 
-        urnUtils.wipeAll(address(urn), address(inConduit), rec);
+        urnUtils.wipeAll(address(urn), address(inConduit), address(rec));
 
-        uint256 recBalanceAfter = dai.balanceOf(rec);
+        uint256 recBalanceAfter = dai.balanceOf(address(rec));
 
         assertEq(recBalanceBefore - recBalanceAfter, expectedAmount - urnBalanceBefore);
     }
 
     function testFailFullRepaymentWhenPayerHasNotEnoughDai() public {
-        ForwardProxy(op).updateForwardTo(address(urn));
-        RwaUrn2(op).lock(1 ether);
-        RwaUrn2(op).draw(400 ether);
+        RwaUrn2(op._(address(urn))).lock(1 ether);
+        RwaUrn2(op._(address(urn))).draw(400 ether);
 
-        ForwardProxy(op).updateForwardTo(address(outConduit));
-        RwaOutputConduit2(op).pick(rec);
+        RwaOutputConduit2(op._(address(outConduit))).pick(address(rec));
 
-        ForwardProxy(mate).updateForwardTo(address(outConduit));
-        RwaOutputConduit2(mate).push();
+        RwaOutputConduit2(mate._(address(outConduit))).push();
 
         // Fast-forward 30 day
         hevm.warp(block.timestamp + 30 days);
 
-        urnUtils.wipeAll(address(urn), address(inConduit), rec);
+        urnUtils.wipeAll(address(urn), address(inConduit), address(rec));
     }
 
     function testNoGemLeftOnTheUrnAfterFullRepayment(uint32 secs) public {
         // Between 1 and 2^32-1 seconds
         secs = (secs % (type(uint32).max - 1)) + 1;
 
-        ForwardProxy(op).updateForwardTo(address(urn));
-        RwaUrn2(op).lock(1 ether);
-        RwaUrn2(op).draw(400 ether);
+        RwaUrn2(op._(address(urn))).lock(1 ether);
+        RwaUrn2(op._(address(urn))).draw(400 ether);
 
-        ForwardProxy(op).updateForwardTo(address(outConduit));
-        RwaOutputConduit2(op).pick(rec);
+        RwaOutputConduit2(op._(address(outConduit))).pick(address(rec));
 
-        ForwardProxy(mate).updateForwardTo(address(outConduit));
-        RwaOutputConduit2(mate).push();
+        RwaOutputConduit2(mate._(address(outConduit))).push();
 
         // Fast-forward 30 day
         hevm.warp(block.timestamp + secs);
         // Mints some additional Dai into the receiver's balance to cope with accrued fees
-        mintDai(rec, 10000000000 ether);
+        mintDai(address(rec), 10000000000 ether);
 
-        urnUtils.wipeAll(address(urn), address(inConduit), rec);
+        urnUtils.wipeAll(address(urn), address(inConduit), address(rec));
 
         (, uint256 art) = vat.urns("RWA008AT1-A", address(urn));
         assertEq(art, 0);
