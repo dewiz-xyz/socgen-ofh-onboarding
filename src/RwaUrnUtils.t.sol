@@ -60,12 +60,12 @@ contract NullAuthority is DSAuthority {
 }
 
 contract M is DSMath {
-    function wad(uint256 rad) internal pure returns (uint256 z) {
-        return rad / RAY;
+    function wad(uint256 rad_) internal pure returns (uint256 z) {
+        return rad_ / RAY;
     }
 
-    function rad(uint256 wad) internal pure returns (uint256 z) {
-        return mul(wad, RAY);
+    function rad(uint256 wad_) internal pure returns (uint256 z) {
+        return mul(wad_, RAY);
     }
 
     function rmulup(uint256 x, uint256 y) internal pure returns (uint256 z) {
@@ -193,7 +193,10 @@ contract RwaUrnUtilsTest is DSTest, M {
         TokenWrapper(rec).approve(address(urnUtils), type(uint256).max);
     }
 
-    function testFullRepayment() public {
+    function testFullRepaymentFuzz(uint32 secs) public {
+        // Between 1 and 2^32-1 seconds
+        secs = (secs % (type(uint32).max - 1)) + 1;
+
         ForwardProxy(op).updateForwardTo(address(urn));
         RwaUrn2(op).lock(1 ether);
         RwaUrn2(op).draw(400 ether);
@@ -205,9 +208,9 @@ contract RwaUrnUtilsTest is DSTest, M {
         RwaOutputConduit2(mate).push();
 
         // Fast-forward 30 day
-        hevm.warp(block.timestamp + 30 days);
+        hevm.warp(block.timestamp + secs);
         // Mints some additional Dai into the receiver's balance to cope with accrued fees
-        mintDai(rec, 10 ether);
+        mintDai(rec, 10000000000 ether);
 
         uint256 expectedAmount = urnUtils.estimateWipeAllWad(address(urn), block.timestamp);
         uint256 recBalanceBefore = dai.balanceOf(rec);
@@ -223,7 +226,10 @@ contract RwaUrnUtilsTest is DSTest, M {
         assertEq(recBalanceBefore - recBalanceAfter, expectedAmount);
     }
 
-    function testFullRepaymentWhenUrnHasOutstandingDai() public {
+    function testFullRepaymentWhenUrnHasOutstandingDaiFuzz(uint32 secs) public {
+        // Between 1 and 2^32-1 seconds
+        secs = (secs % (type(uint32).max - 1)) + 1;
+
         ForwardProxy(op).updateForwardTo(address(urn));
         RwaUrn2(op).lock(1 ether);
         RwaUrn2(op).draw(400 ether);
@@ -235,10 +241,10 @@ contract RwaUrnUtilsTest is DSTest, M {
         RwaOutputConduit2(mate).push();
 
         // Fast-forward 30 day
-        hevm.warp(block.timestamp + 30 days);
+        hevm.warp(block.timestamp + secs);
 
         // Mint some additional Dai into the receiver's balance to cope with accrued fees.
-        mintDai(rec, 10 ether);
+        mintDai(rec, 10000000000 ether);
 
         // Mint some Dai and put it into the urn.
         mintDai(address(urn), 50 ether);
@@ -269,6 +275,31 @@ contract RwaUrnUtilsTest is DSTest, M {
         hevm.warp(block.timestamp + 30 days);
 
         urnUtils.wipeAll(address(urn), address(inConduit), rec);
+    }
+
+    function testNoGemLeftOnTheUrnAfterFullRepayment(uint32 secs) public {
+        // Between 1 and 2^32-1 seconds
+        secs = (secs % (type(uint32).max - 1)) + 1;
+
+        ForwardProxy(op).updateForwardTo(address(urn));
+        RwaUrn2(op).lock(1 ether);
+        RwaUrn2(op).draw(400 ether);
+
+        ForwardProxy(op).updateForwardTo(address(outConduit));
+        RwaOutputConduit2(op).pick(rec);
+
+        ForwardProxy(mate).updateForwardTo(address(outConduit));
+        RwaOutputConduit2(mate).push();
+
+        // Fast-forward 30 day
+        hevm.warp(block.timestamp + secs);
+        // Mints some additional Dai into the receiver's balance to cope with accrued fees
+        mintDai(rec, 10000000000 ether);
+
+        urnUtils.wipeAll(address(urn), address(inConduit), rec);
+
+        (, uint256 art) = vat.urns("RWA008AT1-A", address(urn));
+        assertEq(art, 0);
     }
 
     function mintDai(address who, uint256 wad) internal {
