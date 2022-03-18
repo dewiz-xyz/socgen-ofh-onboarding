@@ -56,17 +56,7 @@ contract RwaUrnUtils {
     ) external {
         require(RwaInputConduitLike(inputConduit).to() == urn, "RwaUrnUtils/bad-conduit");
 
-        // Law of Demeter anybody? @see { https://en.wikipedia.org/wiki/Law_of_Demeter }
-        bytes32 ilk = RwaUrnLike(urn).gemJoin().ilk();
-
-        // Ensure `rate` is up to date.
-        RwaUrnLike(urn).jug().drip(ilk);
-
-        VatAbstract vat = RwaUrnLike(urn).vat();
-        (, uint256 rate, , , ) = vat.ilks(ilk);
-        (, uint256 currentArt) = vat.urns(ilk, urn);
-        // Rounds up if there is some rad dust.
-        uint256 wad = M.rmulup(currentArt, rate);
+        uint256 wad = _getWipeAllWad(urn, block.timestamp);
 
         DaiAbstract dai = DaiAbstract(
             // Law of Demeter anybody? @see { https://en.wikipedia.org/wiki/Law_of_Demeter }
@@ -74,15 +64,10 @@ contract RwaUrnUtils {
         );
         // There might be outstanding Dai balance in the urn already, so we need to take only the missing amount.
         uint256 urnBalance = dai.balanceOf(urn);
-        dai.transferFrom(usr, inputConduit, M.sub(wad, urnBalance));
+        dai.transferFrom(usr, inputConduit, sub(wad, urnBalance));
 
         RwaInputConduitLike(inputConduit).push();
         RwaUrnLike(urn).wipe(wad);
-
-        // Get the remaining debt in the urn
-        (, uint256 art) = vat.urns(ilk, urn);
-        // If the value is >0, it must revert
-        require(art == 0, "RwaUrnUtils/wipe-all-failed");
     }
 
     /**
@@ -94,7 +79,17 @@ contract RwaUrnUtils {
      */
     function estimateWipeAllWad(address urn, uint256 when) public view returns (uint256 wad) {
         require(when >= block.timestamp, "RwaUrnUtils/invalid-date");
+        return _getWipeAllWad(urn, when);
+    }
 
+    /**
+     * @dev Gets the amount of Dai required to wipe all debt from the urn.
+     * Assumes there will be no changes in the base fee or the ilk stability fee between now and `when`.
+     * @param urn The RwaUrn vault targeted by the repayment.
+     * @param when The unix timestamp by which the repayment will be made. It must NOT be in the past.
+     * @return wad The amount of Dai required to make a full repayment.
+     */
+    function _getWipeAllWad(address urn, uint256 when) internal view returns (uint256 wad) {
         // Law of Demeter anybody? @see { https://en.wikipedia.org/wiki/Law_of_Demeter }
         bytes32 ilk = RwaUrnLike(urn).gemJoin().ilk();
         VatAbstract vat = RwaUrnLike(urn).vat();
@@ -104,19 +99,17 @@ contract RwaUrnUtils {
         (, uint256 curr, , , ) = vat.ilks(ilk);
         // This was adapted from how the Jug calculates the rate on drip().
         // @see {https://github.com/makerdao/dss/blob/master/src/jug.sol#L125}
-        uint256 rate = M.rmul(M.rpow(M.add(jug.base(), duty), when - rho), curr);
+        uint256 rate = rmul(rpow(add(jug.base(), duty), when - rho), curr);
 
         (, uint256 art) = vat.urns(ilk, urn);
 
-        wad = M.rmulup(art, rate);
+        wad = rmulup(art, rate);
     }
-}
 
-/**
- * @title An extension/subset of `DSMath` containing only the methods required in this file.
- * @dev The name is kept short to reduce the noise on more complex Math expressions using it.
- */
-library M {
+    /*//////////////////////////////////
+                    Math
+    //////////////////////////////////*/
+
     uint256 internal constant WAD = 10**18;
     uint256 internal constant RAY = 10**27;
 
@@ -135,15 +128,15 @@ library M {
     /**
      * @dev Converts `rad` (10^45) into a `wad` (10^18) by dividing it by RAY (10^27).
      */
-    function wad(uint256 rad) internal pure returns (uint256 z) {
-        return rad / RAY;
+    function wad(uint256 rad_) internal pure returns (uint256 z) {
+        return rad_ / RAY;
     }
 
     /**
      * @dev Converts `wad` (10^18) into a `rad` (10^45) by multiplying it by RAY (10^27).
      */
-    function rad(uint256 wad) internal pure returns (uint256 z) {
-        return mul(wad, RAY);
+    function rad(uint256 wad_) internal pure returns (uint256 z) {
+        return mul(wad_, RAY);
     }
 
     /**

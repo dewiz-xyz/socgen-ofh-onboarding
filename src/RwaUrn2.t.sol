@@ -336,11 +336,11 @@ contract RwaUrn2Test is DSTest, DSMath {
         mate.pushOut();
     }
 
-    function testLockAndDraw() public {
+    function testLockAndDrawFuzz(uint24 secs) public {
         assertEq(dai.balanceOf(address(outConduit)), 0);
         assertEq(dai.balanceOf(address(rec)), 0);
 
-        hevm.warp(block.timestamp + 10 days); // Let rate be > 1
+        hevm.warp(block.timestamp + secs); // Let rate be > 1
 
         assertEq(vat.dai(address(urn)), 0);
 
@@ -576,7 +576,7 @@ contract RwaUrn2Test is DSTest, DSMath {
 
     function testIncreaseGemValueOnLock() public {
         (uint256 ink, ) = vat.urns("RWA008AT1-A", address(urn));
-        uint256 gemCap = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        uint256 gemCap = uint256(hevm.load(address(urn), bytes32(uint256(7))));
         assertEq(ink, 0);
         assertEq(gemCap, URN_GEM_CAP);
 
@@ -622,22 +622,22 @@ contract RwaUrn2Test is DSTest, DSMath {
     }
 
     function testCanIncreaseGemCap() public {
-        uint256 gemCapBefore = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        uint256 gemCapBefore = uint256(hevm.load(address(urn), bytes32(uint256(7))));
         assertEq(gemCapBefore, URN_GEM_CAP);
 
         gov.file("gemCap", URN_GEM_CAP * 2);
 
-        uint256 gemCapAfter = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        uint256 gemCapAfter = uint256(hevm.load(address(urn), bytes32(uint256(7))));
         assertEq(gemCapAfter, URN_GEM_CAP * 2);
     }
 
     function testCanDecreaseGemCap() public {
-        uint256 gemCapBefore = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        uint256 gemCapBefore = uint256(hevm.load(address(urn), bytes32(uint256(7))));
         assertEq(gemCapBefore, URN_GEM_CAP);
 
         gov.file("gemCap", URN_GEM_CAP / 2);
 
-        uint256 gemCapAfter = uint256(hevm.load(address(urn), bytes32(uint256(2))));
+        uint256 gemCapAfter = uint256(hevm.load(address(urn), bytes32(uint256(7))));
         assertEq(gemCapAfter, URN_GEM_CAP / 2);
     }
 

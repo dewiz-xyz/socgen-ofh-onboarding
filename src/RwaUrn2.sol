@@ -27,24 +27,24 @@ import {VatAbstract, JugAbstract, DSTokenAbstract, GemJoinAbstract, DaiJoinAbstr
  * @dev This vault implements `gemCap`, the maximum amount of gem the urn can hold.
  */
 contract RwaUrn2 {
+    /// @notice Addresses with admin access on this contract. `wards[usr]`
+    mapping(address => uint256) public wards;
+    /// @notice Addresses with operator access on this contract. `can[usr]`
+    mapping(address => uint256) public can;
+
     /// @notice Core module address.
-    VatAbstract public immutable vat;
-    /// @notice The GemJoin adapter for the gem in this urn.
-    GemJoinAbstract public immutable gemJoin;
-    /// @notice The adapter to mint/burn Dai tokens.
-    DaiJoinAbstract public immutable daiJoin;
+    VatAbstract public vat;
     /// @notice The stability fee management module.
     JugAbstract public jug;
+    /// @notice The GemJoin adapter for the gem in this urn.
+    GemJoinAbstract public gemJoin;
+    /// @notice The adapter to mint/burn Dai tokens.
+    DaiJoinAbstract public daiJoin;
     /// @notice The destination of Dai drawn from this urn.
     address public outputConduit;
 
     /// @notice Maximum amount of tokens this contract can lock
     uint256 public gemCap;
-
-    /// @notice Addresses with admin access on this contract. `wards[usr]`
-    mapping(address => uint256) public wards;
-    /// @notice Addresses with operator access on this contract. `can[usr]`
-    mapping(address => uint256) public can;
 
     /**
      * @notice `usr` was granted admin access.
@@ -249,7 +249,7 @@ contract RwaUrn2 {
         require(wad <= 2**255 - 1, "RwaUrn2/overflow");
 
         (uint256 ink, ) = vat.urns(gemJoin.ilk(), address(this));
-        require(M.add(ink, wad) <= gemCap, "RwaUrn2/gemcap-exceeded");
+        require(add(ink, wad) <= gemCap, "RwaUrn2/gemcap-exceeded");
 
         DSTokenAbstract(gemJoin.gem()).transferFrom(msg.sender, address(this), wad);
         // join with this contract's address
@@ -281,7 +281,7 @@ contract RwaUrn2 {
         jug.drip(ilk);
         (, uint256 rate, , , ) = vat.ilks(ilk);
 
-        uint256 dart = M.divup(M.rad(wad), rate);
+        uint256 dart = divup(rad(wad), rate);
         require(dart <= 2**255 - 1, "RwaUrn2/overflow");
 
         vat.frob(ilk, address(this), address(this), address(this), 0, int256(dart));
@@ -298,9 +298,9 @@ contract RwaUrn2 {
 
         bytes32 ilk = gemJoin.ilk();
         jug.drip(ilk);
-        (, uint256 rate, , , ) = vat.ilks(ilk);
 
-        uint256 dart = M.rad(wad) / rate;
+        (, uint256 rate, , , ) = vat.ilks(ilk);
+        uint256 dart = rad(wad) / rate;
         require(dart <= 2**255, "RwaUrn2/overflow");
 
         vat.frob(ilk, address(this), address(this), address(this), 0, -int256(dart));
@@ -320,13 +320,11 @@ contract RwaUrn2 {
         dai.transfer(outputConduit, wad);
         emit Quit(msg.sender, wad);
     }
-}
 
-/**
- * @title An extension/subset of `DSMath` containing only the methods required in this file.
- * @dev The name is kept short to reduce the noise on more complex Math expressions using it.
- */
-library M {
+    /*//////////////////////////////////
+                    Math
+    //////////////////////////////////*/
+
     uint256 internal constant WAD = 10**18;
     uint256 internal constant RAY = 10**27;
 
