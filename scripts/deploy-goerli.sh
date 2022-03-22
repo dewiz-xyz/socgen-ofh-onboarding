@@ -56,10 +56,6 @@ make build
 [[ -z "$RWA_OUTPUT_CONDUIT" ]] && {
     RWA_OUTPUT_CONDUIT=$(dapp create RwaOutputConduit2 "$MCD_DAI")
 
-    # trust addresses for goerli
-    seth send "$RWA_OUTPUT_CONDUIT" 'hope(address)' "$OPERATOR"
-    seth send "$RWA_OUTPUT_CONDUIT" 'mate(address)' "$MATE"
-
     seth send "$RWA_OUTPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY"
     seth send "$RWA_OUTPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
 }
@@ -81,9 +77,6 @@ seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
 # connect it
 [[ -z "$RWA_INPUT_CONDUIT_2" ]] && {
     RWA_INPUT_CONDUIT_2=$(dapp create RwaInputConduit2 "$MCD_DAI" "$RWA_URN_2")
-
-    # trust addresses for goerli
-    seth send "$RWA_INPUT_CONDUIT_2" 'mate(address)' "$MATE"
 
     seth send "$RWA_INPUT_CONDUIT_2" 'rely(address)' "$MCD_PAUSE_PROXY"
     seth send "$RWA_INPUT_CONDUIT_2" 'deny(address)' "$ETH_FROM"

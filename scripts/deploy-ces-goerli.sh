@@ -33,10 +33,6 @@ export ETH_GAS=6000000
 
 ZERO_ADDRESS="0x0000000000000000000000000000000000000000"
 
-# goerli only, trust a couple of addresses
-TRUST1="0x597084d145e96Ae2e89E1c9d8DEE6d43d3557898"
-TRUST2="0xCB84430E410Df2dbDE0dF04Cf7711E656C90BDa2"
-
 ILK="${SYMBOL}-${LETTER}"
 echo "ILK: ${ILK}" >&2
 ILK_ENCODED=$(seth --to-bytes32 "$(seth --from-ascii "$ILK")")
@@ -58,7 +54,10 @@ echo "${SYMBOL}_${LETTER}_MATE: ${MATE}" >&2
 }
 
 # tokenize it
-[[ -z "$RWA_WRAPPER_TOKEN" ]] && RWA_WRAPPER_TOKEN=$(dapp create TokenWrapper "$RWA_OFH_TOKEN")
+[[ -z "$RWA_WRAPPER_TOKEN" ]] && {
+    RWA_WRAPPER_TOKEN=$(dapp create TokenWrapper "$RWA_OFH_TOKEN")
+    seth send "$RWA_WRAPPER_TOKEN" 'hope(address)' "$OPERATOR"
+}
 echo "${SYMBOL}: ${RWA_WRAPPER_TOKEN}" >&2
 
 # route it
@@ -67,9 +66,7 @@ echo "${SYMBOL}: ${RWA_WRAPPER_TOKEN}" >&2
     echo "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT: ${RWA_OUTPUT_CONDUIT_2}" >&2
 
     # trust addresses for goerli
-    seth send "$RWA_OUTPUT_CONDUIT_2" 'hope(address)' "$OPERATOR" &&
-        seth send "$RWA_OUTPUT_CONDUIT_2" 'mate(address)' "$MATE" &&
-        seth send "$RWA_OUTPUT_CONDUIT_2" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+    seth send "$RWA_OUTPUT_CONDUIT_2" 'rely(address)' "$MCD_PAUSE_PROXY" &&
         seth send "$RWA_OUTPUT_CONDUIT_2" 'deny(address)' "$ETH_FROM"
 
 } || {
@@ -79,16 +76,18 @@ echo "${SYMBOL}: ${RWA_WRAPPER_TOKEN}" >&2
 # join it
 RWA_JOIN=$(dapp create AuthGemJoin "$MCD_VAT" "$ILK_ENCODED" "$RWA_WRAPPER_TOKEN")
 echo "MCD_JOIN_${SYMBOL}_${LETTER}: ${RWA_JOIN}" >&2
-seth send "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY"
 
 # urn it
 RWA_URN_2=$(dapp create RwaUrn2 "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT_2" $RWA_URN_2_GEM_CAP)
 echo "${SYMBOL}_${LETTER}_URN: ${RWA_URN}" >&2
 
-seth send "$RWA_URN_2" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-    seth send "$RWA_URN_2" 'deny(address)' "$ETH_FROM" &&
-    # rely it
-    seth send "$RWA_JOIN" 'rely(address)' "$RWA_URN_2" &&
+seth send "$RWA_URN_2" 'hope(address)' "$OPERATOR" &&
+    seth send "$RWA_URN_2" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+    seth send "$RWA_URN_2" 'deny(address)' "$ETH_FROM"
+
+# rely it
+seth send "$RWA_JOIN" 'rely(address)' "$RWA_URN_2" &&
+    seth send "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
     # deny it
     seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
 
