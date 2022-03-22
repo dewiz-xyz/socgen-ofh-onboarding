@@ -66,11 +66,13 @@ make deploy-ces-goerli > out/ces-goerli-addresses.json
 
 ### Verify source code
 
-If you saved the deployed addresses like suggested above, in order to verify the contracts you need to extract the contents of the JSON file into environment variables. There is a convenience script for that in `scripts/json-to-env.sh`.
+If you saved the deployed addresses like suggested above, in order to verify the contracts you need to extract the contents of the JSON file into environment variables. There is a convenience script named `json-to-env` for that in [CES Shell Utils](https://github.com/clio-finance/shell-utils).
+
+If you properly initialized this repo, it should be already installed at `lib/shell-utils` and can be referenced as:
 
 ```bash
  # sets the proper env vars
-source <(scripts/json-to-env.sh out/ces-goerli-addresses.json)
+source <(lib/shell-utils/bin/json-to-env -x out/ces-goerli-addresses.json)
 make verify-ces-goerli
 ```
 
