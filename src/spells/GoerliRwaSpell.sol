@@ -88,13 +88,13 @@ contract SpellAction {
     ChainlogAbstract constant CHANGELOG = ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
 
     address constant MIP21_LIQUIDATION_ORACLE = address(0); // TODO
-    address constant RWA008AT1 = address(0); // TODO
-    address constant MCD_JOIN_RWA008AT1_A = address(0); // TODO
-    address constant RWA008AT1_A_URN = address(0); // TODO
-    address constant RWA008AT1_A_INPUT_CONDUIT = address(0); // TODO
-    address constant RWA008AT1_A_OUTPUT_CONDUIT = address(0); // TODO
-    address constant RWA008AT1_OPERATOR = address(0); // TODO
-    address constant RWA008AT1_MATE = address(0); // TODO
+    address constant RWA008AT2 = address(0); // TODO
+    address constant MCD_JOIN_RWA008AT2_A = address(0); // TODO
+    address constant RWA008AT2_A_URN = address(0); // TODO
+    address constant RWA008AT2_A_INPUT_CONDUIT = address(0); // TODO
+    address constant RWA008AT2_A_OUTPUT_CONDUIT = address(0); // TODO
+    address constant RWA008AT2_OPERATOR = address(0); // TODO
+    address constant RWA008AT2_MATE = address(0); // TODO
 
     uint256 constant THREE_PCT_RATE = 1000000000937303470807876289; // TODO RWA team should provide this one
 
@@ -105,9 +105,9 @@ contract SpellAction {
     uint256 public constant RAY = 10**27;
     uint256 public constant RAD = 10**45;
 
-    uint256 constant RWA008AT1_A_INITIAL_DC = 80000000 * RAD; // TODO RWA team should provide
-    uint256 constant RWA008AT1_A_INITIAL_PRICE = 115000 * WAD; // TODO RWA team should provide
-    uint48 constant RWA008AT1_A_TAU = 1 weeks; // TODO RWA team should provide
+    uint256 constant RWA008AT2_A_INITIAL_DC = 80000000 * RAD; // TODO RWA team should provide
+    uint256 constant RWA008AT2_A_INITIAL_PRICE = 115000 * WAD; // TODO RWA team should provide
+    uint48 constant RWA008AT2_A_TAU = 1 weeks; // TODO RWA team should provide
 
     /**
      * @notice MIP13c3-SP4 Declaration of Intent & Commercial Points -
@@ -123,28 +123,28 @@ contract SpellAction {
         address MCD_JUG = ChainlogAbstract(CHANGELOG).getAddress("MCD_JUG");
         address MCD_SPOT = ChainlogAbstract(CHANGELOG).getAddress("MCD_SPOT");
 
-        // RWA008AT1-A collateral deploy
+        // RWA008AT2-A collateral deploy
 
         // Set ilk bytes32 variable
-        bytes32 ilk = "RWA008AT1-A";
+        bytes32 ilk = "RWA008AT2-A";
 
-        // add RWA008AT1 contract to the changelog
-        CHANGELOG.setAddress("RWA008AT1", RWA008AT1);
-        CHANGELOG.setAddress("MCD_JOIN_RWA008AT1_A", MCD_JOIN_RWA008AT1_A);
-        CHANGELOG.setAddress("RWA008AT1_A_URN", RWA008AT1_A_URN);
-        CHANGELOG.setAddress("RWA008AT1_A_INPUT_CONDUIT", RWA008AT1_A_INPUT_CONDUIT);
-        CHANGELOG.setAddress("RWA008AT1_A_OUTPUT_CONDUIT", RWA008AT1_A_OUTPUT_CONDUIT);
+        // add RWA008AT2 contract to the changelog
+        CHANGELOG.setAddress("RWA008AT2", RWA008AT2);
+        CHANGELOG.setAddress("MCD_JOIN_RWA008AT2_A", MCD_JOIN_RWA008AT2_A);
+        CHANGELOG.setAddress("RWA008AT2_A_URN", RWA008AT2_A_URN);
+        CHANGELOG.setAddress("RWA008AT2_A_INPUT_CONDUIT", RWA008AT2_A_INPUT_CONDUIT);
+        CHANGELOG.setAddress("RWA008AT2_A_OUTPUT_CONDUIT", RWA008AT2_A_OUTPUT_CONDUIT);
 
         // bump changelog version
         // TODO make sure to update this version on mainnet
         CHANGELOG.setVersion("1.0.0");
 
         // Sanity checks
-        require(GemJoinAbstract(MCD_JOIN_RWA008AT1_A).vat() == MCD_VAT, "join-vat-not-match");
-        require(GemJoinAbstract(MCD_JOIN_RWA008AT1_A).ilk() == ilk, "join-ilk-not-match");
-        require(GemJoinAbstract(MCD_JOIN_RWA008AT1_A).gem() == RWA008AT1, "join-gem-not-match");
+        require(GemJoinAbstract(MCD_JOIN_RWA008AT2_A).vat() == MCD_VAT, "join-vat-not-match");
+        require(GemJoinAbstract(MCD_JOIN_RWA008AT2_A).ilk() == ilk, "join-ilk-not-match");
+        require(GemJoinAbstract(MCD_JOIN_RWA008AT2_A).gem() == RWA008AT2, "join-gem-not-match");
         require(
-            GemJoinAbstract(MCD_JOIN_RWA008AT1_A).dec() == DSTokenAbstract(RWA008AT1).decimals(),
+            GemJoinAbstract(MCD_JOIN_RWA008AT2_A).dec() == DSTokenAbstract(RWA008AT2).decimals(),
             "join-dec-not-match"
         );
 
@@ -152,24 +152,24 @@ contract SpellAction {
          * Init the RwaLiquidationOracle
          */
         // TODO: this should be verified with RWA Team (5 min for testing is good)
-        RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).init(ilk, RWA008AT1_A_INITIAL_PRICE, DOC, RWA008AT1_A_TAU);
+        RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).init(ilk, RWA008AT2_A_INITIAL_PRICE, DOC, RWA008AT2_A_TAU);
         (, address pip, , ) = RwaLiquidationLike(MIP21_LIQUIDATION_ORACLE).ilks(ilk);
-        CHANGELOG.setAddress("PIP_RWA008AT1", pip);
+        CHANGELOG.setAddress("PIP_RWA008AT2", pip);
 
-        // Set price feed for RWA008AT1
+        // Set price feed for RWA008AT2
         SpotAbstract(MCD_SPOT).file(ilk, "pip", pip);
 
-        // Init RWA008AT1 in Vat
+        // Init RWA008AT2 in Vat
         VatAbstract(MCD_VAT).init(ilk);
-        // Init RWA008AT1 in Jug
+        // Init RWA008AT2 in Jug
         JugAbstract(MCD_JUG).init(ilk);
 
-        // Allow RWA008AT1 Join to modify Vat registry
-        VatAbstract(MCD_VAT).rely(MCD_JOIN_RWA008AT1_A);
+        // Allow RWA008AT2 Join to modify Vat registry
+        VatAbstract(MCD_VAT).rely(MCD_JOIN_RWA008AT2_A);
 
         // 1000 debt ceiling
-        VatAbstract(MCD_VAT).file(ilk, "line", RWA008AT1_A_INITIAL_DC);
-        VatAbstract(MCD_VAT).file("Line", VatAbstract(MCD_VAT).Line() + RWA008AT1_A_INITIAL_DC);
+        VatAbstract(MCD_VAT).file(ilk, "line", RWA008AT2_A_INITIAL_DC);
+        VatAbstract(MCD_VAT).file("Line", VatAbstract(MCD_VAT).Line() + RWA008AT2_A_INITIAL_DC);
 
         // No dust
         // VatAbstract(MCD_VAT).file(ilk, "dust", 0)
@@ -184,17 +184,17 @@ contract SpellAction {
         SpotAbstract(MCD_SPOT).poke(ilk);
 
         // Give the urn permissions on the join adapter
-        GemJoinAbstract(MCD_JOIN_RWA008AT1_A).rely(RWA008AT1_A_URN);
+        GemJoinAbstract(MCD_JOIN_RWA008AT2_A).rely(RWA008AT2_A_URN);
 
         // Set up the urn
-        RwaUrnLike(RWA008AT1_A_URN).hope(RWA008AT1_OPERATOR);
+        RwaUrnLike(RWA008AT2_A_URN).hope(RWA008AT2_OPERATOR);
 
         // Set up output conduit
-        RwaOutputConduitLike(RWA008AT1_A_OUTPUT_CONDUIT).hope(RWA008AT1_OPERATOR);
+        RwaOutputConduitLike(RWA008AT2_A_OUTPUT_CONDUIT).hope(RWA008AT2_OPERATOR);
 
         // Whitelist DIIS Group in the conduits
-        RwaOutputConduitLike(RWA008AT1_A_OUTPUT_CONDUIT).mate(RWA008AT1_MATE);
-        RwaInputConduitLike(RWA008AT1_A_INPUT_CONDUIT).mate(RWA008AT1_MATE);
+        RwaOutputConduitLike(RWA008AT2_A_OUTPUT_CONDUIT).mate(RWA008AT2_MATE);
+        RwaInputConduitLike(RWA008AT2_A_INPUT_CONDUIT).mate(RWA008AT2_MATE);
     }
 }
 

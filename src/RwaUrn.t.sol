@@ -28,13 +28,11 @@ import {Spotter} from "dss/spot.sol";
 import {DaiJoin} from "dss/join.sol";
 import {AuthGemJoin} from "dss-gem-joins/join-auth.sol";
 
-import {OFHTokenLike} from "./tokens/ITokenWrapper.sol";
-import {TokenWrapper} from "./tokens/TokenWrapper.sol";
-import {MockOFH} from "./tokens/mocks/MockOFH.sol";
+import {RwaToken} from "./RwaToken.sol";
 import {RwaInputConduit2} from "./RwaInputConduit2.sol";
 import {RwaOutputConduit2} from "./RwaOutputConduit2.sol";
 import {RwaLiquidationOracle} from "./RwaLiquidationOracle.sol";
-import {RwaUrn2} from "./RwaUrn2.sol";
+import {RwaUrn} from "./RwaUrn.sol";
 
 interface Hevm {
     function warp(uint256) external;
@@ -78,12 +76,12 @@ contract TryCaller {
 }
 
 contract RwaOperator is TryCaller {
-    RwaUrn2 internal urn;
+    RwaUrn internal urn;
     RwaOutputConduit2 internal outC;
     RwaInputConduit2 internal inC;
 
     constructor(
-        RwaUrn2 urn_,
+        RwaUrn urn_,
         RwaOutputConduit2 outC_,
         RwaInputConduit2 inC_
     ) public {
@@ -93,7 +91,7 @@ contract RwaOperator is TryCaller {
     }
 
     function approve(
-        TokenWrapper tok,
+        RwaToken tok,
         address who,
         uint256 wad
     ) public {
@@ -131,10 +129,6 @@ contract RwaOperator is TryCaller {
     function canFree(uint256 wad) public returns (bool) {
         return this.tryCall(address(outC), abi.encodeWithSignature("free(uint256)", wad));
     }
-
-    function file(bytes32 who, uint256 data) public {
-        urn.file(who, data);
-    }
 }
 
 contract RwaMate is TryCaller {
@@ -164,14 +158,10 @@ contract RwaMate is TryCaller {
 }
 
 contract RwaGov is TryCaller {
-    RwaUrn2 internal urn;
+    RwaUrn internal urn;
 
-    constructor(RwaUrn2 urn_) public {
+    constructor(RwaUrn urn_) public {
         urn = urn_;
-    }
-
-    function file(bytes32 who, uint256 data) public {
-        urn.file(who, data);
     }
 }
 
@@ -181,8 +171,7 @@ contract RwaUrn2Test is DSTest, DSMath {
     Hevm internal hevm;
 
     DSToken internal dai;
-    TokenWrapper internal wrapper;
-    MockOFH internal token;
+    RwaToken internal rwaToken;
 
     Vat internal vat;
     Jug internal jug;
@@ -193,7 +182,7 @@ contract RwaUrn2Test is DSTest, DSMath {
     AuthGemJoin internal gemJoin;
 
     RwaLiquidationOracle internal oracle;
-    RwaUrn2 internal urn;
+    RwaUrn internal urn;
 
     RwaOutputConduit2 internal outConduit;
     RwaInputConduit2 internal inConduit;
@@ -207,7 +196,6 @@ contract RwaUrn2Test is DSTest, DSMath {
     string internal constant DOC = "Please sign this";
     uint256 internal constant CEILING = 200 ether;
     uint256 internal constant EIGHT_PCT = 1000000002440418608258400030;
-    uint256 internal constant URN_GEM_CAP = 400 ether;
 
     uint48 internal constant TAU = 2 weeks;
 
@@ -218,10 +206,6 @@ contract RwaUrn2Test is DSTest, DSMath {
     function setUp() public {
         hevm = Hevm(address(CHEAT_CODE));
         hevm.warp(104411200);
-
-        token = new MockOFH(500);
-        wrapper = new TokenWrapper(address(token));
-        wrapper.hope(address(this));
 
         vat = new Vat();
 
@@ -234,37 +218,32 @@ contract RwaUrn2Test is DSTest, DSMath {
         vat.rely(address(daiJoin));
         dai.setOwner(address(daiJoin));
 
-        vat.init("RWA008AT1-A");
+        vat.init("RWA008AT2-A");
         vat.file("Line", 100 * rad(CEILING));
-        vat.file("RWA008AT1-A", "line", rad(CEILING));
+        vat.file("RWA008AT2-A", "line", rad(CEILING));
 
-        jug.init("RWA008AT1-A");
-        jug.file("RWA008AT1-A", "duty", EIGHT_PCT);
+        jug.init("RWA008AT2-A");
+        jug.file("RWA008AT2-A", "duty", EIGHT_PCT);
 
         oracle = new RwaLiquidationOracle(address(vat), VOW);
-        oracle.init("RWA008AT1-A", wmul(CEILING, 1.1 ether), DOC, TAU);
+        oracle.init("RWA008AT2-A", wmul(CEILING, 1.1 ether), DOC, TAU);
         vat.rely(address(oracle));
-        (, address pip, , ) = oracle.ilks("RWA008AT1-A");
+        (, address pip, , ) = oracle.ilks("RWA008AT2-A");
 
         spotter = new Spotter(address(vat));
         vat.rely(address(spotter));
-        spotter.file("RWA008AT1-A", "mat", RAY);
-        spotter.file("RWA008AT1-A", "pip", pip);
-        spotter.poke("RWA008AT1-A");
+        spotter.file("RWA008AT2-A", "mat", RAY);
+        spotter.file("RWA008AT2-A", "pip", pip);
+        spotter.poke("RWA008AT2-A");
 
-        gemJoin = new AuthGemJoin(address(vat), "RWA008AT1-A", address(wrapper));
+        rwaToken = new RwaToken("RWA008AT2", "");
+
+        gemJoin = new AuthGemJoin(address(vat), "RWA008AT2-A", address(rwaToken));
         vat.rely(address(gemJoin));
 
         outConduit = new RwaOutputConduit2(address(dai));
 
-        urn = new RwaUrn2(
-            address(vat),
-            address(jug),
-            address(gemJoin),
-            address(daiJoin),
-            address(outConduit),
-            URN_GEM_CAP
-        );
+        urn = new RwaUrn(address(vat), address(jug), address(gemJoin), address(daiJoin), address(outConduit));
         gemJoin.rely(address(urn));
         inConduit = new RwaInputConduit2(address(dai), address(urn));
 
@@ -273,10 +252,6 @@ contract RwaUrn2Test is DSTest, DSMath {
         rec = new TokenUser(dai);
         gov = new RwaGov(urn);
 
-        // Wraps all tokens into `op` balance
-        token.transfer(address(wrapper), 500);
-        wrapper.wrap(address(op), 500);
-
         urn.hope(address(op));
         urn.rely(address(gov));
 
@@ -284,7 +259,9 @@ contract RwaUrn2Test is DSTest, DSMath {
         outConduit.mate(address(mate));
         outConduit.hope(address(op));
 
-        op.approve(wrapper, address(urn), type(uint256).max);
+        op.approve(rwaToken, address(urn), type(uint256).max);
+
+        rwaToken.transfer(address(op), 1 ether);
     }
 
     function testFile() public {
@@ -296,7 +273,7 @@ contract RwaUrn2Test is DSTest, DSMath {
 
     function testPickAndPush() public {
         uint256 amount = 200 ether;
-        op.lock(amount);
+        op.lock(1 ether);
         op.draw(amount);
 
         op.pick(address(rec));
@@ -308,7 +285,7 @@ contract RwaUrn2Test is DSTest, DSMath {
     function testUnpickAndPickNewReceiver() public {
         uint256 amount = 200 ether;
 
-        op.lock(amount);
+        op.lock(1 ether);
         op.draw(amount);
 
         op.pick(address(rec));
@@ -330,7 +307,7 @@ contract RwaUrn2Test is DSTest, DSMath {
     function testFailPushBeforePick() public {
         uint256 amount = 200 ether;
 
-        op.lock(amount);
+        op.lock(1 ether);
         op.draw(amount);
 
         mate.pushOut();
@@ -344,7 +321,7 @@ contract RwaUrn2Test is DSTest, DSMath {
 
         assertEq(vat.dai(address(urn)), 0);
 
-        (uint256 ink, uint256 art) = vat.urns("RWA008AT1-A", address(urn));
+        (uint256 ink, uint256 art) = vat.urns("RWA008AT2-A", address(urn));
         assertEq(ink, 0);
         assertEq(art, 0);
 
@@ -355,8 +332,8 @@ contract RwaUrn2Test is DSTest, DSMath {
 
         assertLe(vat.dai(address(urn)), dustLimit);
 
-        (, uint256 rate, , , ) = vat.ilks("RWA008AT1-A");
-        (ink, art) = vat.urns("RWA008AT1-A", address(urn));
+        (, uint256 rate, , , ) = vat.ilks("RWA008AT2-A");
+        (ink, art) = vat.urns("RWA008AT2-A", address(urn));
         assertEq(ink, 1 ether);
         assertLe((art * rate) - rad(199 ether), dustLimit);
 
@@ -410,7 +387,7 @@ contract RwaUrn2Test is DSTest, DSMath {
         assertTrue(!op.canFree(1 ether));
 
         op.free(0.4 ether);
-        (uint256 ink, uint256 art) = vat.urns("RWA008AT1-A", address(urn));
+        (uint256 ink, uint256 art) = vat.urns("RWA008AT2-A", address(urn));
         // 100 < art < 101 because of accumulated interest
         assertLt(art - 100 ether, 1 ether);
         assertEq(ink, 0.6 ether);
@@ -431,13 +408,13 @@ contract RwaUrn2Test is DSTest, DSMath {
         op.lock(1 ether);
 
         hevm.warp(now + drawTime);
-        jug.drip("RWA008AT1-A");
+        jug.drip("RWA008AT2-A");
         op.draw(drawAmount);
         op.pick(address(rec));
         mate.pushOut();
 
         hevm.warp(now + wipeTime);
-        jug.drip("RWA008AT1-A");
+        jug.drip("RWA008AT2-A");
         rec.transfer(address(inConduit), wipeAmount);
         assertEq(dai.balanceOf(address(inConduit)), wipeAmount);
 
@@ -454,14 +431,14 @@ contract RwaUrn2Test is DSTest, DSMath {
         drawTime = drawTime % 15 days; // 0-15 days
         wipeTime = wipeTime % 15 days; // 0-15 days
 
-        (uint256 ink, uint256 art) = vat.urns("RWA008AT1-A", address(urn));
+        (uint256 ink, uint256 art) = vat.urns("RWA008AT2-A", address(urn));
         assertEq(ink, 0);
         assertEq(art, 0);
 
         op.lock(1 ether);
 
         hevm.warp(block.timestamp + drawTime);
-        jug.drip("RWA008AT1-A");
+        jug.drip("RWA008AT2-A");
 
         op.draw(drawAmount);
 
@@ -470,8 +447,8 @@ contract RwaUrn2Test is DSTest, DSMath {
         // A draw should leave less than 2 RAY dust
         assertLt(urnVatDust, 2 * RAY);
 
-        (, uint256 rate, , , ) = vat.ilks("RWA008AT1-A");
-        (ink, art) = vat.urns("RWA008AT1-A", address(urn));
+        (, uint256 rate, , , ) = vat.ilks("RWA008AT2-A");
+        (ink, art) = vat.urns("RWA008AT2-A", address(urn));
         assertEq(ink, 1 ether);
         assertLe((art * rate) - rad(drawAmount), urnVatDust);
 
@@ -480,9 +457,9 @@ contract RwaUrn2Test is DSTest, DSMath {
         mate.pushOut();
 
         hevm.warp(block.timestamp + wipeTime);
-        jug.drip("RWA008AT1-A");
+        jug.drip("RWA008AT2-A");
 
-        (, rate, , , ) = vat.ilks("RWA008AT1-A");
+        (, rate, , , ) = vat.ilks("RWA008AT2-A");
 
         uint256 fullWipeAmount = (art * rate) / RAY;
         if (fullWipeAmount * RAY < art * rate) {
@@ -508,7 +485,7 @@ contract RwaUrn2Test is DSTest, DSMath {
         mate.pushIn();
         op.wipe(fullWipeAmount);
 
-        (, art) = vat.urns("RWA008AT1-A", address(urn));
+        (, art) = vat.urns("RWA008AT2-A", address(urn));
         assertEq(art, 0);
 
         uint256 newUrnVatDust = vat.dai(address(urn));
@@ -532,10 +509,10 @@ contract RwaUrn2Test is DSTest, DSMath {
         rando.wipe(200 ether);
         rando.free(1 ether);
 
-        (uint256 ink, uint256 art) = vat.urns("RWA008AT1-A", address(urn));
+        (uint256 ink, uint256 art) = vat.urns("RWA008AT2-A", address(urn));
         assertEq(ink, 0);
         assertEq(art, 0);
-        assertEq(wrapper.balanceOf(address(rando)), 1 ether);
+        assertEq(rwaToken.balanceOf(address(rando)), 1 ether);
     }
 
     function testQuit() public {
@@ -570,31 +547,14 @@ contract RwaUrn2Test is DSTest, DSMath {
         urn.quit();
     }
 
-    function testFailOnGemLimitExceed() public {
-        op.lock(URN_GEM_CAP + 1 ether);
-    }
-
-    function testIncreaseGemValueOnLock() public {
-        (uint256 ink, ) = vat.urns("RWA008AT1-A", address(urn));
-        uint256 gemCap = uint256(hevm.load(address(urn), bytes32(uint256(7))));
-        assertEq(ink, 0);
-        assertEq(gemCap, URN_GEM_CAP);
-
-        uint256 amount = URN_GEM_CAP;
-        op.lock(amount);
-
-        (uint256 inkAfter, ) = vat.urns("RWA008AT1-A", address(urn));
-        assertEq(inkAfter, amount);
-    }
-
     function testDecreaseGemValueOnFree() public {
-        (uint256 ink, ) = vat.urns("RWA008AT1-A", address(urn));
+        (uint256 ink, ) = vat.urns("RWA008AT2-A", address(urn));
         assertEq(ink, 0);
 
         op.lock(1 ether);
         op.draw(200 ether);
 
-        (uint256 inkAfterDraw, ) = vat.urns("RWA008AT1-A", address(urn));
+        (uint256 inkAfterDraw, ) = vat.urns("RWA008AT2-A", address(urn));
         assertEq(inkAfterDraw, 1 ether);
 
         // op nominats the receiver
@@ -613,36 +573,7 @@ contract RwaUrn2Test is DSTest, DSMath {
 
         op.free(0.4 ether);
 
-        (uint256 inkAfterFree, ) = vat.urns("RWA008AT1-A", address(urn));
+        (uint256 inkAfterFree, ) = vat.urns("RWA008AT2-A", address(urn));
         assertEq(inkAfterFree, 0.6 ether);
-    }
-
-    function testFailUnAuthorizedGemCapIncrease() public {
-        op.file("gemCap", 600 ether);
-    }
-
-    function testCanIncreaseGemCap() public {
-        uint256 gemCapBefore = uint256(hevm.load(address(urn), bytes32(uint256(7))));
-        assertEq(gemCapBefore, URN_GEM_CAP);
-
-        gov.file("gemCap", URN_GEM_CAP * 2);
-
-        uint256 gemCapAfter = uint256(hevm.load(address(urn), bytes32(uint256(7))));
-        assertEq(gemCapAfter, URN_GEM_CAP * 2);
-    }
-
-    function testCanDecreaseGemCap() public {
-        uint256 gemCapBefore = uint256(hevm.load(address(urn), bytes32(uint256(7))));
-        assertEq(gemCapBefore, URN_GEM_CAP);
-
-        gov.file("gemCap", URN_GEM_CAP / 2);
-
-        uint256 gemCapAfter = uint256(hevm.load(address(urn), bytes32(uint256(7))));
-        assertEq(gemCapAfter, URN_GEM_CAP / 2);
-    }
-
-    function testFailCannotLockMoreThanGemCapAfterDecrease() public {
-        gov.file("gemCap", URN_GEM_CAP / 2);
-        op.lock(URN_GEM_CAP);
     }
 }

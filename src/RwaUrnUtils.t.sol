@@ -28,13 +28,11 @@ import {Spotter} from "dss/spot.sol";
 import {DaiJoin} from "dss/join.sol";
 import {AuthGemJoin} from "dss-gem-joins/join-auth.sol";
 
-import {OFHTokenLike} from "./tokens/ITokenWrapper.sol";
-import {TokenWrapper} from "./tokens/TokenWrapper.sol";
-import {MockOFH} from "./tokens/mocks/MockOFH.sol";
+import {RwaToken} from "./RwaToken.sol";
 import {RwaInputConduit2} from "./RwaInputConduit2.sol";
 import {RwaOutputConduit2} from "./RwaOutputConduit2.sol";
 import {RwaLiquidationOracle} from "./RwaLiquidationOracle.sol";
-import {RwaUrn2} from "./RwaUrn2.sol";
+import {RwaUrn} from "./RwaUrn.sol";
 import {RwaUrnUtils} from "./RwaUrnUtils.sol";
 
 interface Hevm {
@@ -79,8 +77,7 @@ contract RwaUrnUtilsTest is DSTest, M {
     Hevm internal hevm;
 
     DSToken internal dai;
-    TokenWrapper internal wrapper;
-    MockOFH internal token;
+    RwaToken internal rwaToken;
 
     Vat internal vat;
     Jug internal jug;
@@ -91,7 +88,7 @@ contract RwaUrnUtilsTest is DSTest, M {
     AuthGemJoin internal gemJoin;
 
     RwaLiquidationOracle internal oracle;
-    RwaUrn2 internal urn;
+    RwaUrn internal urn;
 
     RwaOutputConduit2 internal outConduit;
     RwaInputConduit2 internal inConduit;
@@ -107,17 +104,12 @@ contract RwaUrnUtilsTest is DSTest, M {
     string internal constant DOC = "Please sign this";
     uint256 internal constant CEILING = 400 ether;
     uint256 internal constant EIGHT_PCT = 1000000002440418608258400030;
-    uint256 internal constant URN_GEM_CAP = 400 ether;
 
     uint48 internal constant TAU = 2 weeks;
 
     function setUp() public {
         hevm = Hevm(address(CHEAT_CODE));
         hevm.warp(104411200);
-
-        token = new MockOFH(500);
-        wrapper = new TokenWrapper(address(token));
-        wrapper.hope(address(this));
 
         vat = new Vat();
 
@@ -131,37 +123,32 @@ contract RwaUrnUtilsTest is DSTest, M {
         dai.setAuthority(new NullAuthority());
         dai.setOwner(address(daiJoin));
 
-        vat.init("RWA008AT1-A");
+        vat.init("RWA008AT2-A");
         vat.file("Line", 100 * rad(CEILING));
-        vat.file("RWA008AT1-A", "line", rad(CEILING));
+        vat.file("RWA008AT2-A", "line", rad(CEILING));
 
-        jug.init("RWA008AT1-A");
-        jug.file("RWA008AT1-A", "duty", EIGHT_PCT);
+        jug.init("RWA008AT2-A");
+        jug.file("RWA008AT2-A", "duty", EIGHT_PCT);
 
         oracle = new RwaLiquidationOracle(address(vat), VOW);
-        oracle.init("RWA008AT1-A", wmul(CEILING, 1.1 ether), DOC, TAU);
+        oracle.init("RWA008AT2-A", wmul(CEILING, 1.1 ether), DOC, TAU);
         vat.rely(address(oracle));
-        (, address pip, , ) = oracle.ilks("RWA008AT1-A");
+        (, address pip, , ) = oracle.ilks("RWA008AT2-A");
 
         spotter = new Spotter(address(vat));
         vat.rely(address(spotter));
-        spotter.file("RWA008AT1-A", "mat", RAY);
-        spotter.file("RWA008AT1-A", "pip", pip);
-        spotter.poke("RWA008AT1-A");
+        spotter.file("RWA008AT2-A", "mat", RAY);
+        spotter.file("RWA008AT2-A", "pip", pip);
+        spotter.poke("RWA008AT2-A");
 
-        gemJoin = new AuthGemJoin(address(vat), "RWA008AT1-A", address(wrapper));
+        rwaToken = new RwaToken("RWA008AT2", "RWA-008");
+
+        gemJoin = new AuthGemJoin(address(vat), "RWA008AT2-A", address(rwaToken));
         vat.rely(address(gemJoin));
 
         outConduit = new RwaOutputConduit2(address(dai));
 
-        urn = new RwaUrn2(
-            address(vat),
-            address(jug),
-            address(gemJoin),
-            address(daiJoin),
-            address(outConduit),
-            URN_GEM_CAP
-        );
+        urn = new RwaUrn(address(vat), address(jug), address(gemJoin), address(daiJoin), address(outConduit));
         gemJoin.rely(address(urn));
         inConduit = new RwaInputConduit2(address(dai), address(urn));
 
@@ -171,10 +158,6 @@ contract RwaUrnUtilsTest is DSTest, M {
         gov = new ForwardProxy();
 
         urnUtils = new RwaUrnUtils();
-
-        // Wraps all tokens into `op` balance
-        token.transfer(address(wrapper), 500);
-        wrapper.wrap(address(op), 500);
 
         urn.hope(address(op));
         urn.hope(address(urnUtils));
@@ -186,17 +169,19 @@ contract RwaUrnUtilsTest is DSTest, M {
         inConduit.mate(address(mate));
         inConduit.mate(address(urnUtils));
 
-        TokenWrapper(op._(address(wrapper))).approve(address(urn), type(uint256).max);
+        RwaToken(op._(address(rwaToken))).approve(address(urn), type(uint256).max);
 
-        TokenWrapper(rec._(address(dai))).approve(address(urnUtils), type(uint256).max);
+        RwaToken(rec._(address(dai))).approve(address(urnUtils), type(uint256).max);
+
+        rwaToken.transfer(address(op), 1 ether);
     }
 
-    function testFullRepaymentFuzz(uint32 secs) public {
+    function testFuzzFullRepayment(uint32 secs) public {
         // Between 1 and 2^32-1 seconds
         secs = (secs % (type(uint32).max - 1)) + 1;
 
-        RwaUrn2(op._(address(urn))).lock(1 ether);
-        RwaUrn2(op._(address(urn))).draw(400 ether);
+        RwaUrn(op._(address(urn))).lock(1 ether);
+        RwaUrn(op._(address(urn))).draw(400 ether);
 
         RwaOutputConduit2(op._(address(outConduit))).pick(address(rec));
 
@@ -215,18 +200,18 @@ contract RwaUrnUtilsTest is DSTest, M {
         uint256 recBalanceAfter = dai.balanceOf(address(rec));
 
         // Get the remaining debt in the urn
-        (, uint256 art) = vat.urns("RWA008AT1-A", address(urn));
+        (, uint256 art) = vat.urns("RWA008AT2-A", address(urn));
         // If the value is >0, it must revert
         assertEq(art, 0);
         assertEq(recBalanceBefore - recBalanceAfter, expectedAmount);
     }
 
-    function testFullRepaymentWhenUrnHasOutstandingDaiFuzz(uint32 secs) public {
+    function testFuzzFullRepaymentWhenUrnHasOutstandingDai(uint32 secs) public {
         // Between 1 and 2^32-1 seconds
         secs = (secs % (type(uint32).max - 1)) + 1;
 
-        RwaUrn2(op._(address(urn))).lock(1 ether);
-        RwaUrn2(op._(address(urn))).draw(400 ether);
+        RwaUrn(op._(address(urn))).lock(1 ether);
+        RwaUrn(op._(address(urn))).draw(400 ether);
 
         RwaOutputConduit2(op._(address(outConduit))).pick(address(rec));
 
@@ -253,8 +238,8 @@ contract RwaUrnUtilsTest is DSTest, M {
     }
 
     function testFailFullRepaymentWhenPayerHasNotEnoughDai() public {
-        RwaUrn2(op._(address(urn))).lock(1 ether);
-        RwaUrn2(op._(address(urn))).draw(400 ether);
+        RwaUrn(op._(address(urn))).lock(1 ether);
+        RwaUrn(op._(address(urn))).draw(400 ether);
 
         RwaOutputConduit2(op._(address(outConduit))).pick(address(rec));
 
@@ -270,8 +255,8 @@ contract RwaUrnUtilsTest is DSTest, M {
         // Between 1 and 2^32-1 seconds
         secs = (secs % (type(uint32).max - 1)) + 1;
 
-        RwaUrn2(op._(address(urn))).lock(1 ether);
-        RwaUrn2(op._(address(urn))).draw(400 ether);
+        RwaUrn(op._(address(urn))).lock(1 ether);
+        RwaUrn(op._(address(urn))).draw(400 ether);
 
         RwaOutputConduit2(op._(address(outConduit))).pick(address(rec));
 
@@ -284,7 +269,7 @@ contract RwaUrnUtilsTest is DSTest, M {
 
         urnUtils.wipeAll(address(urn), address(inConduit), address(rec));
 
-        (, uint256 art) = vat.urns("RWA008AT1-A", address(urn));
+        (, uint256 art) = vat.urns("RWA008AT2-A", address(urn));
         assertEq(art, 0);
     }
 
