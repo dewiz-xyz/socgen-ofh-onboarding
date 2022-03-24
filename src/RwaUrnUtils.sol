@@ -59,7 +59,7 @@ contract RwaUrnUtils {
         uint256 wad = _getWipeAllWad(urn, block.timestamp);
 
         DaiAbstract dai = DaiAbstract(
-            // Law of Demeter anybody? @see { https://en.wikipedia.org/wiki/Law_of_Demeter }
+            // Law of Demeter anybody? https://en.wikipedia.org/wiki/Law_of_Demeter
             RwaUrnLike(urn).daiJoin().dai()
         );
         // There might be outstanding Dai balance in the urn already, so we need to take only the missing amount.
@@ -90,7 +90,7 @@ contract RwaUrnUtils {
      * @return wad The amount of Dai required to make a full repayment.
      */
     function _getWipeAllWad(address urn, uint256 when) internal view returns (uint256 wad) {
-        // Law of Demeter anybody? @see { https://en.wikipedia.org/wiki/Law_of_Demeter }
+        // Law of Demeter anybody? https://en.wikipedia.org/wiki/Law_of_Demeter
         bytes32 ilk = RwaUrnLike(urn).gemJoin().ilk();
         VatAbstract vat = RwaUrnLike(urn).vat();
         JugAbstract jug = RwaUrnLike(urn).jug();
@@ -98,7 +98,7 @@ contract RwaUrnUtils {
         (uint256 duty, uint256 rho) = jug.ilks(ilk);
         (, uint256 curr, , , ) = vat.ilks(ilk);
         // This was adapted from how the Jug calculates the rate on drip().
-        // @see {https://github.com/makerdao/dss/blob/master/src/jug.sol#L125}
+        // https://github.com/makerdao/dss/blob/master/src/jug.sol#L125
         uint256 rate = rmul(rpow(add(jug.base(), duty), when - rho), curr);
 
         (, uint256 art) = vat.urns(ilk, urn);

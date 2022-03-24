@@ -58,9 +58,9 @@ if [ "$0" = "$BASH_SOURCE" ]; then
 
     set -u
 
-    verify-contract "src/utils/ForwardProxy.sol:ForwardProxy" "$RWA008AT2_A_OPERATOR" || exit_code=1
-    verify-contract "src/utils/ForwardProxy.sol:ForwardProxy" "$RWA008AT2_A_MATE" || exit_code=1
-    verify-contract "src/RwaToken.sol:RwaToken" "$SYMBOL" "$NAME" || exit_code=1
+    verify-contract "lib/forward-proxy/src/ForwardProxy.sol:ForwardProxy" "$RWA008AT2_A_OPERATOR" || exit_code=1
+    verify-contract "lib/forward-proxy/src/ForwardProxy.sol:ForwardProxy" "$RWA008AT2_A_MATE" || exit_code=1
+    verify-contract "src/RwaToken.sol:RwaToken" "$RWA008AT2" "\"$SYMBOL\"" "\"$NAME\"" || exit_code=1
     verify-contract "src/RwaOutputConduit2.sol:RwaOutputConduit2" "$RWA008AT2_A_OUTPUT_CONDUIT" "$MCD_DAI" || exit_code=1
     verify-contract "src/RwaInputConduit2.sol:RwaInputConduit2" "$RWA008AT2_A_INPUT_CONDUIT" "$MCD_DAI" "$RWA008AT2_A_URN" || exit_code=1
     verify-contract "src/RwaUrn.sol:RwaUrn" "$RWA008AT2_A_URN" "$MCD_VAT" "$MCD_JUG" "$MCD_JOIN_RWA008AT2_A" "$MCD_JOIN_DAI" "$RWA008AT2_A_OUTPUT_CONDUIT" || exit_code=1

@@ -1,7 +1,7 @@
 /* prettier-disable */
 
 /**
- * This file is a copy of @see { https://goerli.etherscan.io/address/0xeb7C7DE82c3b05BD4059f11aE8f43dD7f1595bce#code }.
+ * This file is a copy of https://goerli.etherscan.io/address/0xeb7C7DE82c3b05BD4059f11aE8f43dD7f1595bce#code.
  * The only change is the solidity version, since this repo is using 0.6.x
  */
 
