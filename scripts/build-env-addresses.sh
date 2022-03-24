@@ -49,4 +49,11 @@ if [ -z "$MCD_ADDRESSES" ]; then
   fi
 fi
 
-echo $MCD_ADDRESSES | ${BASH_SOURCE%/*}/../lib/shell-utils/bin/json-to-env -x - | grep -v '^export version'
+ENV_VARS=$(${BASH_SOURCE%/*}/../lib/shell-utils/bin/json-to-env -x <<<"$MCD_ADDRESSES" | grep -v '^export version')
+
+# If the file was sourced, then set the env vars directly
+if [[ $0 != "$BASH_SOURCE" ]]; then
+  eval set -- "$ENV_VARS"
+else
+  echo $ENV_VARS
+fi
