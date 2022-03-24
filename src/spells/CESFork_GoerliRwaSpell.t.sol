@@ -902,11 +902,12 @@ contract CESFork_DssSpellTest is DSTest, DSMath {
         hevm.warp(now + 10 days); // Let rate be > 1
 
         uint256 totalSupplyBeforeCheat = rwagem.totalSupply();
-        // put 1 conti of MKR into this contract to push
-        hevm.store(address(rwagem), keccak256(abi.encode(address(this), uint256(0))), bytes32(uint256(2 * WAD)));
+        // set the balance of this contract
+        hevm.store(address(rwagem), keccak256(abi.encode(address(this), uint256(3))), bytes32(uint256(2 * WAD)));
+        // increase the total supply
         hevm.store(address(rwagem), bytes32(uint256(2)), bytes32(uint256(rwagem.totalSupply() + 2 * WAD)));
         // setting address(this) as operator
-        hevm.store(address(rwaurn), keccak256(abi.encode(address(this), uint256(4))), bytes32(uint256(1)));
+        hevm.store(address(rwaurn), keccak256(abi.encode(address(this), uint256(1))), bytes32(uint256(1)));
 
         (uint256 preInk, uint256 preArt) = vat.urns(ilk, address(rwaurn));
 
@@ -935,8 +936,6 @@ contract CESFork_DssSpellTest is DSTest, DSMath {
         hevm.store(address(rwaconduitout), keccak256(abi.encode(address(this), uint256(2))), bytes32(uint256(1)));
         // may
         hevm.store(address(rwaconduitout), keccak256(abi.encode(address(this), uint256(3))), bytes32(uint256(1)));
-        // bud
-        hevm.store(address(rwaconduitout), keccak256(abi.encode(address(this), uint256(4))), bytes32(uint256(1)));
 
         assertEq(dai.balanceOf(address(rwaconduitout)), 1 * WAD);
 
@@ -995,18 +994,6 @@ contract CESFork_DssSpellTest is DSTest, DSMath {
         assertTrue(art < 4); // wad -> rad conversion in wipe leaves some dust
         (ink, ) = vat.urns(ilk, address(this));
         assertEq(ink, 0);
-    }
-
-    function testFailSpellIsCast_RWA008AT2_OPERATOR_LOCK_ABOVE_CAP() public {
-        if (!spell.done()) {
-            vote(address(spell));
-            scheduleWaitAndCast();
-            assertTrue(spell.done());
-        }
-        // setting address(this) as operator
-        hevm.store(address(rwaurn), keccak256(abi.encode(address(this), uint256(4))), bytes32(uint256(1)));
-
-        rwaurn.lock(500 * WAD);
     }
 
     function testSpellIsCast_RWA008AT2_END() public {
