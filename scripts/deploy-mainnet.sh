@@ -41,7 +41,7 @@ make build
 
 # tokenize it
 [[ -z "$RWA_TOKEN" ]] && {
-    RWA_TOKEN=$(dapp create RwaToken "\"$SYMBOL\"" "\"$NAME\"")
+    RWA_TOKEN=$(dapp create RwaToken "\"$NAME\"" "\"$SYMBOL\"")
     seth send "$RWA_TOKEN" 'transfer(address,uint256)' "$OPERATOR" $(seth --to-wei 1 ETH)
 }
 
