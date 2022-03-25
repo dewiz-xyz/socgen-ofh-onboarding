@@ -95,6 +95,7 @@ contract SpellAction {
     address constant RWA008AT2_A_OUTPUT_CONDUIT = 0xcD6534b0f356d1b7b849974238Dd3733C9A1f2e5;
     address constant RWA008AT2_A_OPERATOR = 0x3E774D9dfA578cc82C5b94a329230cD5736e9106;
     address constant RWA008AT2_A_MATE = 0x969880695d8aDFB8e9C38982e07905CC42eD3fAd;
+    address constant RWA008AT2_A_TESTING_MATE = 0xc0b362cbb0117Ec6A4b589f744d4dECb2768A2eB;
 
     uint256 constant THREE_PCT_RATE = 1000000000937303470807876289; // TODO RWA team should provide this one
 
@@ -106,7 +107,7 @@ contract SpellAction {
     uint256 public constant RAD = 10**45;
 
     uint256 constant RWA008AT2_A_INITIAL_DC = 80000000 * RAD; // TODO RWA team should provide
-    uint256 constant RWA008AT2_A_INITIAL_PRICE = 115000 * WAD; // TODO RWA team should provide
+    uint256 constant RWA008AT2_A_INITIAL_PRICE = 52 * MILLION * WAD; // TODO RWA team should provide
     uint48 constant RWA008AT2_A_TAU = 1 weeks; // TODO RWA team should provide
 
     /**
@@ -199,6 +200,9 @@ contract SpellAction {
         // whitelist DIIS Group in the conduits
         RwaOutputConduitLike(RWA008AT2_A_OUTPUT_CONDUIT).mate(RWA008AT2_A_MATE);
         RwaInputConduitLike(RWA008AT2_A_INPUT_CONDUIT).mate(RWA008AT2_A_MATE);
+
+        RwaOutputConduitLike(RWA008AT2_A_OUTPUT_CONDUIT).mate(RWA008AT2_A_TESTING_MATE);
+        RwaInputConduitLike(RWA008AT2_A_INPUT_CONDUIT).mate(RWA008AT2_A_TESTING_MATE);
     }
 }
 
