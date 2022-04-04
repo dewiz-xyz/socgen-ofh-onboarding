@@ -5,21 +5,21 @@
 set -eo pipefail
 
 source "${BASH_SOURCE%/*}/common.sh"
-
-[[ "$ETH_RPC_URL" && "$(seth chain)" == "ethlive" ]] || die "Please set a mainnet ETH_RPC_URL"
-[[ "$RWA_URN_2_GEM_CAP" ]] || die "Please set RWA_URN_2_GEM_CAP"
-[[ "$MIP21_LIQUIDATION_ORACLE" ]] || die "Please set MIP21_LIQUIDATION_ORACLE"
-
 # shellcheck disable=SC1091
 source "${BASH_SOURCE%/*}/build-env-addresses.sh" mainnet >/dev/null 2>&1
+
+[[ "$ETH_RPC_URL" && "$(seth chain)" == "ethlive" ]] || die "Please set a mainnet ETH_RPC_URL"
+[[ -z "$MIP21_LIQUIDATION_ORACLE" ]] || die 'Please set the MIP21_LIQUIDATION_ORACLE env var'
+[[ -z "$OPERATOR" ]] && die  'Please set the OPERATOR env var'
+[[ -z "$MATE" ]] && die  "Please set the MATE env var"
 
 # TODO: confirm for mainnet deployment
 export ETH_GAS=6000000
 
 # TODO: confirm if name/symbol is going to follow the RWA convention
 # TODO: confirm with DAO at the time of mainnet deployment if OFH will indeed be 007
-[[ -z "$NAME" ]] && NAME="RWA-008";
-[[ -z "$SYMBOL" ]] && SYMBOL="RWA008";
+[[ -z "$NAME" ]] && NAME="RWA-008-AT2"
+[[ -z "$SYMBOL" ]] && SYMBOL="RWA008AT2"
 #
 # WARNING (2021-09-08): The system cannot currently accomodate any LETTER beyond
 # "A".  To add more letters, we will need to update the PIP naming convention
@@ -32,59 +32,57 @@ export ETH_GAS=6000000
 # ! TODO: check with team/PE if this is still the case
 #
 [[ -z "$LETTER" ]] && LETTER="A";
-[[ -z "$OPERATOR" ]] && OPERATOR="0xA5Eee849FF395f9FA592645979f2A8Af6E0eF5c3" # TODO: update for mainnet
 
 ILK="${SYMBOL}-${LETTER}"
 ILK_ENCODED=$(seth --to-bytes32 "$(seth --from-ascii ${ILK})")
 
 # build it
-dapp --use solc:0.6.12 build
+make build
 
 # tokenize it
-RWA_TOKEN=$(dapp create "TokenWrapper")
-seth send "${RWA_TOKEN}" 'transfer(address,uint256)' "$OPERATOR" "$(seth --to-wei 1.0 ether)"
+[[ -z "$RWA_TOKEN" ]] && {
+    RWA_TOKEN=$(dapp create RwaToken "\"$NAME\"" "\"$SYMBOL\"")
+    seth send "$RWA_TOKEN" 'transfer(address,uint256)' "$OPERATOR" $(seth --to-wei 1 ETH)
+}
 
 # route it
-[[ -z "$RWA_OUTPUT_CONDUIT" ]] && RWA_OUTPUT_CONDUIT=$(dapp create RwaConduits:RwaOutputConduit2 "${MCD_DAI}")
+[[ -z "$RWA_OUTPUT_CONDUIT" ]] && {
+    RWA_OUTPUT_CONDUIT=$(dapp create RwaConduits:RwaOutputConduit2 "$MCD_DAI")
 
-if [ "$RWA_OUTPUT_CONDUIT" != "$OPERATOR" ]; then
-    seth send "${RWA_OUTPUT_CONDUIT}" 'rely(address)' "${MCD_PAUSE_PROXY}"
-    if [ "$1" == "goerli" ]; then
-        seth send "${RWA_OUTPUT_CONDUIT}" 'kiss(address)' "${TRUST1}"
-        seth send "${RWA_OUTPUT_CONDUIT}" 'kiss(address)' "${TRUST2}"
-    fi
-    seth send "${RWA_OUTPUT_CONDUIT}" 'deny(address)' "${ETH_FROM}"
-fi
+    seth send "$RWA_OUTPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+        seth send "$RWA_OUTPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
+}
 
 # join it
-RWA_JOIN=$(dapp create AuthGemJoin "${MCD_VAT}" "${ILK_ENCODED}" "${RWA_TOKEN}")
-seth send "${RWA_JOIN}" 'rely(address)' "${MCD_PAUSE_PROXY}"
+RWA_JOIN=$(dapp create AuthGemJoin "$MCD_VAT" "$ILK_ENCODED" "$RWA_TOKEN")
+seth send "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+    seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
 
 # urn it
-RWA_URN_2=$(dapp create RwaUrn2 "${MCD_VAT}" "${MCD_JUG}" "${RWA_JOIN}" "${MCD_JOIN_DAI}" "${RWA_OUTPUT_CONDUIT}" $RWA_URN_2_GEM_CAP)
-seth send "${RWA_URN_2}" 'rely(address)' "${MCD_PAUSE_PROXY}"
-seth send "${RWA_URN_2}" 'deny(address)' "${ETH_FROM}"
-
-# rely it
-seth send "${RWA_JOIN}" 'rely(address)' "${RWA_URN_2}"
-
-# deny it
-seth send "${RWA_JOIN}" 'deny(address)' "${ETH_FROM}"
+RWA_URN=$(dapp create RwaUrn "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT")
+seth send "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+    seth send "$RWA_URN" 'deny(address)' "$ETH_FROM"
 
 # connect it
-[[ -z "$RWA_INPUT_CONDUIT_2" ]] && RWA_INPUT_CONDUIT_2=$(dapp create RwaConduits:RwaInputConduit2 "${MCD_DAI}" "${RWA_URN_2}")
+[[ -z "$RWA_INPUT_CONDUIT" ]] && {
+    RWA_INPUT_CONDUIT=$(dapp create RwaConduits:RwaInputConduit2 "$MCD_DAI" "$RWA_URN")
+
+    seth send "$RWA_INPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+        seth send "$RWA_INPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
+}
 
 # print it
 cat << JSON
 {
+    "SYMBOL": "${SYMBOL}",
+    "NAME": "${NAME}",
     "ILK": "${ILK}",
     "MIP21_LIQUIDATION_ORACLE": "${MIP21_LIQUIDATION_ORACLE}",
-    "RWA_OFH_TOKEN": "${RWA_OFH_TOKEN}",
     "${SYMBOL}": "${RWA_WRAPPER_TOKEN}",
     "MCD_JOIN_${SYMBOL}_${LETTER}": "${RWA_JOIN}",
-    "${SYMBOL}_${LETTER}_URN": "${RWA_URN_2}",
-    "${SYMBOL}_${LETTER}_INPUT_CONDUIT": "${RWA_INPUT_CONDUIT_2}",
-    "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT": "${RWA_OUTPUT_CONDUIT_2}",
+    "${SYMBOL}_${LETTER}_URN": "${RWA_URN}",
+    "${SYMBOL}_${LETTER}_INPUT_CONDUIT": "${RWA_INPUT_CONDUIT}",
+    "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT": "${RWA_OUTPUT_CONDUIT}",
     "${SYMBOL}_${LETTER}_OPERATOR": "${OPERATOR}",
     "${SYMBOL}_${LETTER}_MATE": "${MATE}"
 }

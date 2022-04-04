@@ -55,17 +55,15 @@ if [ "$0" = "$BASH_SOURCE" ]; then
     [ -z "$ETH_RPC_URL" ] && ETH_RPC_URL="$(alchemy-url $chain)"
 
     exit_code=0
-    ZERO_ADDRESS='0x0000000000000000000000000000000000000000'
 
     set -u
 
-    verify-contract "src/utils/ForwardProxy.sol:ForwardProxy" "$RWA008AT1_A_OPERATOR" "$ZERO_ADDRESS" || exit_code=1
-    verify-contract "src/utils/ForwardProxy.sol:ForwardProxy" "$RWA008AT1_A_MATE" "$ZERO_ADDRESS" || exit_code=1
-    # verify-contract "src/tokens/mocks/MockOFH.sol:MockOFH" "$RWA_OFH_TOKEN" "$RWA_OFH_TOKEN_SUPPLY" || exit_code=1
-    verify-contract "src/tokens/TokenWrapper.sol:TokenWrapper" "$RWA008AT1" "$RWA_OFH_TOKEN" || exit_code=1
-    verify-contract "src/RwaOutputConduit2.sol:RwaOutputConduit2" "$RWA008AT1_A_OUTPUT_CONDUIT" "$MCD_DAI" || exit_code=1
-    verify-contract "src/RwaInputConduit2.sol:RwaInputConduit2" "$RWA008AT1_A_INPUT_CONDUIT" "$MCD_DAI" "$RWA008AT1_A_URN" || exit_code=1
-    verify-contract "src/RwaUrn2.sol:RwaUrn2" "$RWA008AT1_A_URN" "$MCD_VAT" "$MCD_JUG" "$MCD_JOIN_RWA008AT1_A" "$MCD_JOIN_DAI" "$RWA008AT1_A_OUTPUT_CONDUIT" "$RWA_URN_2_GEM_CAP" || exit_code=1
+    verify-contract "lib/forward-proxy/src/ForwardProxy.sol:ForwardProxy" "$RWA008AT2_A_OPERATOR" || exit_code=1
+    verify-contract "lib/forward-proxy/src/ForwardProxy.sol:ForwardProxy" "$RWA008AT2_A_MATE" || exit_code=1
+    verify-contract "src/RwaToken.sol:RwaToken" "$RWA008AT2" "\"$SYMBOL\"" "\"$NAME\"" || exit_code=1
+    verify-contract "src/RwaOutputConduit2.sol:RwaOutputConduit2" "$RWA008AT2_A_OUTPUT_CONDUIT" "$MCD_DAI" || exit_code=1
+    verify-contract "src/RwaInputConduit2.sol:RwaInputConduit2" "$RWA008AT2_A_INPUT_CONDUIT" "$MCD_DAI" "$RWA008AT2_A_URN" || exit_code=1
+    verify-contract "src/RwaUrn.sol:RwaUrn" "$RWA008AT2_A_URN" "$MCD_VAT" "$MCD_JUG" "$MCD_JOIN_RWA008AT2_A" "$MCD_JOIN_DAI" "$RWA008AT2_A_OUTPUT_CONDUIT" || exit_code=1
     verify-contract "src/RwaLiquidationOracle.sol:RwaLiquidationOracle" "$MIP21_LIQUIDATION_ORACLE" "$MCD_VAT" "$MCD_VOW" || exit_code=1
 
     set +u

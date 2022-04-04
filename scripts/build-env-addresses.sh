@@ -22,23 +22,18 @@ function validate_url() {
   exit 1
 }
 
-if [ "$0" != "$BASH_SOURCE" ]; then
-  # Script was run as source
-  SOURCED=1
-fi
-
 if [ -z "${1}" ]; then
   echo "Please specify the network [ mainnet, goerli, ces-goerli ] or a file path as an argument." >&2
   [ -z "${PS1}" ] && exit || return
 fi
 
-if [ -z "$ADDRESSES_RAW" ]; then
+if [ -z "$MCD_ADDRESSES" ]; then
   if [ "${1}" == "goerli" ]; then
     URL="https://changelog.makerdao.com/releases/goerli/active/contracts.json"
   elif [ "${1}" == "mainnet" ]; then
     URL="https://changelog.makerdao.com/releases/mainnet/active/contracts.json"
   elif [ "${1}" == "ces-goerli" ]; then
-    URL="https://raw.githubusercontent.com/clio-finance/ces-goerli/master/contracts.json"
+    URL="https://raw.githubusercontent.com/clio-finance/ces-goerli-mcd/master/contracts.json"
   else
     echo "# Invalid network ${1}" >&2
     [ -z "${PS1}" ] && exit || return
@@ -47,26 +42,18 @@ if [ -z "$ADDRESSES_RAW" ]; then
   if validate_url "${URL}"; then
     echo "# Deployment addresses generated from:" >&2
     echo "# ${URL}" >&2
-    ADDRESSES_RAW="$(curl -Ls "${URL}")"
+    MCD_ADDRESSES="$(curl -Ls "${URL}")"
   else
     echo "# Invalid URL ${URL}" >&2
     [ -z "${PS1}" ] && exit || return
   fi
 fi
 
-OUTPUT=$(jq -r 'to_entries | map(.key + "|" + (.value | tostring)) | .[]' <<<"${ADDRESSES_RAW}" | \
-  while IFS='|' read -r key value; do
-    PAIR="${key}=$(seth --to-checksum-address "${value}")"
-    echo "${PAIR}"
-  done
-)
+ENV_VARS=$(${BASH_SOURCE%/*}/../lib/shell-utils/bin/json-to-env -x <<<"$MCD_ADDRESSES" | grep -v '^export version')
 
-for pair in $OUTPUT
-do
-  if [[ $SOURCED == 1 ]]; then
-    echo "${pair}"
-    export "${pair?}"
-  else
-    echo "export ${pair}"
-  fi
-done
+# If the file was sourced, then set the env vars directly
+if [[ $0 != "$BASH_SOURCE" ]]; then
+  eval set -- "$ENV_VARS"
+else
+  echo $ENV_VARS
+fi

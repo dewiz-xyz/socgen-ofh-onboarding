@@ -11,9 +11,12 @@ contract RmulupTest is DSTest {
         instance = new Rmulup();
     }
 
-    function testRmulupFuzz(uint128 a, uint128 b) public {
+    function testFuzzRmulupVsRmulResults(uint128 a, uint128 b) public {
         // The result of rmulup is always greater than or equal the rmul result.
         assertGe(instance.rmulup(a, b), instance.rmul(a, b));
+    }
+
+    function testFuzzDifferenceBetweenRmulupAndRmulResults(uint128 a, uint128 b) public {
         // The difference between the results of rmulup and rmul is never greater than 1.
         assertLe(instance.rmulup(a, b) - instance.rmul(a, b), 1);
     }

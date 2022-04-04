@@ -1,7 +1,7 @@
 /* prettier-disable */
 
-/**
- * This file is a verbatim copy of @see { https://github.com/makerdao/MIP21-RWA-Example/blob/69bb3500106275f17ab9145127ffb4abf01a81d5/src/RwaLiquidationOracle.sol }.
+/*
+ * This file is a verbatim copy of https://github.com/makerdao/MIP21-RWA-Example/blob/69bb3500106275f17ab9145127ffb4abf01a81d5/src/RwaLiquidationOracle.sol.
  * It is replicated here so it can be used for testing purposes.
  */
 
