@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity >=0.6.8 <0.7.0;
+pragma solidity 0.6.12;
 
 import {DSTest} from "ds-test/test.sol";
 import {DSToken, DSAuthority} from "ds-token/token.sol";
@@ -33,7 +33,7 @@ import {RwaInputConduit2} from "mip21-toolkit/conduits/RwaInputConduit2.sol";
 import {RwaOutputConduit2} from "mip21-toolkit/conduits/RwaOutputConduit2.sol";
 import {RwaLiquidationOracle} from "mip21-toolkit/oracles/RwaLiquidationOracle.sol";
 import {RwaUrn} from "mip21-toolkit/urns/RwaUrn.sol";
-import {RwaUrnUtils} from "./RwaUrnUtils.sol";
+import {RwaUrnProxyView} from "./RwaUrnProxyView.sol";
 
 interface Hevm {
     function warp(uint256) external;
@@ -71,7 +71,7 @@ contract M is DSMath {
     }
 }
 
-contract RwaUrnUtilsTest is DSTest, M {
+contract RwaUrnProxyViewTest is DSTest, M {
     bytes20 internal constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
 
     Hevm internal hevm;
@@ -98,7 +98,7 @@ contract RwaUrnUtilsTest is DSTest, M {
     ForwardProxy internal rec;
     ForwardProxy internal gov;
 
-    RwaUrnUtils internal urnUtils;
+    RwaUrnProxyView internal urnProxyView;
 
     // Debt ceiling of 1000 DAI
     string internal constant DOC = "Please sign this";
@@ -123,27 +123,27 @@ contract RwaUrnUtilsTest is DSTest, M {
         dai.setAuthority(new NullAuthority());
         dai.setOwner(address(daiJoin));
 
-        vat.init("RWA008AT2-A");
+        vat.init("RWA008-A");
         vat.file("Line", 100 * rad(CEILING));
-        vat.file("RWA008AT2-A", "line", rad(CEILING));
+        vat.file("RWA008-A", "line", rad(CEILING));
 
-        jug.init("RWA008AT2-A");
-        jug.file("RWA008AT2-A", "duty", EIGHT_PCT);
+        jug.init("RWA008-A");
+        jug.file("RWA008-A", "duty", EIGHT_PCT);
 
         oracle = new RwaLiquidationOracle(address(vat), VOW);
-        oracle.init("RWA008AT2-A", wmul(CEILING, 1.1 ether), DOC, TAU);
+        oracle.init("RWA008-A", wmul(CEILING, 1.1 ether), DOC, TAU);
         vat.rely(address(oracle));
-        (, address pip, , ) = oracle.ilks("RWA008AT2-A");
+        (, address pip, , ) = oracle.ilks("RWA008-A");
 
         spotter = new Spotter(address(vat));
         vat.rely(address(spotter));
-        spotter.file("RWA008AT2-A", "mat", RAY);
-        spotter.file("RWA008AT2-A", "pip", pip);
-        spotter.poke("RWA008AT2-A");
+        spotter.file("RWA008-A", "mat", RAY);
+        spotter.file("RWA008-A", "pip", pip);
+        spotter.poke("RWA008-A");
 
-        rwaToken = new RwaToken("RWA008AT2", "RWA-008");
+        rwaToken = new RwaToken("RWA008", "RWA-008");
 
-        gemJoin = new AuthGemJoin(address(vat), "RWA008AT2-A", address(rwaToken));
+        gemJoin = new AuthGemJoin(address(vat), "RWA008-A", address(rwaToken));
         vat.rely(address(gemJoin));
 
         outConduit = new RwaOutputConduit2(address(dai));
@@ -157,28 +157,28 @@ contract RwaUrnUtilsTest is DSTest, M {
         rec = new ForwardProxy();
         gov = new ForwardProxy();
 
-        urnUtils = new RwaUrnUtils();
+        urnProxyView = new RwaUrnProxyView();
 
         urn.hope(address(op));
-        urn.hope(address(urnUtils));
+        urn.hope(address(urnProxyView));
         urn.rely(address(gov));
 
         outConduit.hope(address(op));
         outConduit.mate(address(mate));
 
         inConduit.mate(address(mate));
-        inConduit.mate(address(urnUtils));
+        inConduit.mate(address(urnProxyView));
 
         RwaToken(op._(address(rwaToken))).approve(address(urn), type(uint256).max);
-
-        RwaToken(rec._(address(dai))).approve(address(urnUtils), type(uint256).max);
 
         rwaToken.transfer(address(op), 1 ether);
     }
 
-    function testFuzzFullRepayment(uint32 secs) public {
+    function testFuzzRepayment(uint32 estimateDelay, uint32 repaymentDelay) public {
         // Between 1 and 2^32-1 seconds
-        secs = (secs % (type(uint32).max - 1)) + 1;
+        estimateDelay = (estimateDelay % (type(uint32).max - 1)) + 1;
+        // Between estimateDelay and 2^32-1 seconds
+        repaymentDelay = (repaymentDelay % (type(uint32).max - estimateDelay)) + estimateDelay;
 
         RwaUrn(op._(address(urn))).lock(1 ether);
         RwaUrn(op._(address(urn))).draw(400 ether);
@@ -187,28 +187,34 @@ contract RwaUrnUtilsTest is DSTest, M {
 
         RwaOutputConduit2(mate._(address(outConduit))).push();
 
-        // Fast-forward 30 day
-        hevm.warp(block.timestamp + secs);
+        uint256 estimatedAmount = urnProxyView.estimateWipeAllWad(address(urn), block.timestamp + estimateDelay);
+        uint256 actualAmount = urnProxyView.estimateWipeAllWad(address(urn), block.timestamp + repaymentDelay);
+
+        hevm.warp(block.timestamp + repaymentDelay);
+
         // Mints some additional Dai into the receiver's balance to cope with accrued fees
-        mintDai(address(rec), 10000000000 ether);
+        mintDai(address(op), estimatedAmount);
+        uint256 opBalanceBefore = dai.balanceOf(address(op));
 
-        uint256 expectedAmount = urnUtils.estimateWipeAllWad(address(urn), block.timestamp);
-        uint256 recBalanceBefore = dai.balanceOf(address(rec));
+        DSToken(op._(address(dai))).transfer(address(inConduit), estimatedAmount);
+        RwaInputConduit2(mate._(address(inConduit))).push();
 
-        urnUtils.wipeAll(address(urn), address(inConduit), address(rec));
+        RwaUrn(op._(address(urn))).wipe(estimatedAmount);
 
-        uint256 recBalanceAfter = dai.balanceOf(address(rec));
+        uint256 opBalanceAfter = dai.balanceOf(address(op));
 
         // Get the remaining debt in the urn
-        (, uint256 art) = vat.urns("RWA008AT2-A", address(urn));
-        // If the value is >0, it must revert
-        assertEq(art, 0);
-        assertEq(recBalanceBefore - recBalanceAfter, expectedAmount);
+        (, uint256 art) = vat.urns("RWA008-A", address(urn));
+
+        assertLe(art, actualAmount - estimatedAmount);
+        assertEq(opBalanceBefore - opBalanceAfter, estimatedAmount);
     }
 
-    function testFuzzFullRepaymentWhenUrnHasOutstandingDai(uint32 secs) public {
+    function testFailFullRepaymentIfTooEarly(uint32 estimateDelay, uint32 repaymentDelay) public {
         // Between 1 and 2^32-1 seconds
-        secs = (secs % (type(uint32).max - 1)) + 1;
+        estimateDelay = (estimateDelay % (type(uint32).max - 1)) + 1;
+        // Between 0 and estimateDelay - 1
+        repaymentDelay = repaymentDelay % estimateDelay;
 
         RwaUrn(op._(address(urn))).lock(1 ether);
         RwaUrn(op._(address(urn))).draw(400 ether);
@@ -217,60 +223,16 @@ contract RwaUrnUtilsTest is DSTest, M {
 
         RwaOutputConduit2(mate._(address(outConduit))).push();
 
-        // Fast-forward 30 day
-        hevm.warp(block.timestamp + secs);
+        uint256 estimatedAmount = urnProxyView.estimateWipeAllWad(address(urn), block.timestamp + estimateDelay);
 
-        // Mint some additional Dai into the receiver's balance to cope with accrued fees.
-        mintDai(address(rec), 10000000000 ether);
-
-        // Mint some Dai and put it into the urn.
-        mintDai(address(urn), 50 ether);
-
-        uint256 recBalanceBefore = dai.balanceOf(address(rec));
-        uint256 urnBalanceBefore = dai.balanceOf(address(urn));
-        uint256 expectedAmount = urnUtils.estimateWipeAllWad(address(urn), block.timestamp);
-
-        urnUtils.wipeAll(address(urn), address(inConduit), address(rec));
-
-        uint256 recBalanceAfter = dai.balanceOf(address(rec));
-
-        assertEq(recBalanceBefore - recBalanceAfter, expectedAmount - urnBalanceBefore);
-    }
-
-    function testFailFullRepaymentWhenPayerHasNotEnoughDai() public {
-        RwaUrn(op._(address(urn))).lock(1 ether);
-        RwaUrn(op._(address(urn))).draw(400 ether);
-
-        RwaOutputConduit2(op._(address(outConduit))).pick(address(rec));
-
-        RwaOutputConduit2(mate._(address(outConduit))).push();
-
-        // Fast-forward 30 day
-        hevm.warp(block.timestamp + 30 days);
-
-        urnUtils.wipeAll(address(urn), address(inConduit), address(rec));
-    }
-
-    function testNoGemLeftOnTheUrnAfterFullRepayment(uint32 secs) public {
-        // Between 1 and 2^32-1 seconds
-        secs = (secs % (type(uint32).max - 1)) + 1;
-
-        RwaUrn(op._(address(urn))).lock(1 ether);
-        RwaUrn(op._(address(urn))).draw(400 ether);
-
-        RwaOutputConduit2(op._(address(outConduit))).pick(address(rec));
-
-        RwaOutputConduit2(mate._(address(outConduit))).push();
-
-        // Fast-forward 30 day
-        hevm.warp(block.timestamp + secs);
+        hevm.warp(block.timestamp + repaymentDelay);
         // Mints some additional Dai into the receiver's balance to cope with accrued fees
-        mintDai(address(rec), 10000000000 ether);
+        mintDai(address(op), estimatedAmount);
 
-        urnUtils.wipeAll(address(urn), address(inConduit), address(rec));
+        DSToken(op._(address(dai))).transfer(address(inConduit), estimatedAmount);
+        RwaInputConduit2(mate._(address(inConduit))).push();
 
-        (, uint256 art) = vat.urns("RWA008AT2-A", address(urn));
-        assertEq(art, 0);
+        RwaUrn(op._(address(urn))).wipe(estimatedAmount);
     }
 
     function mintDai(address who, uint256 wad) internal {
