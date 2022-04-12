@@ -28,3 +28,6 @@
 [submodule "lib/shell-utils"]
 	path = lib/shell-utils
 	url = https://github.com/clio-finance/shell-utils.git
+[submodule "lib/mip21-toolkit"]
+	path = lib/mip21-toolkit
+	url = https://github.com/clio-finance/mip21-toolkit
