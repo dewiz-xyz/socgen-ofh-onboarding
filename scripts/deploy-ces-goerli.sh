@@ -74,6 +74,11 @@ echo "${SYMBOL}_${LETTER}_URN: ${RWA_URN}" >&2
 seth send "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
     seth send "$RWA_URN" 'deny(address)' "$ETH_FROM"
 
+[[ -z "$RWA_URN_PROXY_VIEW" ]] && {
+    RWA_URN_PROXY_VIEW=$(dapp create RwaUrnProxyView)
+    echo "RWA_URN_PROXY_VIEW: ${RWA_URN_PROXY_VIEW}" >&2
+}
+
 # connect it
 [[ -z "$RWA_INPUT_CONDUIT" ]] && {
     RWA_INPUT_CONDUIT=$(dapp create RwaInputConduit2 "$MCD_DAI" "$RWA_URN")
@@ -108,6 +113,7 @@ cat <<JSON
     "${SYMBOL}_${LETTER}_INPUT_CONDUIT": "${RWA_INPUT_CONDUIT}",
     "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT": "${RWA_OUTPUT_CONDUIT}",
     "${SYMBOL}_${LETTER}_OPERATOR": "${OPERATOR}",
-    "${SYMBOL}_${LETTER}_MATE": "${MATE}"
+    "${SYMBOL}_${LETTER}_MATE": "${MATE}",
+    "RWA_URN_PROXY_VIEW": "${RWA_URN_PROXY_VIEW}"
 }
 JSON

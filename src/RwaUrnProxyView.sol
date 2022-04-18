@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.6.12;
+pragma solidity 0.6.12;
 
 import {VatAbstract, JugAbstract, DaiJoinAbstract, GemJoinAbstract, DaiAbstract} from "dss-interfaces/Interfaces.sol";
 
@@ -40,36 +40,7 @@ interface RwaInputConduitLike {
  * @author Henrique Barcelos <henrique@clio.finance>
  * @title Simplifies the interaction with vaults for Real-World Assets.
  */
-contract RwaUrnUtils {
-    /**
-     * @notice Makes a full repayment of the outstanding debt in a RwaUrn.
-     * @dev After this function is called, no collateral should remain locked into the urn.
-     * If this condition is not met for any reason, the transaction will revert.
-     * @param urn The RwaUrn address.
-     * @param inputConduit The address of the input conduit wired to the RwaUrn.
-     * @param usr The address of the wallet which will fund the repayment.
-     */
-    function wipeAll(
-        address urn,
-        address inputConduit,
-        address usr
-    ) external {
-        require(RwaInputConduitLike(inputConduit).to() == urn, "RwaUrnUtils/bad-conduit");
-
-        uint256 wad = _getWipeAllWad(urn, block.timestamp);
-
-        DaiAbstract dai = DaiAbstract(
-            // Law of Demeter anybody? https://en.wikipedia.org/wiki/Law_of_Demeter
-            RwaUrnLike(urn).daiJoin().dai()
-        );
-        // There might be outstanding Dai balance in the urn already, so we need to take only the missing amount.
-        uint256 urnBalance = dai.balanceOf(urn);
-        dai.transferFrom(usr, inputConduit, sub(wad, urnBalance));
-
-        RwaInputConduitLike(inputConduit).push();
-        RwaUrnLike(urn).wipe(wad);
-    }
-
+contract RwaUrnProxyView {
     /**
      * @notice Estimates the amount of Dai required to fully repay a loan at `when` given time.
      * @dev It assumes there will be no changes in the base fee or the ilk stability fee between now and `when`.
@@ -78,18 +49,8 @@ contract RwaUrnUtils {
      * @return wad The amount of Dai required to make a full repayment.
      */
     function estimateWipeAllWad(address urn, uint256 when) public view returns (uint256 wad) {
-        require(when >= block.timestamp, "RwaUrnUtils/invalid-date");
-        return _getWipeAllWad(urn, when);
-    }
+        require(when >= block.timestamp, "RwaUrnProxyView/invalid-date");
 
-    /**
-     * @dev Gets the amount of Dai required to wipe all debt from the urn.
-     * Assumes there will be no changes in the base fee or the ilk stability fee between now and `when`.
-     * @param urn The RwaUrn vault targeted by the repayment.
-     * @param when The unix timestamp by which the repayment will be made. It must NOT be in the past.
-     * @return wad The amount of Dai required to make a full repayment.
-     */
-    function _getWipeAllWad(address urn, uint256 when) internal view returns (uint256 wad) {
         // Law of Demeter anybody? https://en.wikipedia.org/wiki/Law_of_Demeter
         bytes32 ilk = RwaUrnLike(urn).gemJoin().ilk();
         VatAbstract vat = RwaUrnLike(urn).vat();
@@ -117,26 +78,8 @@ contract RwaUrnUtils {
         require((z = x + y) >= x, "DSMath/add-overflow");
     }
 
-    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require((z = x - y) <= x, "DSMath/sub-overflow");
-    }
-
     function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require(y == 0 || (z = x * y) / y == x, "DSMath/mul-overflow");
-    }
-
-    /**
-     * @dev Converts `rad` (10^45) into a `wad` (10^18) by dividing it by RAY (10^27).
-     */
-    function wad(uint256 rad_) internal pure returns (uint256 z) {
-        return rad_ / RAY;
-    }
-
-    /**
-     * @dev Converts `wad` (10^18) into a `rad` (10^45) by multiplying it by RAY (10^27).
-     */
-    function rad(uint256 wad_) internal pure returns (uint256 z) {
-        return mul(wad_, RAY);
     }
 
     /**

@@ -63,6 +63,11 @@ RWA_URN=$(dapp create RwaUrn "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "
 seth send "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
     seth send "$RWA_URN" 'deny(address)' "$ETH_FROM"
 
+[[ -z "$RWA_URN_PROXY_VIEW" ]] && {
+    RWA_URN_PROXY_VIEW=$(dapp create RwaUrnProxyView)
+    echo "RWA_URN_PROXY_VIEW: ${RWA_URN_PROXY_VIEW}" >&2
+}
+
 # connect it
 [[ -z "$RWA_INPUT_CONDUIT" ]] && {
     RWA_INPUT_CONDUIT=$(dapp create RwaConduits:RwaInputConduit2 "$MCD_DAI" "$RWA_URN")
