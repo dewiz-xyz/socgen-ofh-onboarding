@@ -13,8 +13,8 @@ export ETH_GAS=6000000
 
 # TODO: confirm if name/symbol is going to follow the RWA convention
 # TODO: confirm with DAO at the time of mainnet deployment if OFH will indeed be 007
-[[ -z "$NAME" ]] && NAME="RWA-008-AT2"
-[[ -z "$SYMBOL" ]] && SYMBOL="RWA008AT2"
+[[ -z "$NAME" ]] && NAME="RWA-008"
+[[ -z "$SYMBOL" ]] && SYMBOL="RWA008"
 #
 # WARNING (2021-09-08): The system cannot currently accomodate any LETTER beyond
 # "A".  To add more letters, we will need to update the PIP naming convention
@@ -77,11 +77,13 @@ seth send "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
 # print it
 cat << JSON
 {
+    "MIP21_LIQUIDATION_ORACLE": "${MIP21_LIQUIDATION_ORACLE}",
+    "RWA_TOKEN_FACTORY": "${RWA_TOKEN_FACTORY}",
+    "RWA_URN_PROXY_VIEW": "${RWA_URN_PROXY_VIEW}",
     "SYMBOL": "${SYMBOL}",
     "NAME": "${NAME}",
     "ILK": "${ILK}",
-    "MIP21_LIQUIDATION_ORACLE": "${MIP21_LIQUIDATION_ORACLE}",
-    "${SYMBOL}": "${RWA_WRAPPER_TOKEN}",
+    "${SYMBOL}": "${RWA_TOKEN}",
     "MCD_JOIN_${SYMBOL}_${LETTER}": "${RWA_JOIN}",
     "${SYMBOL}_${LETTER}_URN": "${RWA_URN}",
     "${SYMBOL}_${LETTER}_INPUT_CONDUIT": "${RWA_INPUT_CONDUIT}",

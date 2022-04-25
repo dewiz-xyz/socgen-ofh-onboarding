@@ -11,8 +11,8 @@ export ETH_GAS=6000000
 
 # TODO: confirm if name/symbol is going to follow the RWA convention
 # TODO: confirm with DAO at the time of mainnet deployment if OFH will indeed be 007
-[[ -z "$NAME" ]] && NAME="RWA-008-AT2"
-[[ -z "$SYMBOL" ]] && SYMBOL="RWA008AT2"
+[[ -z "$NAME" ]] && NAME="RWA-008"
+[[ -z "$SYMBOL" ]] && SYMBOL="RWA008"
 #
 # WARNING (2021-09-08): The system cannot currently accomodate any LETTER beyond
 # "A".  To add more letters, we will need to update the PIP naming convention
@@ -36,18 +36,17 @@ ILK_ENCODED=$(seth --to-bytes32 "$(seth --from-ascii "$ILK")")
 # build it
 make build
 
+# tokenize it
+[[ -z "$RWA_TOKEN" ]] && {
+    RWA_TOKEN=$(seth send "${RWA_TOKEN_FACTORY}" 'createRwaToken(string,string,address)' \"$NAME\" \"$SYMBOL\" "$MCD_PAUSE_PROXY")
+}
+echo "${SYMBOL}: ${RWA_TOKEN}" >&2
+
 [[ -z "$OPERATOR" ]] && OPERATOR=$(dapp create ForwardProxy) # using generic forward proxy for goerli
 echo "${SYMBOL}_${LETTER}_OPERATOR: ${OPERATOR}" >&2
 
 [[ -z "$MATE" ]] && MATE=$(dapp create ForwardProxy) # using generic forward proxy for goerli
 echo "${SYMBOL}_${LETTER}_MATE: ${MATE}" >&2
-
-# tokenize it
-[[ -z "$RWA_TOKEN" ]] && {
-    RWA_TOKEN=$(dapp create RwaToken "\"$NAME\"" "\"$SYMBOL\"")
-    seth send "$RWA_TOKEN" 'transfer(address,uint256)' "$OPERATOR" $(seth --to-wei 1 ETH)
-}
-echo "${SYMBOL}: ${RWA_TOKEN}" >&2
 
 # route it
 [[ -z "$RWA_OUTPUT_CONDUIT" ]] && {
@@ -103,17 +102,18 @@ seth send "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
 
 cat <<JSON
 {
+    "MIP21_LIQUIDATION_ORACLE": "${MIP21_LIQUIDATION_ORACLE}",
+    "RWA_TOKEN_FACTORY": "${RWA_TOKEN_FACTORY}",
+    "RWA_URN_PROXY_VIEW": "${RWA_URN_PROXY_VIEW}",
     "SYMBOL": "${SYMBOL}",
     "NAME": "${NAME}",
     "ILK": "${ILK}",
-    "MIP21_LIQUIDATION_ORACLE": "${MIP21_LIQUIDATION_ORACLE}",
     "${SYMBOL}": "${RWA_TOKEN}",
     "MCD_JOIN_${SYMBOL}_${LETTER}": "${RWA_JOIN}",
     "${SYMBOL}_${LETTER}_URN": "${RWA_URN}",
     "${SYMBOL}_${LETTER}_INPUT_CONDUIT": "${RWA_INPUT_CONDUIT}",
     "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT": "${RWA_OUTPUT_CONDUIT}",
     "${SYMBOL}_${LETTER}_OPERATOR": "${OPERATOR}",
-    "${SYMBOL}_${LETTER}_MATE": "${MATE}",
-    "RWA_URN_PROXY_VIEW": "${RWA_URN_PROXY_VIEW}"
+    "${SYMBOL}_${LETTER}_MATE": "${MATE}"
 }
 JSON
