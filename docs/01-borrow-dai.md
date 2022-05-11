@@ -2,10 +2,15 @@
 
 ⚠️ Replace the `SYMBOL` variable below accordingly.
 
-0. Read from the proper environment variables:
+## Using Authorized Wallets
+
+1. Read from the proper environment variables:
 
    ```bash
-   var_expand() {
+   SYMBOL="RWA008"
+   ```
+
+   ```bash var_expand() {
        if [ "$#" -ne 1 ] || [ -z "${1-}" ]; then
            printf 'var_expand: expected one non-empty argument\n' >&2;
        return 1;
@@ -13,46 +18,120 @@
        eval printf '%s' "\"\${$1?}\""
    }
 
-   SYMBOL="RWA008"
    ILK="${SYMBOL}_A"
-   _TOKEN=$(var_expand "${SYMBOL}")
-   _OPERATOR=$(var_expand "${ILK}_OPERATOR")
-   _MATE=$(var_expand "${ILK}_MATE")
-   _INPUT_CONDUIT=$(var_expand "${ILK}_INPUT_CONDUIT")
-   _OUTPUT_CONDUIT=$(var_expand "${ILK}_OUTPUT_CONDUIT")
-   _URN=$(var_expand "${ILK}_URN")
+   OPERATOR=$(var_expand "${ILK}_OPERATOR")
+   MATE=$(var_expand "${ILK}_MATE")
+   TOKEN=$(var_expand "${SYMBOL}")
+   INPUT_CONDUIT=$(var_expand "${ILK}_INPUT_CONDUIT")
+   OUTPUT_CONDUIT=$(var_expand "${ILK}_OUTPUT_CONDUIT")
+   URN=$(var_expand "${ILK}_URN")
    ```
 
-1. Approve the urn to pull the wrapped token from the operator's balance
+2. Approve the urn to pull the wrapped token from the operator's balance
+
    ```bash
-   TOKEN_AMOUNT=$(seth --to-wei ".01 ether")
-   seth send "$_OPERATOR" "_(address)" "$_TOKEN"
-   seth send "$_OPERATOR" "approve(address,uint)" "$_URN" $TOKEN_AMOUNT
-   ```
-2. Lock the tokens into the urn
-   ```bash
-   seth send "$_OPERATOR" "_(address)" "$_URN"
-   seth send "$_OPERATOR" "lock(uint)" $TOKEN_AMOUNT
-   ```
-3. Draw Dai
-   ```bash
-   DAI_TOKEN_AMOUNT=$(seth --to-wei '1000 ether')
-   seth send "$_OPERATOR" "draw(uint)" $DAI_TOKEN_AMOUNT
-   ```
-4. Pick the Dai recipient
-   ```bash
-   seth send "$_OPERATOR" "_(address)" "$_OUTPUT_CONDUIT"
-   seth send "$_OPERATOR" "pick(address)" "$_OPERATOR"
-   ```
-5. Push Dai to the recipient
-   ```bash
-   seth send "$_MATE" "_(address)" "$_OUTPUT_CONDUIT"
-   seth send "$_MATE" "push()"
+   TOKEN_AMOUNT=$(seth --to-wei '.01' ETH)
+   seth send "$TOKEN" "approve(address,uint)" "$URN" $TOKEN_AMOUNT
    ```
 
-Last check the balance of the operator:
+3. Lock the tokens into the urn
 
-```bash
-OPERATOR_BALANCE=$(seth call $MCD_DAI "balanceOf(address)(uint)" $_OPERATOR | seth --from-wei)
-echo "Operator Balance: ${OPERATOR_BALANCE} Dai"
-```
+   ```bash
+   seth send "$URN" "lock(uint)" $TOKEN_AMOUNT
+   ```
+
+4. Draw DAI
+
+   ```bash
+   DAI_AMOUNT=$(seth --to-wei 1000 ETH)
+   seth send "$URN" "draw(uint)" $DAI_AMOUNT
+   ```
+
+5. Pick the DAI recipient
+
+   ```bash
+   seth send "$OUTPUT_CONDUIT" "pick(address)" "$OPERATOR"
+   ```
+
+6. Push DAI to the recipient
+
+   ⚠️ Requires permission to call `push`.
+
+   ```bash
+   seth send "$OUTPUT_CONDUIT" "push()"
+   ```
+
+7. Check the balance of the operator:
+
+   ```bash
+   OPERATOR_BALANCE=$(seth call $MCD_DAI "balanceOf(address)(uint)" $OPERATOR | seth --from-wei)
+   echo "Operator Balance: ${OPERATOR_BALANCE} DAI"
+   ```
+
+## Using `ForwardProxy` (dev environment only)
+
+1. Read from the proper environment variables:
+
+   ```bash
+   SYMBOL="RWA008"
+   ```
+
+   ```bash var_expand() {
+       if [ "$#" -ne 1 ] || [ -z "${1-}" ]; then
+           printf 'var_expand: expected one non-empty argument\n' >&2;
+       return 1;
+           fi
+       eval printf '%s' "\"\${$1?}\""
+   }
+
+   ILK="${SYMBOL}_A"
+   TOKEN=$(var_expand "${SYMBOL}")
+   OPERATOR=$(var_expand "${ILK}_OPERATOR")
+   MATE=$(var_expand "${ILK}_MATE")
+   INPUT_CONDUIT=$(var_expand "${ILK}_INPUT_CONDUIT")
+   OUTPUT_CONDUIT=$(var_expand "${ILK}_OUTPUT_CONDUIT")
+   URN=$(var_expand "${ILK}URN")
+   ```
+
+2. Approve the urn to pull the wrapped token from the operator's balance
+
+   ```bash
+   TOKEN_AMOUNT=$(seth --to-wei '.01' ETH)
+   seth send "$OPERATOR" "_(address)" "$TOKEN"
+   seth send "$OPERATOR" "approve(address,uint)" "$URN" $TOKEN_AMOUNT
+   ```
+
+3. Lock the tokens into the urn
+
+   ```bash
+   seth send "$OPERATOR" "_(address)" "$URN"
+   seth send "$OPERATOR" "lock(uint)" $TOKEN_AMOUNT
+   ```
+
+4. Draw DAI
+
+   ```bash
+   DAI_AMOUNT=$(seth --to-wei 1000 ETH)
+   seth send "$OPERATOR" "draw(uint)" $DAI_AMOUNT
+   ```
+
+5. Pick the DAI recipient
+
+   ```bash
+   seth send "$OPERATOR" "_(address)" "$OUTPUT_CONDUIT"
+   seth send "$OPERATOR" "pick(address)" "$OPERATOR"
+   ```
+
+6. Push DAI to the recipient
+
+   ```bash
+   seth send "$MATE" "_(address)" "$OUTPUT_CONDUIT"
+   seth send "$MATE" "push()"
+   ```
+
+7. Check the balance of the operator:
+
+   ```bash
+   OPERATOR_BALANCE=$(seth call $MCD_DAI "balanceOf(address)(uint)" $OPERATOR | seth --from-wei)
+   echo "Operator Balance: ${OPERATOR_BALANCE} DAI"
+   ```

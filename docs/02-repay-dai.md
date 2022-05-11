@@ -2,7 +2,13 @@
 
 ⚠️ Replace the `SYMBOL` variable below accordingly.
 
-0. Read from the proper environment variables:
+## Using Authorized Wallets
+
+1. Read from the proper environment variables:
+
+   ```bash
+   SYMBOL="RWA008"
+   ```
 
    ```bash
    var_expand() {
@@ -13,34 +19,94 @@
        eval printf '%s' "\"\${$1?}\""
    }
 
-   SYMBOL="RWA008"
    ILK="${SYMBOL}_A"
-   _TOKEN=$(var_expand "${SYMBOL}")
-   _OPERATOR=$(var_expand "${ILK}_OPERATOR")
-   _MATE=$(var_expand "${ILK}_MATE")
-   _INPUT_CONDUIT=$(var_expand "${ILK}_INPUT_CONDUIT")
-   _OUTPUT_CONDUIT=$(var_expand "${ILK}_OUTPUT_CONDUIT")
-   _URN=$(var_expand "${ILK}_URN")
+   TOKEN=$(var_expand "${SYMBOL}")
+   OPERATOR=$(var_expand "${ILK}_OPERATOR")
+   MATE=$(var_expand "${ILK}_MATE")
+   INPUT_COUNDUIT=$(var_expand "${ILK}_INPUT_CONDUIT")
+   OUTPUT_CONDUIT=$(var_expand "${ILK}_OUTPUT_CONDUIT")
+   URN=$(var_expand "${ILK}_URN")
    ```
 
-1. Transfer Dai to the input conduit
+2. Transfer DAI to the input conduit
+
    ```bash
-   DAI_AMOUNT=$(seth --to-wei '1000 ether')
-   seth send "$_OPERATOR" "_(address)" "$MCD_DAI"
-   seth send "$_OPERATOR" "transfer(address,uint)" "$_INPUT_CONDUIT" $DAI_AMOUNT
+   DAI_AMOUNT=$(seth --to-wei 1000 ETH)
+   seth send "$MCD_DAI" "transfer(address,uint)" "$INPUT_COUNDUIT" $DAI_AMOUNT
    ```
-2. Push Dai into the urn
+
+3. Push DAI into the urn
+
+   ⚠️ Requires permission to call `push`.
+
    ```bash
-   seth send "$_MATE" "_(address)" "$_INPUT_CONDUIT"
-   seth send "$_MATE" "push()"
+   seth send "$INPUT_COUNDUIT" "push()"
    ```
-3. Wipe the debt from the urn
+
+4. Wipe the debt from the urn
+
    ```bash
-   seth send "$_OPERATOR" "_(address)" "$_URN"
-   seth send "$_OPERATOR" "wipe(uint)" $DAI_AMOUNT
+   seth send "$URN" "wipe(uint)" $DAI_AMOUNT
    ```
-4. Free the gem from the urn
+
+5. Free the gem from the urn [optional]
+
    ```bash
-   TOKEN_AMOUNT=$(seth --to-wei ".01 ether")
-   seth send "$_OPERATOR" "free(uint)" $TOKEN_AMOUNT
+   TOKEN_AMOUNT=$(seth --to-wei '.01' ETH)
+   seth send "$URN" "free(uint)" $TOKEN_AMOUNT
+   ```
+
+## Using `ForwardProxy` (dev environment only)
+
+1. Read from the proper environment variables:
+
+   ```bash
+   SYMBOL="RWA008"
+   ```
+
+   ```bash
+   var_expand() {
+       if [ "$#" -ne 1 ] || [ -z "${1-}" ]; then
+           printf 'var_expand: expected one non-empty argument\n' >&2;
+       return 1;
+           fi
+       eval printf '%s' "\"\${$1?}\""
+   }
+
+   ILK="${SYMBOL}_A"
+   TOKEN=$(var_expand "${SYMBOL}")
+   OPERATOR=$(var_expand "${ILK}_OPERATOR")
+   MATE=$(var_expand "${ILK}_MATE")
+   INPUT_COUNDUIT=$(var_expand "${ILK}_INPUT_CONDUIT")
+   OUTPUT_CONDUIT=$(var_expand "${ILK}_OUTPUT_CONDUIT")
+   URN=$(var_expand "${ILK}_URN")
+   ```
+
+2. Transfer DAI to the input conduit
+
+   ```bash
+   DAI_AMOUNT=$(seth --to-wei 1000 ETH)
+   seth send "$OPERATOR" "_(address)" "$MCD_DAI"
+   seth send "$OPERATOR" "transfer(address,uint)" "$INPUT_COUNDUIT" $DAI_AMOUNT
+   ```
+
+3. Push DAI into the urn
+
+   ```bash
+   seth send "$MATE" "_(address)" "$INPUT_COUNDUIT"
+   seth send "$MATE" "push()"
+   ```
+
+4. Wipe the debt from the urn
+
+   ```bash
+   seth send "$OPERATOR" "_(address)" "$URN"
+   seth send "$OPERATOR" "wipe(uint)" $DAI_AMOUNT
+   ```
+
+5. Free the gem from the urn [optional]
+
+   ```bash
+   TOKEN_AMOUNT=$(seth --to-wei '.01' ETH)
+   seth send "$OPERATOR" "free(uint)" $TOKEN_AMOUNT
    ```
