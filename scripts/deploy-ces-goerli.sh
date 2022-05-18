@@ -73,9 +73,9 @@ echo "${SYMBOL}_${LETTER}_URN: ${RWA_URN}" >&2
 seth send "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
     seth send "$RWA_URN" 'deny(address)' "$ETH_FROM"
 
-[[ -z "$RWA_URN_PROXY_VIEW" ]] && {
-    RWA_URN_PROXY_VIEW=$(dapp create RwaUrnProxyView)
-    echo "RWA_URN_PROXY_VIEW: ${RWA_URN_PROXY_VIEW}" >&2
+[[ -z "$RWA_URN_PROXY_ACTIONS" ]] && {
+    RWA_URN_PROXY_ACTIONS=$(dapp create RwaUrnProxyActions)
+    echo "RWA_URN_PROXY_ACTIONS: ${RWA_URN_PROXY_ACTIONS}" >&2
 }
 
 # connect it
@@ -104,7 +104,7 @@ cat <<JSON
 {
     "MIP21_LIQUIDATION_ORACLE": "${MIP21_LIQUIDATION_ORACLE}",
     "RWA_TOKEN_FACTORY": "${RWA_TOKEN_FACTORY}",
-    "RWA_URN_PROXY_VIEW": "${RWA_URN_PROXY_VIEW}",
+    "RWA_URN_PROXY_ACTIONS": "${RWA_URN_PROXY_ACTIONS}",
     "SYMBOL": "${SYMBOL}",
     "NAME": "${NAME}",
     "ILK": "${ILK}",

@@ -68,7 +68,7 @@ if [ "$0" = "$BASH_SOURCE" ]; then
     verify-contract "lib/mip21-toolkit/src/conduits/RwaInputConduit2.sol:RwaInputConduit2" "$RWA008AT4_A_INPUT_CONDUIT" "$MCD_DAI" "$RWA008AT4_A_URN" || exit_code=1
     verify-contract "lib/mip21-toolkit/src/urns/RwaUrn.sol:RwaUrn" "$RWA008AT4_A_URN" "$MCD_VAT" "$MCD_JUG" "$MCD_JOIN_RWA008AT4_A" "$MCD_JOIN_DAI" "$RWA008AT4_A_OUTPUT_CONDUIT" || exit_code=1
     verify-contract "lib/mip21-toolkit/src/oracles/RwaLiquidationOracle.sol:RwaLiquidationOracle" "$MIP21_LIQUIDATION_ORACLE" "$MCD_VAT" "$MCD_VOW" || exit_code=1
-    verify-contract "src/RwaUrnProxyView.sol:RwaUrnProxyView" "$RWA_URN_PROXY_VIEW" || exit_code=1
+    verify-contract "src/RwaUrnProxyActions.sol:RwaUrnProxyActions" "$RWA_URN_PROXY_ACTIONS" || exit_code=1
 
     set +u
 
