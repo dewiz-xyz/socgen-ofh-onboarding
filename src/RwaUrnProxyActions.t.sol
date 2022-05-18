@@ -180,10 +180,8 @@ contract RwaUrnProxyActionsTest is DSTest, M {
         outConduit.mate(address(mate));
 
         inConduit.mate(address(mate));
-        inConduit.mate(address(urnProxyActions));
 
         inConduit2.mate(address(mate));
-        inConduit2.mate(address(urnProxyActions));
 
         RwaToken(op._(address(rwaToken))).approve(address(urn), type(uint256).max);
         RwaToken(op._(address(rwaToken))).approve(address(urn2), type(uint256).max);
