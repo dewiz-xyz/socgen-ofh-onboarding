@@ -25,7 +25,8 @@ import {VatAbstract, JugAbstract, DaiJoinAbstract, GemJoinAbstract, DaiAbstract,
 contract RwaUrnProxyActions {
     /**
      * @notice Wipes all the outstanding debt from the `urn` and burns the collateral token.
-     * @dev It requires that enough Dai to repay the debt is already deposited into the `urn`. Any remaining Dai balance is sent back to the output conduit when possible.
+     * @dev It requires that enough Dai to repay the debt is already deposited into the `urn`.
+     * @dev Any remaining Dai balance is sent back to the output conduit when possible.
      * @param urn The RwaUrn vault targeted by the repayment.
      */
     function close(address urn) external {
@@ -44,8 +45,8 @@ contract RwaUrnProxyActions {
         DSTokenAbstract gem = DSTokenAbstract(gemJoin.gem());
         gem.transfer(address(0), ink);
 
-        // Using try..catch makes this method compatible with implementations of `RwaUrn`
-        // whose `quit()` method can only be called after Emergency Shutdown.
+        // By using try..catch we make this method compatible with implementations of
+        // `RwaUrn` whose `quit()` method can only be called after Emergency Shutdown.
         try RwaUrnLike(urn).quit() {} catch {}
     }
 
