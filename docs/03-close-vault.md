@@ -62,7 +62,7 @@
 
    - Wipe all the debt from the urn
    - Free all the collateral token (`RWA008`) from the urn
-   - Burn the `RWA008`
+   - Send the `RWA008` token to `msg.sender`
    - Transfer any remaining DAI to the `OUTPUT_CONDUIT`
 
 ## Using `ForwardProxy` (dev environment only)
@@ -128,5 +128,5 @@
 
    - Wipe all the debt from the urn
    - Free all the collateral token (`RWA008`) from the urn
-   - Burn the `RWA008`
+   - Send the `RWA008` token to `msg.sender`
    - Transfer any remaining DAI to the `OUTPUT_CONDUIT`

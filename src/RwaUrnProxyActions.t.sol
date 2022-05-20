@@ -222,7 +222,7 @@ contract RwaUrnProxyActionsTest is DSTest, M {
         assertEq(art, 0);
         assertEq(opBalanceBefore - opBalanceAfter, estimatedAmount);
         assertEq(ink, 0);
-        assertEq(rwaToken.balanceOf(address(0)), lockedAmount);
+        assertEq(rwaToken.balanceOf(address(op)), lockedAmount);
     }
 
     function testFullRepaymentWithRemainingDaiThroughProxy(uint32 estimateDelay, uint128 daiSurplus) public {
@@ -264,7 +264,7 @@ contract RwaUrnProxyActionsTest is DSTest, M {
         assertEq(art, 0);
         assertEq(opBalanceBefore - opBalanceAfter, estimatedAmount);
         assertEq(ink, 0);
-        assertEq(rwaToken.balanceOf(address(0)), lockedAmount);
+        assertEq(rwaToken.balanceOf(address(op)), lockedAmount);
     }
 
     function testFailFullRepaymentWhenCallerIsNotOperator() public {
