@@ -30,9 +30,11 @@
 
 2. Estimate the amount required to make the full repayment
 
+   **ℹ️ NOTICE:** You might want to send some extra DAI in this step in case the vault closing transaction cannot be included in the blockchain **after** `REPAYMENT_DATE`. Any outstanding DAI after `close()` is called will be automatically sent to the `OUTPUT_CONDUIT`.
+
    ```bash
    REPAYMENT_DATE=$(date -d "+7 days" +%s) # i.e.: 7 days from now as UNIX timestamp
-   DAI_AMOUNT=$(seth call "$RWA_URN_PROXY_VIEW" "estimateWipeAllWad(address, uint)" \
+   DAI_AMOUNT=$(seth call "$RWA_URN_PROXY_ACTIONS" "estimateWipeAllWad(address, uint)" \
        "$URN" $REPAYMENT_DATE)
    ```
 
@@ -50,37 +52,18 @@
    seth send "$INPUT_COUNDUIT" "push()"
    ```
 
-5. Wipe the debt from the urn
-
-   **⚠️ IMPORTANT:** This step **MUST** take place **AFTER** `REPAYMENT_DATE`.
+5. Close the vault with the help of `RWA_URN_PROXY_ACTIONS`
 
    ```bash
-   seth send "$URN" "wipe(uint)" $DAI_AMOUNT
+   seth send "$RWA_URN_PROXY_ACTIONS" "close(address)" $URN
    ```
 
-6. Free the gem from the urn
+   The step above will:
 
-   ```bash
-   TOKEN_AMOUNT=$(seth --to-wei '0.999999' ETH) # cannot be 1 because of rounding issues
-   seth send "$URN" "free(uint)" $TOKEN_AMOUNT
-   ```
-
-7. Burn the gem
-
-   ```bash
-   NULL_ADDRESS=0x0000000000000000000000000000000000000000
-   seth send "$TOKEN" "transfer(address, uint)" $NULL_ADDRESS $TOKEN_AMOUNT
-   ```
-
-8. Claim any DAI remaining in the urn
-
-   ```bash
-   REMAINING_DAI=$(seth call "$MCD_DAI" "balanceof(address)" "$URN" | seth --from-wei)
-   echo "Remaining DAI Balance: ${REMAINING_DAI} DAI"
-
-   # If the amount is relevant, then run:
-   seth send "$URN" "quit()"
-   ```
+   - Wipe all the debt from the urn
+   - Free all the collateral token (`RWA008`) from the urn
+   - Burn the `RWA008`
+   - Transfer any remaining DAI to the `OUTPUT_CONDUIT`
 
 ## Using `ForwardProxy` (dev environment only)
 
@@ -112,9 +95,11 @@
 
 2. Estimate the amount required to make the full repayment
 
+   **ℹ️ NOTICE:** You might want to send some extra DAI in this step in case the vault closing transaction cannot be included in the blockchain **after** `REPAYMENT_DATE`. Any outstanding DAI after `close()` is called will be automatically sent to the `OUTPUT_CONDUIT`.
+
    ```bash
    REPAYMENT_DATE=$(date -d "+7 days" +%s) # i.e.: 7 days from now as UNIX timestamp
-   DAI_AMOUNT=$(seth call "$RWA_URN_PROXY_VIEW" "estimateWipeAllWad(address, uint)" \
+   DAI_AMOUNT=$(seth call "$RWA_URN_PROXY_ACTIONS" "estimateWipeAllWad(address, uint)" \
        "$URN" $REPAYMENT_DATE)
    ```
 
@@ -132,37 +117,16 @@
    seth send "$MATE" "push()"
    ```
 
-5. Wipe the debt from the urn
-
-   **⚠️ IMPORTANT:** This step **MUST** take place **AFTER** `REPAYMENT_DATE`.
+5. Close the vault with the help of `RWA_URN_PROXY_ACTIONS`
 
    ```bash
-   seth send "$OPERATOR" "_(address)" "$URN"
-   seth send "$OPERATOR" "wipe(uint)" $DAI_AMOUNT
+   seth send "$OPERATOR" "_(address)" "$RWA_URN_PROXY_ACTIONS"
+   seth send "$OPERATOR" "close(address)" $URN
    ```
 
-6. Free the gem from the urn
+   The step above will:
 
-   ```bash
-   TOKEN_AMOUNT=$(seth --to-wei '0.999999' ETH) # cannot be 1 because of rounding issues
-   seth send "$OPERATOR" "free(uint)" $TOKEN_AMOUNT
-   ```
-
-7. Burn the gem
-
-   ```bash
-   NULL_ADDRESS=0x0000000000000000000000000000000000000000
-   seth send "$OPERATOR" "_(address)" "$TOKEN"
-   seth send "$OPERATOR" "transfer(address, uint)" $NULL_ADDRESS $TOKEN_AMOUNT
-   ```
-
-8. Claim any DAI remaining in the urn
-
-   ```bash
-   REMAINING_DAI=$(seth call "$MCD_DAI" "balanceof(address)" "$URN" | seth --from-wei)
-   echo "Remaining DAI Balance: ${REMAINING_DAI} DAI"
-
-   # If the amount is relevant, then run:
-   seth send "$OPERATOR" "_(address)" "$URN"
-   seth send "$OPERATOR" "quit()"
-   ```
+   - Wipe all the debt from the urn
+   - Free all the collateral token (`RWA008`) from the urn
+   - Burn the `RWA008`
+   - Transfer any remaining DAI to the `OUTPUT_CONDUIT`
