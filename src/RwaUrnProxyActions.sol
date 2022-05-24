@@ -16,31 +16,40 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.6.12;
 
-import {VatAbstract, JugAbstract, DaiJoinAbstract, GemJoinAbstract, DaiAbstract} from "dss-interfaces/Interfaces.sol";
-
-interface RwaUrnLike {
-    function vat() external view returns (VatAbstract);
-
-    function jug() external view returns (JugAbstract);
-
-    function daiJoin() external view returns (DaiJoinAbstract);
-
-    function gemJoin() external view returns (GemJoinAbstract);
-
-    function wipe(uint256 wad) external;
-}
-
-interface RwaInputConduitLike {
-    function push() external;
-
-    function to() external view returns (address);
-}
+import {VatAbstract, JugAbstract, DaiJoinAbstract, GemJoinAbstract, DaiAbstract, DSTokenAbstract} from "dss-interfaces/Interfaces.sol";
 
 /**
  * @author Henrique Barcelos <henrique@clio.finance>
  * @title Simplifies the interaction with vaults for Real-World Assets.
  */
-contract RwaUrnProxyView {
+contract RwaUrnProxyActions {
+    /**
+     * @notice Wipes all the outstanding debt from the `urn` and transfers the collateral tokens to the caller.
+     * @dev It requires that enough Dai to repay the debt is already deposited into the `urn`.
+     * @dev Any remaining Dai balance is sent back to the output conduit when possible.
+     * @param urn The RwaUrn vault targeted by the repayment.
+     */
+    function close(address urn) external {
+        uint256 wad = _estimateWipeAllWad(urn, block.timestamp);
+        require(RwaUrnLike(urn).can(msg.sender) == 1, "RwaUrnProxyActions/not-operator");
+
+        RwaUrnLike(urn).wipe(wad);
+
+        GemJoinAbstract gemJoin = RwaUrnLike(urn).gemJoin();
+
+        VatAbstract vat = RwaUrnLike(urn).vat();
+        bytes32 ilk = gemJoin.ilk();
+        (uint256 ink, ) = vat.urns(ilk, urn);
+        RwaUrnLike(urn).free(ink);
+
+        DSTokenAbstract gem = DSTokenAbstract(gemJoin.gem());
+        gem.transfer(msg.sender, ink);
+
+        // By using try..catch we make this method compatible with implementations of
+        // `RwaUrn` whose `quit()` method can only be called after Emergency Shutdown.
+        try RwaUrnLike(urn).quit() {} catch {}
+    }
+
     /**
      * @notice Estimates the amount of Dai required to fully repay a loan at `when` given time.
      * @dev It assumes there will be no changes in the base fee or the ilk stability fee between now and `when`.
@@ -48,9 +57,19 @@ contract RwaUrnProxyView {
      * @param when The unix timestamp by which the repayment will be made. It must NOT be in the past.
      * @return wad The amount of Dai required to make a full repayment.
      */
-    function estimateWipeAllWad(address urn, uint256 when) public view returns (uint256 wad) {
-        require(when >= block.timestamp, "RwaUrnProxyView/invalid-date");
+    function estimateWipeAllWad(address urn, uint256 when) external view returns (uint256 wad) {
+        require(when >= block.timestamp, "RwaUrnProxyActions/invalid-date");
+        return _estimateWipeAllWad(urn, when);
+    }
 
+    /**
+     * @notice Estimates the amount of Dai required to fully repay a loan at `when` given time.
+     * @dev It assumes there will be no changes in the base fee or the ilk stability fee between now and `when`.
+     * @param urn The RwaUrn vault targeted by the repayment.
+     * @param when The unix timestamp by which the repayment will be made.
+     * @return wad The amount of Dai required to make a full repayment.
+     */
+    function _estimateWipeAllWad(address urn, uint256 when) internal view returns (uint256 wad) {
         // Law of Demeter anybody? https://en.wikipedia.org/wiki/Law_of_Demeter
         bytes32 ilk = RwaUrnLike(urn).gemJoin().ilk();
         VatAbstract vat = RwaUrnLike(urn).vat();
@@ -126,4 +145,28 @@ contract RwaUrnProxyView {
             }
         }
     }
+}
+
+interface RwaUrnLike {
+    function can(address usr) external view returns (uint256);
+
+    function vat() external view returns (VatAbstract);
+
+    function jug() external view returns (JugAbstract);
+
+    function daiJoin() external view returns (DaiJoinAbstract);
+
+    function gemJoin() external view returns (GemJoinAbstract);
+
+    function wipe(uint256 wad) external;
+
+    function free(uint256 wad) external;
+
+    function quit() external;
+}
+
+interface RwaInputConduitLike {
+    function push() external;
+
+    function to() external view returns (address);
 }

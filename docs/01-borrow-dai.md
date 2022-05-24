@@ -90,7 +90,7 @@
    MATE=$(var_expand "${ILK}_MATE")
    INPUT_CONDUIT=$(var_expand "${ILK}_INPUT_CONDUIT")
    OUTPUT_CONDUIT=$(var_expand "${ILK}_OUTPUT_CONDUIT")
-   URN=$(var_expand "${ILK}URN")
+   URN=$(var_expand "${ILK}_URN")
    ```
 
 2. Approve the urn to pull the wrapped token from the operator's balance

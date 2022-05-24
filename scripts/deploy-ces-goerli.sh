@@ -38,8 +38,17 @@ make build
 
 # tokenize it
 [[ -z "$RWA_TOKEN" ]] && {
-    RWA_TOKEN=$(seth send "${RWA_TOKEN_FACTORY}" 'createRwaToken(string,string,address)' \"$NAME\" \"$SYMBOL\" "$MCD_PAUSE_PROXY")
+    echo 'WARNING: `$RWA_TOKEN` not set. Deploying it...' >&2
+    TX=$(seth send --async "${RWA_TOKEN_FACTORY}" 'createRwaToken(string,string,address)' \"$NAME\" \"$SYMBOL\" "$MCD_PAUSE_PROXY")
+    echo "TX: $TX" >&2
+
+    RECEIPT="$(seth receipt $RWA_TOKEN_CREATE_TX)"
+    TX_STATUS="$(awk '/^status/ { print $2 }' <<<"$RECEIPT")"
+    [[ "$TX_STATUS" != "1" ]] && die "Failed to create ${SYMBOL} token in tx ${TX}."
+
+    RWA_TOKEN="$(seth call "$RWA_TOKEN_FACTORY" "tokenAddresses(bytes32)(address)" $(seth --from-ascii "$SYMBOL"))"
 }
+
 echo "${SYMBOL}: ${RWA_TOKEN}" >&2
 
 [[ -z "$OPERATOR" ]] && OPERATOR=$(dapp create ForwardProxy) # using generic forward proxy for goerli
@@ -73,9 +82,9 @@ echo "${SYMBOL}_${LETTER}_URN: ${RWA_URN}" >&2
 seth send "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
     seth send "$RWA_URN" 'deny(address)' "$ETH_FROM"
 
-[[ -z "$RWA_URN_PROXY_VIEW" ]] && {
-    RWA_URN_PROXY_VIEW=$(dapp create RwaUrnProxyView)
-    echo "RWA_URN_PROXY_VIEW: ${RWA_URN_PROXY_VIEW}" >&2
+[[ -z "$RWA_URN_PROXY_ACTIONS" ]] && {
+    RWA_URN_PROXY_ACTIONS=$(dapp create RwaUrnProxyActions)
+    echo "RWA_URN_PROXY_ACTIONS: ${RWA_URN_PROXY_ACTIONS}" >&2
 }
 
 # connect it
@@ -104,7 +113,7 @@ cat <<JSON
 {
     "MIP21_LIQUIDATION_ORACLE": "${MIP21_LIQUIDATION_ORACLE}",
     "RWA_TOKEN_FACTORY": "${RWA_TOKEN_FACTORY}",
-    "RWA_URN_PROXY_VIEW": "${RWA_URN_PROXY_VIEW}",
+    "RWA_URN_PROXY_ACTIONS": "${RWA_URN_PROXY_ACTIONS}",
     "SYMBOL": "${SYMBOL}",
     "NAME": "${NAME}",
     "ILK": "${ILK}",
