@@ -39,8 +39,15 @@ make build
 
 # tokenize it
 [[ -z "$RWA_TOKEN" ]] && {
-    RWA_TOKEN=$(dapp create RwaToken "\"$NAME\"" "\"$SYMBOL\"")
-    seth send "$RWA_TOKEN" 'transfer(address,uint256)' "$OPERATOR" $(seth --to-wei 1 ETH)
+    echo 'WARNING: `$RWA_TOKEN` not set. Deploying it...' >&2
+    TX=$(seth send --async "${RWA_TOKEN_FACTORY}" 'createRwaToken(string,string,address)' \"$NAME\" \"$SYMBOL\" "$MCD_PAUSE_PROXY")
+    echo "TX: $TX" >&2
+
+    RECEIPT="$(seth receipt $RWA_TOKEN_CREATE_TX)"
+    TX_STATUS="$(awk '/^status/ { print $2 }' <<<"$RECEIPT")"
+    [[ "$TX_STATUS" != "1" ]] && die "Failed to create ${SYMBOL} token in tx ${TX}."
+
+    RWA_TOKEN="$(seth call "$RWA_TOKEN_FACTORY" "tokenAddresses(bytes32)(address)" $(seth --from-ascii "$SYMBOL"))"
 }
 
 # route it
