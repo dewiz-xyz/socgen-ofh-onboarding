@@ -30,7 +30,7 @@
 
 2. Estimate the amount required to make the full repayment
 
-   **ℹ️ NOTICE:** You might want to send some extra DAI in this step in case the vault closing transaction cannot be included in the blockchain **after** `REPAYMENT_DATE`. Any outstanding DAI after `close()` is called will be automatically sent to the `OUTPUT_CONDUIT`.
+   **ℹ️ NOTICE:** You might want to &ldquo;overestimate&rdquo; `REPAYMENT_DATE` below so you will send more DAI than it is actually needed to close the vault. Any outstanding DAI after `close()` is called will be automatically sent to the output conduit.
 
    ```bash
    REPAYMENT_DATE=$(date -d "+7 days" +%s) # i.e.: 7 days from now as UNIX timestamp
@@ -65,6 +65,20 @@
    - Send the `RWA008` token to `msg.sender`
    - Transfer any remaining DAI to the `OUTPUT_CONDUIT`
 
+6. Pick the DAI recipient
+
+   ```bash
+   seth send "$OPERATOR" "_(address)" "$OUTPUT_CONDUIT"
+   seth send "$OPERATOR" "pick(address)" "$OPERATOR"
+   ```
+
+7. Push DAI to the recipient
+
+   ```bash
+   seth send "$MATE" "_(address)" "$OUTPUT_CONDUIT"
+   seth send "$MATE" "push()"
+   ```
+
 ## Using `ForwardProxy` (dev environment only)
 
 ⚠️ Replace the `SYMBOL` variable below accordingly.
@@ -95,7 +109,7 @@
 
 2. Estimate the amount required to make the full repayment
 
-   **ℹ️ NOTICE:** You might want to send some extra DAI in this step in case the vault closing transaction cannot be included in the blockchain **after** `REPAYMENT_DATE`. Any outstanding DAI after `close()` is called will be automatically sent to the `OUTPUT_CONDUIT`.
+   **ℹ️ NOTICE:** You might want to &ldquo;overestimate&rdquo; `REPAYMENT_DATE` below so you will send more DAI than it is actually needed to close the vault. Any outstanding DAI after `close()` is called will be automatically sent to the output conduit.
 
    ```bash
    REPAYMENT_DATE=$(date -d "+7 days" +%s) # i.e.: 7 days from now as UNIX timestamp
@@ -130,3 +144,17 @@
    - Free all the collateral token (`RWA008`) from the urn
    - Send the `RWA008` token to `msg.sender`
    - Transfer any remaining DAI to the `OUTPUT_CONDUIT`
+
+6. Pick the DAI recipient
+
+   ```bash
+   seth send "$OPERATOR" "_(address)" "$OUTPUT_CONDUIT"
+   seth send "$OPERATOR" "pick(address)" "$OPERATOR"
+   ```
+
+7. Push DAI to the recipient
+
+   ```bash
+   seth send "$MATE" "_(address)" "$OUTPUT_CONDUIT"
+   seth send "$MATE" "push()"
+   ```
