@@ -52,7 +52,9 @@
 5. Free the gem from the urn [optional]
 
    ```bash
-   TOKEN_AMOUNT=$(seth --to-wei '.01' ETH)
+   # The amount has to be less than what was put when borrowing DAI
+   # because of the accrued stability fees accrued in the period.
+   TOKEN_AMOUNT=$(seth --to-wei '.005' ETH)
    seth send "$URN" "free(uint)" $TOKEN_AMOUNT
    ```
 
@@ -107,6 +109,8 @@
 5. Free the gem from the urn [optional]
 
    ```bash
-   TOKEN_AMOUNT=$(seth --to-wei '.01' ETH)
+   # The amount has to be less than what was put when borrowing DAI
+   # because of the accrued stability fees accrued in the period.
+   TOKEN_AMOUNT=$(seth --to-wei '.005' ETH)
    seth send "$OPERATOR" "free(uint)" $TOKEN_AMOUNT
    ```

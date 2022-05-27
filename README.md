@@ -1,6 +1,10 @@
-# socgen-ofh-onboarding
+# SocGen OFH Onboarding
 
-Repository for onboarding SocGen's [OFH](https://forum.makerdao.com/t/security-tokens-refinancing-mip6-application-for-ofh-tokens/10605/8) to MCD. Forked and adapted from [MIP21-RWA-Example](https://github.com/makerdao/MIP21-RWA-Example) template repo.
+Repository for onboarding SocGen's [OFH](https://forum.makerdao.com/t/security-tokens-refinancing-mip6-application-for-ofh-tokens/10605/8) to MCD.
+
+## Architecture Overview
+
+TODO.
 
 ## Dev
 
@@ -45,23 +49,26 @@ This script outputs a JSON file like this one:
 
 ```json
 {
-  "RWA_OFH_TOKEN": "<address>",
+  "SYMBOL": "RWA008AT5",
+  "NAME": "RWA-008-AT5",
+  "ILK": "RWA008AT5-A",
   "MIP21_LIQUIDATION_ORACLE": "<address>",
-  "ILK": "RWA007-A",
-  "RWA007": "<address>",
-  "MCD_JOIN_RWA007_A": "<address>",
-  "RWA007_A_URN": "<address>",
-  "RWA007_A_INPUT_CONDUIT": "<address>",
-  "RWA007_A_OUTPUT_CONDUIT": "<address>",
-  "RWA007_A_OPERATOR": "<address>",
-  "RWA007_A_MATE": "<address>"
+  "RWA_TOKEN_FACTORY": "<address>",
+  "RWA_URN_PROXY_ACTIONS": "<address>",
+  "RWA008AT5": "<address>",
+  "MCD_JOIN_RWA008AT5_A": "<address>",
+  "RWA008_A_URN": "<address>",
+  "RWA008_A_INPUT_CONDUIT": "<address>",
+  "RWA008_A_OUTPUT_CONDUIT": "<address>",
+  "RWA008_A_OPERATOR": "<address>",
+  "RWA008_A_MATE": "<address>"
 }
 ```
 
 You can save it using `stdout` redirection:
 
 ```bash
-make deploy-ces-goerli > out/ces-goerli-addresses.json
+make deploy-ces-goerli > addresses.json
 ```
 
 ### Verify source code
@@ -72,7 +79,7 @@ If you properly initialized this repo, it should be already installed at `lib/sh
 
 ```bash
  # sets the proper env vars
-source <(lib/shell-utils/bin/json-to-env -x out/ces-goerli-addresses.json)
+source <(lib/shell-utils/bin/json-to-env -x addresses.json)
 make verify-ces-goerli
 ```
 
@@ -91,13 +98,18 @@ scripts/replace-spell-addresses.sh <deployments_json_file> <spell_file> <spell_a
 Example:
 
 ```
-scripts/replace-spell-addresses.sh out/ces-goerli-addresses.json src/spells/CESFork_GoerliRwaSpell.sol src/spells/helpers/CESFork_GoerliAddresses.sol
+scripts/replace-spell-addresses.sh addresses.json <path/to/spells>/ces-spells-goerli/src/Goerli-DssSpellCollateralOnboarding.sol <path/to/spells>/ces-spells-goerli/src/test/addresses_goerli.sol
+
 ```
 
 ### More...
 
 You can also refer to the Makefile (`make <command>`) for full list of commands.
 
+## Spell Crafting
+
+More details on how onboard these contracts into MCD can be found in [`spell-template/README.md`](./spell-template/README.md).
+
 ## License
 
-AGPL-3.0 LICENSE
+See [LICENSE](./LICENSE).
