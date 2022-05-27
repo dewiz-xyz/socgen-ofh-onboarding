@@ -1,4 +1,20 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// Copyright (C) 2021-2022 Dai Foundation
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 pragma solidity ^0.6.12;
 
 contract Addresses {
@@ -7,7 +23,7 @@ contract Addresses {
     constructor() public {
         addr["CHANGELOG"] = 0x7EafEEa64bF6F79A79853F4A660e0960c821BA50;
         addr["MULTICALL"] = 0x1B376C11C11b91f76840DE2DDF41A0D08EE95401;
-        addr["FAUCET"] = 0xa473CdDD6E4FAc72481dc36f39A409D86980D187;
+        addr["FAUCET"] = 0x801891AFC61d0cB00575d61EEf89B6f2d6509B3d;
         addr["MCD_DEPLOY"] = 0x540f90a052Bf23Abc89A97137e5804924B2592C7;
         addr["FLIP_FAB"] = 0x887f7BC6Aa0FE6b6058E7d5b462b764c9008efB6;
         addr["CLIP_FAB"] = 0xCf9eeF87Dc95bc4d2EB19cef19c44c232E9180F2;
@@ -59,13 +75,22 @@ contract Addresses {
         addr["PROXY_PAUSE_ACTIONS"] = 0x54F63dD1efeE791868F0D88885B9d2930cE9aAbF;
         addr["PROXY_DEPLOYER"] = 0x4DEd538D7edDb5F7E52f0B152C3c46D454d0075a;
         addr["MIP21_LIQUIDATION_ORACLE"] = 0x493A7F7E6f44D3bd476bc1bfBBe191164269C0Cc;
+        addr["DUMMY"] = 0x0EEb733A46e66e9dA6f8E96BF62fb7bA974A44e7;
+        addr["PIP_DUMMY"] = 0x8b648b13fcb0FB767A8E406ECF1071DFC3A46856;
+        addr["MCD_JOIN_DUMMY_A"] = 0x7F23a8550f038aC18Ba59442Eafeac1e0a19C759;
+        addr["MCD_CLIP_DUMMY_A"] = 0x9043b3529Ef841dE4D481ABED3243F366D220c68;
+        addr["MCD_CLIP_CALC_DUMMY_A"] = 0x1Dc45AAB80636300ADF72Ec4b01e2868BFC9De83;
+        addr["RWA_URN_PROXY_VIEW"] = 0x590128AecF8D61B5Bc5965b768CC999Eb8531aFA;
+        addr["RWA_TOKEN_FAB"] = 0xE00724a26Dd7a6F24333926bc70c80abb4b43edC;
+        addr["RWA_URN_PROXY_ACTIONS"] = 0xCafa3857aA7753724d735c6b0cafEa9a62A1806e;
 
-        addr["RWA008AT2"] = 0xE3B8e9B2AdB2CE4B289C13F572b0426e6D8016B5;
-        addr["MCD_JOIN_RWA008AT2_A"] = 0xb7CBE4a7EE12c618Ef4b43FC620aB4e273f883E1;
-        addr["RWA008AT2_A_URN"] = 0xe42f68d8A8e955Be29AF833fdCCa92838271b007;
-        addr["RWA008AT2_A_INPUT_CONDUIT"] = 0x32c0254964697977a3aBC6Bad1D1E8C56Cc8fAb1;
-        addr["RWA008AT2_A_OUTPUT_CONDUIT"] = 0xcD6534b0f356d1b7b849974238Dd3733C9A1f2e5;
-        addr["RWA008AT2_A_OPERATOR"] = 0x3E774D9dfA578cc82C5b94a329230cD5736e9106;
-        addr["RWA008AT2_A_MATE"] = 0x969880695d8aDFB8e9C38982e07905CC42eD3fAd;
+        // TODO: update these
+        addr["RWA008"] = 0x0000000000000000000000000000000000000000;
+        addr["MCD_JOIN_RWA008_A"] = 0x0000000000000000000000000000000000000000;
+        addr["RWA008_A_URN"] = 0x0000000000000000000000000000000000000000;
+        addr["RWA008_A_INPUT_CONDUIT"] = 0x0000000000000000000000000000000000000000;
+        addr["RWA008_A_OUTPUT_CONDUIT"] = 0x0000000000000000000000000000000000000000;
+        addr["RWA008_A_OPERATOR"] = 0x0000000000000000000000000000000000000000;
+        addr["RWA008_A_MATE"] = 0x0000000000000000000000000000000000000000;
     }
 }
