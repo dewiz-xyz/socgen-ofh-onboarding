@@ -164,9 +164,3 @@ interface RwaUrnLike {
 
     function quit() external;
 }
-
-interface RwaInputConduitLike {
-    function push() external;
-
-    function to() external view returns (address);
-}
