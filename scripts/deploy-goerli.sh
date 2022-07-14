@@ -7,7 +7,7 @@ source "${BASH_SOURCE%/*}/common.sh"
 source "${BASH_SOURCE%/*}/build-env-addresses.sh" goerli >/dev/null 2>&1
 
 [[ "$ETH_RPC_URL" && "$(seth chain)" == "goerli" ]] || die "Please set a goerli ETH_RPC_URL"
-[[ -z "$MIP21_LIQUIDATION_ORACLE" ]] || die 'Please set the MIP21_LIQUIDATION_ORACLE env var'
+[[ -z "$MIP21_LIQUIDATION_ORACLE" ]] && die 'Please set the MIP21_LIQUIDATION_ORACLE env var'
 
 export ETH_GAS=6000000
 
@@ -62,7 +62,7 @@ make build
 }
 
 # join it
-RWA_JOIN=$(dapp create AuthGemJoin "$MCD_VAT" "$ILK_ENCODED" "$RWA_WRAPPER_TOKEN")
+RWA_JOIN=$(dapp create AuthGemJoin "$MCD_VAT" "$ILK_ENCODED" "$RWA_TOKEN")
 seth send "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
     seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
 

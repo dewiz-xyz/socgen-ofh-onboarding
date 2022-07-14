@@ -9,7 +9,7 @@ source "${BASH_SOURCE%/*}/common.sh"
 source "${BASH_SOURCE%/*}/build-env-addresses.sh" mainnet >/dev/null 2>&1
 
 [[ "$ETH_RPC_URL" && "$(seth chain)" == "ethlive" ]] || die "Please set a mainnet ETH_RPC_URL"
-[[ -z "$MIP21_LIQUIDATION_ORACLE" ]] || die 'Please set the MIP21_LIQUIDATION_ORACLE env var'
+[[ -z "$MIP21_LIQUIDATION_ORACLE" ]] && die 'Please set the MIP21_LIQUIDATION_ORACLE env var'
 [[ -z "$OPERATOR" ]] && die 'Please set the OPERATOR env var'
 [[ -z "$MATE" ]] && die "Please set the MATE env var"
 
