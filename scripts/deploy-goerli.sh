@@ -39,15 +39,18 @@ make build
 
 # tokenize it
 [[ -z "$RWA_TOKEN" ]] && {
-    echo 'WARNING: `$RWA_TOKEN` not set. Deploying it...' >&2
-    TX=$(seth send --async "${RWA_TOKEN_FACTORY}" 'createRwaToken(string,string,address)' \"$NAME\" \"$SYMBOL\" "$MCD_PAUSE_PROXY")
-    echo "TX: $TX" >&2
+    debug 'WARNING: `$RWA_TOKEN` not set. Deploying it...'
+    TX=$($CAST_SEND "${RWA_TOKEN_FAB}" 'createRwaToken(string,string,address)' "$NAME" "$SYMBOL" "$OPERATOR")
+    debug "TX: $TX"
 
-    RECEIPT="$(seth receipt $RWA_TOKEN_CREATE_TX)"
-    TX_STATUS="$(awk '/^status/ { print $2 }' <<<"$RECEIPT")"
-    [[ "$TX_STATUS" != "1" ]] && die "Failed to create ${SYMBOL} token in tx ${TX}."
+    RECEIPT="$(cast receipt --json $TX)"
+    TX_STATUS="$(jq -r '.status' <<<"$RECEIPT")"
+    [[ "$TX_STATUS" != "0x1" ]] && die "Failed to create ${SYMBOL} token in tx ${TX}."
 
-    RWA_TOKEN="$(seth call "$RWA_TOKEN_FACTORY" "tokenAddresses(bytes32)(address)" $(seth --from-ascii "$SYMBOL"))"
+    RWA_TOKEN="$(jq -r ".logs[0].address" <<<"$RECEIPT")"
+    debug "${SYMBOL}: ${RWA_TOKEN}"
+} || {
+    debug "${SYMBOL}: ${RWA_TOKEN}"
 }
 
 # route it
@@ -70,7 +73,7 @@ seth send "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
 
 [[ -z "$RWA_URN_PROXY_ACTIONS" ]] && {
     RWA_URN_PROXY_ACTIONS=$(dapp create RwaUrnProxyActions)
-    echo "RWA_URN_PROXY_ACTIONS: ${RWA_URN_PROXY_ACTIONS}" >&2
+    debug "RWA_URN_PROXY_ACTIONS: ${RWA_URN_PROXY_ACTIONS}"
 }
 
 # connect it

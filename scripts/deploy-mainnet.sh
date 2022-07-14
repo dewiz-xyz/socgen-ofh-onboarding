@@ -10,8 +10,8 @@ source "${BASH_SOURCE%/*}/build-env-addresses.sh" mainnet >/dev/null 2>&1
 
 [[ "$ETH_RPC_URL" && "$(seth chain)" == "ethlive" ]] || die "Please set a mainnet ETH_RPC_URL"
 [[ -z "$MIP21_LIQUIDATION_ORACLE" ]] || die 'Please set the MIP21_LIQUIDATION_ORACLE env var'
-[[ -z "$OPERATOR" ]] && die  'Please set the OPERATOR env var'
-[[ -z "$MATE" ]] && die  "Please set the MATE env var"
+[[ -z "$OPERATOR" ]] && die 'Please set the OPERATOR env var'
+[[ -z "$MATE" ]] && die "Please set the MATE env var"
 
 # TODO: confirm for mainnet deployment
 export ETH_GAS=6000000
@@ -31,7 +31,7 @@ export ETH_GAS=6000000
 # 3. Make sure all integrations are ready to accomodate that new PIP name.
 # ! TODO: check with team/PE if this is still the case
 #
-[[ -z "$LETTER" ]] && LETTER="A";
+[[ -z "$LETTER" ]] && LETTER="A"
 
 ILK="${SYMBOL}-${LETTER}"
 ILK_ENCODED=$(seth --to-bytes32 "$(seth --from-ascii ${ILK})")
@@ -41,50 +41,53 @@ make build
 
 # tokenize it
 [[ -z "$RWA_TOKEN" ]] && {
-    echo 'WARNING: `$RWA_TOKEN` not set. Deploying it...' >&2
-    TX=$(seth send --async "${RWA_TOKEN_FACTORY}" 'createRwaToken(string,string,address)' \"$NAME\" \"$SYMBOL\" "$MCD_PAUSE_PROXY")
-    echo "TX: $TX" >&2
+	debug 'WARNING: `$RWA_TOKEN` not set. Deploying it...'
+	TX=$($CAST_SEND "${RWA_TOKEN_FAB}" 'createRwaToken(string,string,address)' "$NAME" "$SYMBOL" "$OPERATOR")
+	debug "TX: $TX"
 
-    RECEIPT="$(seth receipt $RWA_TOKEN_CREATE_TX)"
-    TX_STATUS="$(awk '/^status/ { print $2 }' <<<"$RECEIPT")"
-    [[ "$TX_STATUS" != "1" ]] && die "Failed to create ${SYMBOL} token in tx ${TX}."
+	RECEIPT="$(cast receipt --json $TX)"
+	TX_STATUS="$(jq -r '.status' <<<"$RECEIPT")"
+	[[ "$TX_STATUS" != "0x1" ]] && die "Failed to create ${SYMBOL} token in tx ${TX}."
 
-    RWA_TOKEN="$(seth call "$RWA_TOKEN_FACTORY" "tokenAddresses(bytes32)(address)" $(seth --from-ascii "$SYMBOL"))"
+	RWA_TOKEN="$(jq -r ".logs[0].address" <<<"$RECEIPT")"
+	debug "${SYMBOL}: ${RWA_TOKEN}"
+} || {
+	debug "${SYMBOL}: ${RWA_TOKEN}"
 }
 
 # route it
 [[ -z "$RWA_OUTPUT_CONDUIT" ]] && {
-    RWA_OUTPUT_CONDUIT=$(dapp create RwaConduits:RwaOutputConduit2 "$MCD_DAI")
+	RWA_OUTPUT_CONDUIT=$(dapp create RwaConduits:RwaOutputConduit2 "$MCD_DAI")
 
-    seth send "$RWA_OUTPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-        seth send "$RWA_OUTPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
+	seth send "$RWA_OUTPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+		seth send "$RWA_OUTPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
 }
 
 # join it
 RWA_JOIN=$(dapp create AuthGemJoin "$MCD_VAT" "$ILK_ENCODED" "$RWA_TOKEN")
 seth send "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-    seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
+	seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
 
 # urn it
 RWA_URN=$(dapp create RwaUrn2 "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT")
 seth send "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-    seth send "$RWA_URN" 'deny(address)' "$ETH_FROM"
+	seth send "$RWA_URN" 'deny(address)' "$ETH_FROM"
 
 [[ -z "$RWA_URN_PROXY_ACTIONS" ]] && {
-    RWA_URN_PROXY_ACTIONS=$(dapp create RwaUrnProxyActions)
-    echo "RWA_URN_PROXY_ACTIONS: ${RWA_URN_PROXY_ACTIONS}" >&2
+	RWA_URN_PROXY_ACTIONS=$(dapp create RwaUrnProxyActions)
+	debug "RWA_URN_PROXY_ACTIONS: ${RWA_URN_PROXY_ACTIONS}"
 }
 
 # connect it
 [[ -z "$RWA_INPUT_CONDUIT" ]] && {
-    RWA_INPUT_CONDUIT=$(dapp create RwaConduits:RwaInputConduit2 "$MCD_DAI" "$RWA_URN")
+	RWA_INPUT_CONDUIT=$(dapp create RwaConduits:RwaInputConduit2 "$MCD_DAI" "$RWA_URN")
 
-    seth send "$RWA_INPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-        seth send "$RWA_INPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
+	seth send "$RWA_INPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+		seth send "$RWA_INPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
 }
 
 # print it
-cat << JSON
+cat <<JSON
 {
     "MIP21_LIQUIDATION_ORACLE": "${MIP21_LIQUIDATION_ORACLE}",
     "RWA_TOKEN_FACTORY": "${RWA_TOKEN_FACTORY}",

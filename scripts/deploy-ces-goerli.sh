@@ -30,7 +30,7 @@ export ETH_GAS=6000000
 # TODO: confirm liquidations handling - no liquidations for the time being
 
 ILK="${SYMBOL}-${LETTER}"
-echo "ILK: ${ILK}" >&2
+debug "ILK: ${ILK}"
 ILK_ENCODED=$(seth --to-bytes32 "$(seth --from-ascii "$ILK")")
 
 # build it
@@ -38,75 +38,78 @@ make build
 
 # tokenize it
 [[ -z "$RWA_TOKEN" ]] && {
-    echo 'WARNING: `$RWA_TOKEN` not set. Deploying it...' >&2
-    TX=$(seth send --async "${RWA_TOKEN_FACTORY}" 'createRwaToken(string,string,address)' \"$NAME\" \"$SYMBOL\" "$MCD_PAUSE_PROXY")
-    echo "TX: $TX" >&2
+    debug 'WARNING: `$RWA_TOKEN` not set. Deploying it...'
+    TX=$($CAST_SEND "${RWA_TOKEN_FAB}" 'createRwaToken(string,string,address)' "$NAME" "$SYMBOL" "$OPERATOR")
+    debug "TX: $TX"
 
-    RECEIPT="$(seth receipt $RWA_TOKEN_CREATE_TX)"
-    TX_STATUS="$(awk '/^status/ { print $2 }' <<<"$RECEIPT")"
-    [[ "$TX_STATUS" != "1" ]] && die "Failed to create ${SYMBOL} token in tx ${TX}."
+    RECEIPT="$(cast receipt --json $TX)"
+    TX_STATUS="$(jq -r '.status' <<<"$RECEIPT")"
+    [[ "$TX_STATUS" != "0x1" ]] && die "Failed to create ${SYMBOL} token in tx ${TX}."
 
-    RWA_TOKEN="$(seth call "$RWA_TOKEN_FACTORY" "tokenAddresses(bytes32)(address)" $(seth --from-ascii "$SYMBOL"))"
+    RWA_TOKEN="$(jq -r ".logs[0].address" <<<"$RECEIPT")"
+    debug "${SYMBOL}: ${RWA_TOKEN}"
+} || {
+    debug "${SYMBOL}: ${RWA_TOKEN}"
 }
 
-echo "${SYMBOL}: ${RWA_TOKEN}" >&2
+debug "${SYMBOL}: ${RWA_TOKEN}"
 
 [[ -z "$OPERATOR" ]] && OPERATOR=$(dapp create ForwardProxy) # using generic forward proxy for goerli
-echo "${SYMBOL}_${LETTER}_OPERATOR: ${OPERATOR}" >&2
+debug "${SYMBOL}_${LETTER}_OPERATOR: ${OPERATOR}"
 
 [[ -z "$MATE" ]] && MATE=$(dapp create ForwardProxy) # using generic forward proxy for goerli
-echo "${SYMBOL}_${LETTER}_MATE: ${MATE}" >&2
+debug "${SYMBOL}_${LETTER}_MATE: ${MATE}"
 
 # route it
 [[ -z "$RWA_OUTPUT_CONDUIT" ]] && {
     RWA_OUTPUT_CONDUIT=$(dapp create RwaOutputConduit2 "$MCD_DAI")
-    echo "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT: ${RWA_OUTPUT_CONDUIT}" >&2
+    debug "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT: ${RWA_OUTPUT_CONDUIT}"
 
     # trust addresses for goerli
     seth send "$RWA_OUTPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
         seth send "$RWA_OUTPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
 
 } || {
-    echo "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT: ${RWA_OUTPUT_CONDUIT}" >&2
+    debug "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT: ${RWA_OUTPUT_CONDUIT}"
 }
 
 # join it
 RWA_JOIN=$(dapp create AuthGemJoin "$MCD_VAT" "$ILK_ENCODED" "$RWA_TOKEN")
-echo "MCD_JOIN_${SYMBOL}_${LETTER}: ${RWA_JOIN}" >&2
+debug "MCD_JOIN_${SYMBOL}_${LETTER}: ${RWA_JOIN}"
 seth send "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
     seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
 
 # urn it
 RWA_URN=$(dapp create RwaUrn2 "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT")
-echo "${SYMBOL}_${LETTER}_URN: ${RWA_URN}" >&2
+debug "${SYMBOL}_${LETTER}_URN: ${RWA_URN}"
 seth send "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
     seth send "$RWA_URN" 'deny(address)' "$ETH_FROM"
 
 [[ -z "$RWA_URN_PROXY_ACTIONS" ]] && {
     RWA_URN_PROXY_ACTIONS=$(dapp create RwaUrnProxyActions)
-    echo "RWA_URN_PROXY_ACTIONS: ${RWA_URN_PROXY_ACTIONS}" >&2
+    debug "RWA_URN_PROXY_ACTIONS: ${RWA_URN_PROXY_ACTIONS}"
 }
 
 # connect it
 [[ -z "$RWA_INPUT_CONDUIT" ]] && {
     RWA_INPUT_CONDUIT=$(dapp create RwaInputConduit2 "$MCD_DAI" "$RWA_URN")
-    echo "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT}" >&2
+    debug "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT}"
 
     seth send "$RWA_INPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
         seth send "$RWA_INPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
 } || {
-    echo "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT}" >&2
+    debug "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT}"
 }
 
 # price it
 [[ -z "$MIP21_LIQUIDATION_ORACLE" ]] && {
     MIP21_LIQUIDATION_ORACLE=$(dapp create RwaLiquidationOracle "$MCD_VAT" "$MCD_VOW")
-    echo "MIP21_LIQUIDATION_ORACLE: ${MIP21_LIQUIDATION_ORACLE}" >&2
+    debug "MIP21_LIQUIDATION_ORACLE: ${MIP21_LIQUIDATION_ORACLE}"
 
     seth send "$MIP21_LIQUIDATION_ORACLE" 'rely(address)' "$MCD_PAUSE_PROXY" &&
         seth send "$MIP21_LIQUIDATION_ORACLE" 'deny(address)' "$ETH_FROM"
 } || {
-    echo "MIP21_LIQUIDATION_ORACLE: ${MIP21_LIQUIDATION_ORACLE}" >&2
+    debug "MIP21_LIQUIDATION_ORACLE: ${MIP21_LIQUIDATION_ORACLE}"
 }
 
 cat <<JSON

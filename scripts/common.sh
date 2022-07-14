@@ -17,12 +17,19 @@ ADDRESSES_FILE=${ADDRESSES_FILE:-$OUT_DIR/"addresses.json"}
 # default to localhost rpc
 ETH_RPC_URL=${ETH_RPC_URL:-http://localhost:8545}
 
-# green log helper
-GREEN='\033[0;32m'
-NC='\033[0m' # No Color
+GREEN='\033[0;32m' # Green
+NC='\033[0m'       # No Color
+debug() {
+  printf '%b\n' "${GREEN}${*}${NC}" >&2
+}
+
 log() {
-	printf '%b\n' "${GREEN}${*}${NC}"
-	echo ""
+  echo -e "$@" >&2
+}
+
+die() {
+  log "$@"
+  exit 1
 }
 
 # Coloured output helpers
