@@ -1,6 +1,7 @@
 .env
 .eth-password
 addresses.json
+addresses-*.json
 out/
 cache/
 node_modules/

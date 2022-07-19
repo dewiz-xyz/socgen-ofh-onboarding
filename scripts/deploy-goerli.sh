@@ -43,84 +43,84 @@ CAST_SEND="${BASH_SOURCE%/*}/cast-send.sh"
 
 # tokenize it
 [[ -z "$RWA_TOKEN" ]] && {
-    debug 'WARNING: `$RWA_TOKEN` not set. Deploying it...'
-    TX=$($CAST_SEND "${RWA_TOKEN_FAB}" 'createRwaToken(string,string,address)' "$NAME" "$SYMBOL" "$OPERATOR")
-    debug "TX: $TX"
+	debug 'WARNING: `$RWA_TOKEN` not set. Deploying it...'
+	TX=$($CAST_SEND "${RWA_TOKEN_FAB}" 'createRwaToken(string,string,address)' "$NAME" "$SYMBOL" "$OPERATOR")
+	debug "TX: $TX"
 
-    RECEIPT="$(cast receipt --json $TX)"
-    TX_STATUS="$(jq -r '.status' <<<"$RECEIPT")"
-    [[ "$TX_STATUS" != "0x1" ]] && die "Failed to create ${SYMBOL} token in tx ${TX}."
+	RECEIPT="$(cast receipt --json $TX)"
+	TX_STATUS="$(jq -r '.status' <<<"$RECEIPT")"
+	[[ "$TX_STATUS" != "0x1" ]] && die "Failed to create ${SYMBOL} token in tx ${TX}."
 
-    RWA_TOKEN="$(jq -r ".logs[0].address" <<<"$RECEIPT")"
-    debug "${SYMBOL}: ${RWA_TOKEN}"
+	RWA_TOKEN="$(jq -r ".logs[0].address" <<<"$RECEIPT")"
+	debug "${SYMBOL}: ${RWA_TOKEN}"
 } || {
-    debug "${SYMBOL}: ${RWA_TOKEN}"
+	debug "${SYMBOL}: ${RWA_TOKEN}"
 }
 
 debug "${SYMBOL}: ${RWA_TOKEN}"
 
-[[ -z "$OPERATOR" ]] && OPERATOR=$($FORGE_DEPLOY ForwardProxy) # using generic forward proxy for goerli
+[[ -z "$OPERATOR" ]] && OPERATOR=$($FORGE_DEPLOY --verify ForwardProxy) # using generic forward proxy for goerli
 debug "${SYMBOL}_${LETTER}_OPERATOR: ${OPERATOR}"
 
-[[ -z "$MATE" ]] && MATE=$($FORGE_DEPLOY ForwardProxy) # using generic forward proxy for goerli
+[[ -z "$MATE" ]] && MATE=$($FORGE_DEPLOY --verify ForwardProxy) # using generic forward proxy for goerli
 debug "${SYMBOL}_${LETTER}_MATE: ${MATE}"
 
 # route it
 [[ -z "$RWA_OUTPUT_CONDUIT" ]] && {
-    RWA_OUTPUT_CONDUIT=$($FORGE_DEPLOY RwaOutputConduit2 --constructor-args "$MCD_DAI")
-    debug "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT: ${RWA_OUTPUT_CONDUIT}"
+	RWA_OUTPUT_CONDUIT=$($FORGE_DEPLOY --verify RwaOutputConduit2 --constructor-args "$MCD_DAI")
+	debug "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT: ${RWA_OUTPUT_CONDUIT}"
 
-    # trust addresses for goerli
-    $CAST_SEND "$RWA_OUTPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-        $CAST_SEND "$RWA_OUTPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
+	# trust addresses for goerli
+	$CAST_SEND "$RWA_OUTPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+		$CAST_SEND "$RWA_OUTPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
 
-} || {
-    debug "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT: ${RWA_OUTPUT_CONDUIT}"
 }
 
-# join it
-RWA_JOIN=$($FORGE_DEPLOY AuthGemJoin --constructor-args "$MCD_VAT" "$ILK_ENCODED" "$RWA_TOKEN")
-debug "MCD_JOIN_${SYMBOL}_${LETTER}: ${RWA_JOIN}"
-$CAST_SEND "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-    $CAST_SEND "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
+[[ -z "$RWA_JOIN" ]] && {
+	# join it
+	RWA_JOIN=$($FORGE_DEPLOY --verify AuthGemJoin --constructor-args "$MCD_VAT" "$ILK_ENCODED" "$RWA_TOKEN")
+	debug "MCD_JOIN_${SYMBOL}_${LETTER}: ${RWA_JOIN}"
+	$CAST_SEND "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+		$CAST_SEND "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
+}
 
 # urn it
-RWA_URN=$($FORGE_DEPLOY RwaUrn2 --constructor-args "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT")
-debug "${SYMBOL}_${LETTER}_URN: ${RWA_URN}"
-$CAST_SEND "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-    $CAST_SEND "$RWA_URN" 'deny(address)' "$ETH_FROM"
+[[ -z "$RWA_URN" ]] && {
+    RWA_URN=$($FORGE_DEPLOY --verify RwaUrn2 --constructor-args "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT")
+    debug "${SYMBOL}_${LETTER}_URN: ${RWA_URN}"
+    $CAST_SEND "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+	    $CAST_SEND "$RWA_URN" 'deny(address)' "$ETH_FROM"
+}
 
 [[ -z "$RWA_URN_PROXY_ACTIONS" ]] && {
-    RWA_URN_PROXY_ACTIONS=$($FORGE_DEPLOY RwaUrnProxyActions)
-    debug "RWA_URN_PROXY_ACTIONS: ${RWA_URN_PROXY_ACTIONS}"
+	RWA_URN_PROXY_ACTIONS=$($FORGE_DEPLOY --verify RwaUrnProxyActions)
+	debug "RWA_URN_PROXY_ACTIONS: ${RWA_URN_PROXY_ACTIONS}"
 }
 
 # connect it
 [[ -z "$RWA_INPUT_CONDUIT" ]] && {
-    RWA_INPUT_CONDUIT=$($FORGE_DEPLOY RwaInputConduit2 --constructor-args "$MCD_DAI" "$RWA_URN")
-    debug "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT}"
+	RWA_INPUT_CONDUIT=$($FORGE_DEPLOY --verify RwaInputConduit2 --constructor-args "$MCD_DAI" "$RWA_URN")
+	debug "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT}"
 
-    $CAST_SEND "$RWA_INPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-        $CAST_SEND "$RWA_INPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
-} || {
-    debug "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT}"
+	$CAST_SEND "$RWA_INPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+		$CAST_SEND "$RWA_INPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
 }
 
 # price it
 [[ -z "$MIP21_LIQUIDATION_ORACLE" ]] && {
-    MIP21_LIQUIDATION_ORACLE=$($FORGE_DEPLOY RwaLiquidationOracle --constructor-args "$MCD_VAT" "$MCD_VOW")
-    debug "MIP21_LIQUIDATION_ORACLE: ${MIP21_LIQUIDATION_ORACLE}"
+	MIP21_LIQUIDATION_ORACLE=$($FORGE_DEPLOY --verify RwaLiquidationOracle --constructor-args "$MCD_VAT" "$MCD_VOW")
+	debug "MIP21_LIQUIDATION_ORACLE: ${MIP21_LIQUIDATION_ORACLE}"
 
-    $CAST_SEND "$MIP21_LIQUIDATION_ORACLE" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-        $CAST_SEND "$MIP21_LIQUIDATION_ORACLE" 'deny(address)' "$ETH_FROM"
+	$CAST_SEND "$MIP21_LIQUIDATION_ORACLE" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+		$CAST_SEND "$MIP21_LIQUIDATION_ORACLE" 'deny(address)' "$ETH_FROM"
 } || {
-    debug "MIP21_LIQUIDATION_ORACLE: ${MIP21_LIQUIDATION_ORACLE}"
+	debug "MIP21_LIQUIDATION_ORACLE: ${MIP21_LIQUIDATION_ORACLE}"
 }
 
 cat <<JSON
 {
     "MIP21_LIQUIDATION_ORACLE": "${MIP21_LIQUIDATION_ORACLE}",
-    "RWA_TOKEN_FACTORY": "${RWA_TOKEN_FACTORY}",
+    "RWA_TOKEN_FAB": "${RWA_TOKEN_FAB}",
     "RWA_URN_PROXY_ACTIONS": "${RWA_URN_PROXY_ACTIONS}",
     "SYMBOL": "${SYMBOL}",
     "NAME": "${NAME}",

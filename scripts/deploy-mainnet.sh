@@ -54,27 +54,34 @@ CAST_SEND="${BASH_SOURCE%/*}/cast-send.sh"
 
 	RWA_TOKEN="$(jq -r ".logs[0].address" <<<"$RECEIPT")"
 	debug "${SYMBOL}: ${RWA_TOKEN}"
-} || {
-	debug "${SYMBOL}: ${RWA_TOKEN}"
 }
 
 # route it
 [[ -z "$RWA_OUTPUT_CONDUIT" ]] && {
 	RWA_OUTPUT_CONDUIT=$($FORGE_DEPLOY --verify RwaConduits:RwaOutputConduit2 --constructor-args "$MCD_DAI")
+    debug "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT": "${RWA_OUTPUT_CONDUIT}"
 
 	$CAST_SEND "$RWA_OUTPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
 		$CAST_SEND "$RWA_OUTPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
 }
 
-# join it
-RWA_JOIN=$($FORGE_DEPLOY --verify AuthGemJoin --constructor-args "$MCD_VAT" "$ILK_ENCODED" "$RWA_TOKEN")
-$CAST_SEND "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-	$CAST_SEND "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
+[[ -z "$RWA_JOIN" ]] && {
+	# join it
+	RWA_JOIN=$($FORGE_DEPLOY --verify AuthGemJoin --constructor-args "$MCD_VAT" "$ILK_ENCODED" "$RWA_TOKEN")
+    debug "MCD_JOIN_${SYMBOL}_${LETTER}": "${RWA_JOIN}"
 
-# urn it
-RWA_URN=$($FORGE_DEPLOY --verify RwaUrn2 --constructor-args "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT")
-$CAST_SEND "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-	$CAST_SEND "$RWA_URN" 'deny(address)' "$ETH_FROM"
+	$CAST_SEND "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+		$CAST_SEND "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
+}
+
+[[ -z "$RWA_URN" ]] && {
+	# urn it
+	RWA_URN=$($FORGE_DEPLOY --verify RwaUrn2 --constructor-args "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT")
+    debug "${SYMBOL}_${LETTER}_URN: ${RWA_URN}"
+
+	$CAST_SEND "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+		$CAST_SEND "$RWA_URN" 'deny(address)' "$ETH_FROM"
+}
 
 [[ -z "$RWA_URN_PROXY_ACTIONS" ]] && {
 	RWA_URN_PROXY_ACTIONS=$($FORGE_DEPLOY --verify RwaUrnProxyActions) --constructor-args
@@ -84,6 +91,7 @@ $CAST_SEND "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
 # connect it
 [[ -z "$RWA_INPUT_CONDUIT" ]] && {
 	RWA_INPUT_CONDUIT=$($FORGE_DEPLOY --verify RwaConduits:RwaInputConduit2 --constructor-args "$MCD_DAI" "$RWA_URN")
+	debug "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT}"
 
 	$CAST_SEND "$RWA_INPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
 		$CAST_SEND "$RWA_INPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
@@ -93,7 +101,7 @@ $CAST_SEND "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
 cat <<JSON
 {
     "MIP21_LIQUIDATION_ORACLE": "${MIP21_LIQUIDATION_ORACLE}",
-    "RWA_TOKEN_FACTORY": "${RWA_TOKEN_FACTORY}",
+    "RWA_TOKEN_FAB": "${RWA_TOKEN_FAB}",
     "RWA_URN_PROXY_ACTIONS": "${RWA_URN_PROXY_ACTIONS}",
     "SYMBOL": "${SYMBOL}",
     "NAME": "${NAME}",
