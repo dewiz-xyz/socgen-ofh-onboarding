@@ -34,7 +34,7 @@ import {RwaOutputConduit2} from "mip21-toolkit/conduits/RwaOutputConduit2.sol";
 import {RwaLiquidationOracle} from "mip21-toolkit/oracles/RwaLiquidationOracle.sol";
 import {RwaUrn} from "mip21-toolkit/urns/RwaUrn.sol";
 import {RwaUrn2} from "mip21-toolkit/urns/RwaUrn2.sol";
-import {RwaUrnProxyActions} from "./RwaUrnProxyActions.sol";
+import {RwaUrnCloseHelper} from "./RwaUrnCloseHelper.sol";
 
 interface Hevm {
     function warp(uint256) external;
@@ -72,7 +72,7 @@ contract M is DSMath {
     }
 }
 
-contract RwaUrnProxyActionsTest is DSTest, M {
+contract RwaUrnCloseHelperTest is DSTest, M {
     bytes20 internal constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
 
     Hevm internal hevm;
@@ -101,7 +101,7 @@ contract RwaUrnProxyActionsTest is DSTest, M {
     ForwardProxy internal rec;
     ForwardProxy internal gov;
 
-    RwaUrnProxyActions internal urnProxyActions;
+    RwaUrnCloseHelper internal urnProxyActions;
 
     // Debt ceiling of 1000 DAI
     string internal constant DOC = "Please sign this";
@@ -164,7 +164,7 @@ contract RwaUrnProxyActionsTest is DSTest, M {
         rec = new ForwardProxy();
         gov = new ForwardProxy();
 
-        urnProxyActions = new RwaUrnProxyActions();
+        urnProxyActions = new RwaUrnCloseHelper();
 
         urn.hope(address(urnProxyActions));
         urn.hope(address(op));
@@ -212,7 +212,7 @@ contract RwaUrnProxyActionsTest is DSTest, M {
         DSToken(op._(address(dai))).transfer(address(inConduit), estimatedAmount);
         RwaInputConduit2(mate._(address(inConduit))).push();
 
-        RwaUrnProxyActions(op._(address(urnProxyActions))).close(address(urn));
+        RwaUrnCloseHelper(op._(address(urnProxyActions))).close(address(urn));
 
         uint256 opBalanceAfter = dai.balanceOf(address(op));
 
@@ -250,7 +250,7 @@ contract RwaUrnProxyActionsTest is DSTest, M {
         DSToken(op._(address(dai))).transfer(address(inConduit2), transferedAmount);
         RwaInputConduit2(mate._(address(inConduit2))).push();
 
-        RwaUrnProxyActions(op._(address(urnProxyActions))).close(address(urn2));
+        RwaUrnCloseHelper(op._(address(urnProxyActions))).close(address(urn2));
 
         // Push remaining Dai to op
         RwaOutputConduit2(op._(address(outConduit))).pick(address(op));

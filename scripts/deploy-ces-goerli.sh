@@ -88,9 +88,9 @@ debug "${SYMBOL}_${LETTER}_URN: ${RWA_URN}"
 $CAST_SEND "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
     $CAST_SEND "$RWA_URN" 'deny(address)' "$ETH_FROM"
 
-[[ -z "$RWA_URN_PROXY_ACTIONS" ]] && {
-    RWA_URN_PROXY_ACTIONS=$($FORGE_DEPLOY --verify RwaUrnProxyActions)
-    debug "RWA_URN_PROXY_ACTIONS: ${RWA_URN_PROXY_ACTIONS}"
+[[ -z "$RWA_URN_CLOSE_HELPER" ]] && {
+    RWA_URN_CLOSE_HELPER=$($FORGE_DEPLOY --verify RwaUrnCloseHelper)
+    debug "RWA_URN_CLOSE_HELPER: ${RWA_URN_CLOSE_HELPER}"
 }
 
 # connect it
@@ -119,7 +119,7 @@ cat <<JSON
 {
     "MIP21_LIQUIDATION_ORACLE": "${MIP21_LIQUIDATION_ORACLE}",
     "RWA_TOKEN_FAB": "${RWA_TOKEN_FAB}",
-    "RWA_URN_PROXY_ACTIONS": "${RWA_URN_PROXY_ACTIONS}",
+    "RWA008_A_URN_CLOSE_HELPER": "${RWA_URN_CLOSE_HELPER}",
     "SYMBOL": "${SYMBOL}",
     "NAME": "${NAME}",
     "ILK": "${ILK}",

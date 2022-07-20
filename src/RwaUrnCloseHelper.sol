@@ -16,13 +16,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.6.12;
 
-import {VatAbstract, JugAbstract, DaiJoinAbstract, GemJoinAbstract, DaiAbstract, DSTokenAbstract} from "dss-interfaces/Interfaces.sol";
+import {VatAbstract} from "dss-interfaces/dss/VatAbstract.sol";
+import {JugAbstract} from "dss-interfaces/dss/JugAbstract.sol";
+import {GemJoinAbstract} from "dss-interfaces/dss/GemJoinAbstract.sol";
+import {DaiJoinAbstract} from "dss-interfaces/dss/DaiJoinAbstract.sol";
+import {DaiAbstract} from "dss-interfaces/dss/DaiAbstract.sol";
+import {DSTokenAbstract} from "dss-interfaces/dapp/DSTokenAbstract.sol";
 
 /**
  * @author Henrique Barcelos <henrique@clio.finance>
  * @title Simplifies the interaction with vaults for Real-World Assets.
  */
-contract RwaUrnProxyActions {
+contract RwaUrnCloseHelper {
     /**
      * @notice Wipes all the outstanding debt from the `urn` and transfers the collateral tokens to the caller.
      * @dev It requires that enough Dai to repay the debt is already deposited into the `urn`.
@@ -31,7 +36,7 @@ contract RwaUrnProxyActions {
      */
     function close(address urn) external {
         uint256 wad = _estimateWipeAllWad(urn, block.timestamp);
-        require(RwaUrnLike(urn).can(msg.sender) == 1, "RwaUrnProxyActions/not-operator");
+        require(RwaUrnLike(urn).can(msg.sender) == 1, "RwaUrnCloseHelper/not-operator");
 
         RwaUrnLike(urn).wipe(wad);
 
@@ -58,7 +63,7 @@ contract RwaUrnProxyActions {
      * @return wad The amount of Dai required to make a full repayment.
      */
     function estimateWipeAllWad(address urn, uint256 when) external view returns (uint256 wad) {
-        require(when >= block.timestamp, "RwaUrnProxyActions/invalid-date");
+        require(when >= block.timestamp, "RwaUrnCloseHelper/invalid-date");
         return _estimateWipeAllWad(urn, when);
     }
 
