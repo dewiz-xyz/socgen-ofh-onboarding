@@ -4,11 +4,11 @@
 
 set -eo pipefail
 
-source "${BASH_SOURCE%/*}/common.sh"
+source "${BASH_SOURCE%/*}/_common.sh"
 # shellcheck disable=SC1091
 source "${BASH_SOURCE%/*}/build-env-addresses.sh" mainnet >/dev/null 2>&1
 
-[[ "$ETH_RPC_URL" && "$(seth chain)" == "ethlive" ]] || die "Please set a mainnet ETH_RPC_URL"
+[[ "$ETH_RPC_URL" && "$(cast chain)" == "ethlive" ]] || die "Please set a mainnet ETH_RPC_URL"
 [[ -z "$MIP21_LIQUIDATION_ORACLE" ]] && die 'Please set the MIP21_LIQUIDATION_ORACLE env var'
 [[ -z "$OPERATOR" ]] && die 'Please set the OPERATOR env var'
 [[ -z "$MATE" ]] && die "Please set the MATE env var"
@@ -34,10 +34,13 @@ export ETH_GAS=6000000
 [[ -z "$LETTER" ]] && LETTER="A"
 
 ILK="${SYMBOL}-${LETTER}"
-ILK_ENCODED=$(seth --to-bytes32 "$(seth --from-ascii ${ILK})")
+ILK_ENCODED=$(cast --to-bytes32 "$(cast --from-ascii ${ILK})")
 
 # build it
 make build
+
+FORGE_DEPLOY="${BASH_SOURCE%/*}/forge-deploy.sh"
+CAST_SEND="${BASH_SOURCE%/*}/cast-send.sh"
 
 # tokenize it
 [[ -z "$RWA_TOKEN" ]] && {
@@ -57,33 +60,33 @@ make build
 
 # route it
 [[ -z "$RWA_OUTPUT_CONDUIT" ]] && {
-	RWA_OUTPUT_CONDUIT=$(dapp create RwaConduits:RwaOutputConduit2 "$MCD_DAI")
+	RWA_OUTPUT_CONDUIT=$($FORGE_DEPLOY --verify RwaConduits:RwaOutputConduit2 --constructor-args "$MCD_DAI")
 
-	seth send "$RWA_OUTPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-		seth send "$RWA_OUTPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
+	$CAST_SEND "$RWA_OUTPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+		$CAST_SEND "$RWA_OUTPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
 }
 
 # join it
-RWA_JOIN=$(dapp create AuthGemJoin "$MCD_VAT" "$ILK_ENCODED" "$RWA_TOKEN")
-seth send "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-	seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
+RWA_JOIN=$($FORGE_DEPLOY --verify AuthGemJoin --constructor-args "$MCD_VAT" "$ILK_ENCODED" "$RWA_TOKEN")
+$CAST_SEND "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+	$CAST_SEND "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
 
 # urn it
-RWA_URN=$(dapp create RwaUrn2 "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT")
-seth send "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-	seth send "$RWA_URN" 'deny(address)' "$ETH_FROM"
+RWA_URN=$($FORGE_DEPLOY --verify RwaUrn2 --constructor-args "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT")
+$CAST_SEND "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+	$CAST_SEND "$RWA_URN" 'deny(address)' "$ETH_FROM"
 
 [[ -z "$RWA_URN_PROXY_ACTIONS" ]] && {
-	RWA_URN_PROXY_ACTIONS=$(dapp create RwaUrnProxyActions)
+	RWA_URN_PROXY_ACTIONS=$($FORGE_DEPLOY --verify RwaUrnProxyActions) --constructor-args
 	debug "RWA_URN_PROXY_ACTIONS: ${RWA_URN_PROXY_ACTIONS}"
 }
 
 # connect it
 [[ -z "$RWA_INPUT_CONDUIT" ]] && {
-	RWA_INPUT_CONDUIT=$(dapp create RwaConduits:RwaInputConduit2 "$MCD_DAI" "$RWA_URN")
+	RWA_INPUT_CONDUIT=$($FORGE_DEPLOY --verify RwaConduits:RwaInputConduit2 --constructor-args "$MCD_DAI" "$RWA_URN")
 
-	seth send "$RWA_INPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-		seth send "$RWA_INPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
+	$CAST_SEND "$RWA_INPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+		$CAST_SEND "$RWA_INPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
 }
 
 # print it

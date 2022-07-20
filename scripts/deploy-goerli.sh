@@ -2,7 +2,7 @@
 
 set -eo pipefail
 
-source "${BASH_SOURCE%/*}/common.sh"
+source "${BASH_SOURCE%/*}/_common.sh"
 # shellcheck disable=SC1091
 source "${BASH_SOURCE%/*}/build-env-addresses.sh" goerli >/dev/null 2>&1
 
@@ -28,14 +28,18 @@ export ETH_GAS=6000000
 #
 [[ -z "$LETTER" ]] && LETTER="A"
 
+# [[ -z "$MIP21_LIQUIDATION_ORACLE" ]] && MIP21_LIQUIDATION_ORACLE="0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF"
+# TODO: confirm liquidations handling - no liquidations for the time being
+
 ILK="${SYMBOL}-${LETTER}"
-ILK_ENCODED=$(seth --to-bytes32 "$(seth --from-ascii "$ILK")")
+debug "ILK: ${ILK}"
+ILK_ENCODED=$(cast --to-bytes32 "$(cast --from-ascii "$ILK")")
 
 # build it
 make build
 
-[[ -z "$OPERATOR" ]] && OPERATOR=$(dapp create ForwardProxy) # using generic forward proxy for goerli
-[[ -z "$MATE" ]] && MATE=$(dapp create ForwardProxy)         # using generic forward proxy for goerli
+FORGE_DEPLOY="${BASH_SOURCE%/*}/forge-deploy.sh"
+CAST_SEND="${BASH_SOURCE%/*}/cast-send.sh"
 
 # tokenize it
 [[ -z "$RWA_TOKEN" ]] && {
@@ -53,39 +57,67 @@ make build
     debug "${SYMBOL}: ${RWA_TOKEN}"
 }
 
+debug "${SYMBOL}: ${RWA_TOKEN}"
+
+[[ -z "$OPERATOR" ]] && OPERATOR=$($FORGE_DEPLOY ForwardProxy) # using generic forward proxy for goerli
+debug "${SYMBOL}_${LETTER}_OPERATOR: ${OPERATOR}"
+
+[[ -z "$MATE" ]] && MATE=$($FORGE_DEPLOY ForwardProxy) # using generic forward proxy for goerli
+debug "${SYMBOL}_${LETTER}_MATE: ${MATE}"
+
 # route it
 [[ -z "$RWA_OUTPUT_CONDUIT" ]] && {
-    RWA_OUTPUT_CONDUIT=$(dapp create RwaOutputConduit2 "$MCD_DAI")
+    RWA_OUTPUT_CONDUIT=$($FORGE_DEPLOY RwaOutputConduit2 --constructor-args "$MCD_DAI")
+    debug "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT: ${RWA_OUTPUT_CONDUIT}"
 
-    seth send "$RWA_OUTPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-        seth send "$RWA_OUTPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
+    # trust addresses for goerli
+    $CAST_SEND "$RWA_OUTPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+        $CAST_SEND "$RWA_OUTPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
+
+} || {
+    debug "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT: ${RWA_OUTPUT_CONDUIT}"
 }
 
 # join it
-RWA_JOIN=$(dapp create AuthGemJoin "$MCD_VAT" "$ILK_ENCODED" "$RWA_TOKEN")
-seth send "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-    seth send "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
+RWA_JOIN=$($FORGE_DEPLOY AuthGemJoin --constructor-args "$MCD_VAT" "$ILK_ENCODED" "$RWA_TOKEN")
+debug "MCD_JOIN_${SYMBOL}_${LETTER}: ${RWA_JOIN}"
+$CAST_SEND "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+    $CAST_SEND "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
 
 # urn it
-RWA_URN=$(dapp create RwaUrn2 "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT")
-seth send "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-    seth send "$RWA_URN" 'deny(address)' "$ETH_FROM"
+RWA_URN=$($FORGE_DEPLOY RwaUrn2 --constructor-args "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT")
+debug "${SYMBOL}_${LETTER}_URN: ${RWA_URN}"
+$CAST_SEND "$RWA_URN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+    $CAST_SEND "$RWA_URN" 'deny(address)' "$ETH_FROM"
 
 [[ -z "$RWA_URN_PROXY_ACTIONS" ]] && {
-    RWA_URN_PROXY_ACTIONS=$(dapp create RwaUrnProxyActions)
+    RWA_URN_PROXY_ACTIONS=$($FORGE_DEPLOY RwaUrnProxyActions)
     debug "RWA_URN_PROXY_ACTIONS: ${RWA_URN_PROXY_ACTIONS}"
 }
 
 # connect it
 [[ -z "$RWA_INPUT_CONDUIT" ]] && {
-    RWA_INPUT_CONDUIT=$(dapp create RwaInputConduit2 "$MCD_DAI" "$RWA_URN")
+    RWA_INPUT_CONDUIT=$($FORGE_DEPLOY RwaInputConduit2 --constructor-args "$MCD_DAI" "$RWA_URN")
+    debug "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT}"
 
-    seth send "$RWA_INPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-        seth send "$RWA_INPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
+    $CAST_SEND "$RWA_INPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+        $CAST_SEND "$RWA_INPUT_CONDUIT" 'deny(address)' "$ETH_FROM"
+} || {
+    debug "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT}"
 }
 
-# print it
-cat << JSON
+# price it
+[[ -z "$MIP21_LIQUIDATION_ORACLE" ]] && {
+    MIP21_LIQUIDATION_ORACLE=$($FORGE_DEPLOY RwaLiquidationOracle --constructor-args "$MCD_VAT" "$MCD_VOW")
+    debug "MIP21_LIQUIDATION_ORACLE: ${MIP21_LIQUIDATION_ORACLE}"
+
+    $CAST_SEND "$MIP21_LIQUIDATION_ORACLE" 'rely(address)' "$MCD_PAUSE_PROXY" &&
+        $CAST_SEND "$MIP21_LIQUIDATION_ORACLE" 'deny(address)' "$ETH_FROM"
+} || {
+    debug "MIP21_LIQUIDATION_ORACLE: ${MIP21_LIQUIDATION_ORACLE}"
+}
+
+cat <<JSON
 {
     "MIP21_LIQUIDATION_ORACLE": "${MIP21_LIQUIDATION_ORACLE}",
     "RWA_TOKEN_FACTORY": "${RWA_TOKEN_FACTORY}",

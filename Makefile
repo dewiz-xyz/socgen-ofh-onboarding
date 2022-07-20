@@ -8,22 +8,16 @@ lint:; yarn run lint
 
 # install solc version
 # example to install other versions: `make solc 0_6_12`
+# install solc version
+# example to install other versions: `make solc 0_6_12`
 SOLC_VERSION := 0_6_12
 solc:; nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_${SOLC_VERSION}
 
-# Build & test
-build:; dapp build
-
-clean:; dapp clean
+build:; forge build
 
 estimate:; ./scripts/estimate-gas.sh ${file} ${contract} ${args}
 
-flatten:; hevm flatten --source-file ${file} --json-file out/dapp.sol.json
-
 size:; ./scripts/contract-size.sh ${file} ${contract} ${args}
-
-test-remote: check-api-key; dapp test --rpc-url $(call alchemy-url,goerli) # --ffi # enable if you need the `ffi` cheat code on HEVM
-test-local: ; @ETH_RPC_URL='http://localhost:8545' dapp test --rpc  # --ffi # enable if you need the `ffi` cheat code on HEVM
 
 # mainnet
 deploy-mainnet: check-api-key; @ETH_RPC_URL=$(call alchemy-url,mainnet) ./scripts/deploy-mainnet.sh
