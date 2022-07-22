@@ -40,11 +40,25 @@ ILK_ENCODED=$(cast --to-bytes32 "$(cast --from-ascii ${ILK})")
 make build
 
 FORGE_DEPLOY="${BASH_SOURCE%/*}/forge-deploy.sh"
+FORGE_VERIFY="${BASH_SOURCE%/*}/forge-verify.sh"
 CAST_SEND="${BASH_SOURCE%/*}/cast-send.sh"
+
+confirm_before_proceed() {
+    local REPLY
+    read -p "$1 [Y/n] " -n 1 -r REPLY >&2
+    echo ""
+    if [[ $REPLY =~ ^[Nn]$ ]]; then
+        exit 1
+    else
+        return 0
+    fi
+}
 
 # tokenize it
 [[ -z "$RWA_TOKEN" ]] && {
 	debug 'WARNING: `$RWA_TOKEN` not set. Deploying it...'
+    confirm_before_proceed "Deploy RWA_TOKEN?"
+
 	TX=$($CAST_SEND "${RWA_TOKEN_FAB}" 'createRwaToken(string,string,address)' "$NAME" "$SYMBOL" "$OPERATOR")
 	debug "TX: $TX"
 
@@ -58,7 +72,9 @@ CAST_SEND="${BASH_SOURCE%/*}/cast-send.sh"
 
 # route it
 [[ -z "$RWA_OUTPUT_CONDUIT" ]] && {
-	RWA_OUTPUT_CONDUIT=$($FORGE_DEPLOY --verify RwaConduits:RwaOutputConduit2 --constructor-args "$MCD_DAI")
+    confirm_before_proceed "Deploy RWA_OUTPUT_CONDUIT?"
+
+	RWA_OUTPUT_CONDUIT=$($FORGE_DEPLOY --verify RwaOutputConduit2 --constructor-args "$MCD_DAI")
     debug "${SYMBOL}_${LETTER}_OUTPUT_CONDUIT": "${RWA_OUTPUT_CONDUIT}"
 
 	$CAST_SEND "$RWA_OUTPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
@@ -66,6 +82,8 @@ CAST_SEND="${BASH_SOURCE%/*}/cast-send.sh"
 }
 
 [[ -z "$RWA_JOIN" ]] && {
+    confirm_before_proceed "Deploy RWA_JOIN?"
+
 	# join it
 	RWA_JOIN=$($FORGE_DEPLOY --verify AuthGemJoin --constructor-args "$MCD_VAT" "$ILK_ENCODED" "$RWA_TOKEN")
     debug "MCD_JOIN_${SYMBOL}_${LETTER}": "${RWA_JOIN}"
@@ -75,6 +93,8 @@ CAST_SEND="${BASH_SOURCE%/*}/cast-send.sh"
 }
 
 [[ -z "$RWA_URN" ]] && {
+    confirm_before_proceed "Deploy RWA_URN?"
+
 	# urn it
 	RWA_URN=$($FORGE_DEPLOY --verify RwaUrn2 --constructor-args "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT")
     debug "${SYMBOL}_${LETTER}_URN: ${RWA_URN}"
@@ -84,13 +104,17 @@ CAST_SEND="${BASH_SOURCE%/*}/cast-send.sh"
 }
 
 [[ -z "$RWA_URN_CLOSE_HELPER" ]] && {
-	RWA_URN_CLOSE_HELPER=$($FORGE_DEPLOY --verify RwaUrnCloseHelper) --constructor-args
+    confirm_before_proceed "Deploy RWA_URN_CLOSE_HELPER?"
+
+	RWA_URN_CLOSE_HELPER=$($FORGE_DEPLOY --verify RwaUrnCloseHelper)
 	debug "RWA_URN_CLOSE_HELPER: ${RWA_URN_CLOSE_HELPER}"
 }
 
 # connect it
 [[ -z "$RWA_INPUT_CONDUIT" ]] && {
-	RWA_INPUT_CONDUIT=$($FORGE_DEPLOY --verify RwaConduits:RwaInputConduit2 --constructor-args "$MCD_DAI" "$RWA_URN")
+    confirm_before_proceed "Deploy RWA_INPUT_CONDUIT?"
+
+	RWA_INPUT_CONDUIT=$($FORGE_DEPLOY --verify RwaInputConduit2 --constructor-args "$MCD_DAI" "$RWA_URN")
 	debug "${SYMBOL}_${LETTER}_INPUT_CONDUIT: ${RWA_INPUT_CONDUIT}"
 
 	$CAST_SEND "$RWA_INPUT_CONDUIT" 'rely(address)' "$MCD_PAUSE_PROXY" &&
