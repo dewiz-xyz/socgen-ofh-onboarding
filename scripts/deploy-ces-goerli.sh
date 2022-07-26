@@ -77,10 +77,17 @@ debug "${SYMBOL}_${LETTER}_MATE: ${MATE}"
 }
 
 # join it
-RWA_JOIN=$($FORGE_DEPLOY --verify AuthGemJoin --constructor-args "$MCD_VAT" "$ILK_ENCODED" "$RWA_TOKEN")
-debug "MCD_JOIN_${SYMBOL}_${LETTER}: ${RWA_JOIN}"
-$CAST_SEND "$RWA_JOIN" 'rely(address)' "$MCD_PAUSE_PROXY" &&
-    $CAST_SEND "$RWA_JOIN" 'deny(address)' "$ETH_FROM"
+[[ -z "$RWA_JOIN" ]] && {
+	TX=$($CAST_SEND "${JOIN_FAB}" 'newAuthGemJoin(address,bytes32,address)' "$MCD_PAUSE_PROXY" "$ILK_ENCODED" "$RWA_TOKEN")
+    debug "TX: $TX"
+
+    RECEIPT="$(cast receipt --json $TX)"
+    TX_STATUS="$(jq -r '.status' <<<"$RECEIPT")"
+    [[ "$TX_STATUS" != "0x1" ]] && die "Failed to create ${SYMBOL} token in tx ${TX}."
+
+	RWA_JOIN="$(jq -r ".logs[0].address" <<<"$RECEIPT")"
+	debug "MCD_JOIN_${SYMBOL}_${LETTER}: ${RWA_JOIN}"
+}
 
 # urn it
 RWA_URN=$($FORGE_DEPLOY --verify RwaUrn2 --constructor-args "$MCD_VAT" "$MCD_JUG" "$RWA_JOIN" "$MCD_JOIN_DAI" "$RWA_OUTPUT_CONDUIT")
