@@ -8,9 +8,9 @@ replace-spell-addresses() {
 		while IFS='|' read -r key value; do
 			value="$(seth --to-checksum-address "${value}")"
 			# Replace occurrences in the spell file
-			sed -r -e "/^\\s*address.*${key}\\s*=/s/(=\s*)[^;]*/\\1${value}/" -i "$spell_file"
+			sed -r -e "/^\\s*address.*\\b${key}\\b\\s*=/s/(=\s*)0x[^;]*/\\1${value}/" -i "$spell_file"
 			# Replace occurrences in the test helper file
-			sed -r -e "/^\\s*addr\\[\\\"${key}\\\"\\]\\s*=/s/(=\s*)[^;]*/\\1${value}/" -i "$spell_helper_addresses_file"
+			sed -r -e "/^\\s*addr\\[\\\"${key}\\\"\\]\\s*=/s/(=\s*)0x[^;]*/\\1${value}/" -i "$spell_helper_addresses_file"
 		done
 }
 
